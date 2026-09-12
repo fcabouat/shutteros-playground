@@ -12,6 +12,8 @@ It is a local simulation. It has no backend, account system, persistence, teleme
 
 The login begins with a single sticky note. The assistant stays collapsed until requested; the desktop offers free exploration, calm mode by default, all six situations, three quiet routines, and the recap.
 
+The interface uses familiar desktop conventions with an original window-and-curtains identity. Each simulated application keeps its own visual vocabulary; guidance and answers live in a separate, expandable panel. A restrained palette, readable surfaces and progressive explanations support discovery at the player's pace. Organisation branding occupies its own space, independently of the fictional OS.
+
 ## Run and build
 
 Use Node.js 22.13 or later (Node 24 is used in CI). Dependency installation and CI use pnpm 11.19.0 with the committed lockfile:
