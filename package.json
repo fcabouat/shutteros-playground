@@ -29,7 +29,7 @@
   },
   "dependencies": {
     "@internationalized/date": "^3.8.1",
-    "@lucide/svelte": "^0.577.0",
+    "@lucide/svelte": "^1.43.0",
     "@shutteros/core": "workspace:*",
     "bits-ui": "2.19.2"
   },
