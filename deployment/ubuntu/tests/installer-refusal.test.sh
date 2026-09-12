@@ -61,8 +61,7 @@ expect_refusal() {
 prepare_script
 expect_refusal existing-account env ACCOUNT_EXISTS=1 "$tmp/kit/install.sh" --site-dir "$tmp/dist"
 
-# An unused account must advance beyond the refusal guard. In particular, a
-# final false `id ... && die` must not make set -e abort a valid fresh install.
+# A missing account is expected on a fresh target; preflight must reach staging.
 : > "$tmp/calls"
 if PATH="$tmp/bin:$PATH" TEST_CALLS="$tmp/calls" ACCOUNT_EXISTS=0 \
   "$tmp/kit/install.sh" --site-dir "$tmp/dist" 2> "$tmp/fresh-error"; then

@@ -1,6 +1,6 @@
 # Organisation branding
 
-The committed application uses the generic **ShutterOS** OS name and original window-and-curtains icon. OS branding is separate from organisation branding. Organisation name, campaign name, and logo belong together in the upper-left organisation block and are supplied locally and must be kept out of version control. “ShutterOS” is a working name and its availability as a product name is not guaranteed.
+**ShutterOS** is the fictional OS identity, with its window-and-curtains icon. The deploying organisation's name, campaign label, and logo appear together in the upper-left corner of the login screen and desktop. Supply organisation assets locally and keep them out of version control. See [licensing and attribution](legal.md) for ownership and redistribution terms.
 
 ## Deployment-local organisation logo
 
@@ -48,4 +48,4 @@ Private build-time branding has precedence over deployment-local branding. The o
 
 ## Public and private artifacts
 
-A customised build contains its organisation name and embedded logo in the generated HTML/JavaScript. Ignoring the source files does not remove them from that build. Publish only a generic build from a clean checkout to the personal public demo. Review staged files before committing; `.gitignore` does not exclude a file that is already tracked or force-added.
+A customised build contains its organisation name and embedded logo in the generated HTML/JavaScript. Ignoring the source files does not remove them from that build. Publish a generic build from a clean checkout for the public demo. Review staged files before committing; `.gitignore` does not exclude a file that is already tracked or force-added.

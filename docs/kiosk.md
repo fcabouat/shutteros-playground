@@ -45,7 +45,7 @@ Treat the accepted passwords as public game content. They are not credentials an
 
 ## Ubuntu setup kit
 
-The repository includes `deployment/ubuntu/install.sh`, its support files, verification, and uninstall scripts for a dedicated Ubuntu 24.04 Server. See [the Ubuntu guide](ubuntu-kiosk.md) for prerequisites and recovery. The kit has not been exercised on your physical device and does not claim a universal keyboard or firmware lock.
+The repository includes `deployment/ubuntu/install.sh`, its support files, verification, and uninstall scripts for a dedicated Ubuntu 24.04 Server. See [the Ubuntu guide](ubuntu-kiosk.md) for prerequisites, validation status, hardware acceptance checks, and recovery.
 
 ## Host policy
 
@@ -63,4 +63,9 @@ The web timer is checked against elapsed time and resynchronises on visibility/f
 
 ## Output directories
 
-`dist/index.html` is the deployed site's entry point; copy and serve the whole `dist/` directory. `dist/portable/shutteros.html` is the optional single-file edition. `.svelte-kit/` contains ignored compiler intermediates, including a prerendered index. `src/app.html` and `portable/index.html` are source templates, not duplicated deliveries. There is no generated HTML at the repository root.
+| Path                                  | Purpose                                                                                     |
+| ------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `dist/`                               | Static site, runtime configuration and license notices; copy and serve the whole directory. |
+| `dist/portable/shutteros.html`        | Self-contained single-file edition.                                                         |
+| `.svelte-kit/`                        | Ignored compiler intermediates.                                                             |
+| `src/app.html`, `portable/index.html` | Source templates for the two builds.                                                        |

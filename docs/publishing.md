@@ -1,17 +1,16 @@
-# GitHub publication
+# GitHub Pages deployment
 
 The source is a personal MIT project. The public demo uses the generic ShutterOS identity and fictional content. Keep an organisation's build and logo separate from the public demo.
 
-## First publication
+## Configure Pages
 
-1. Create the intended GitHub repository. Review `git status --short` and the files to be committed before the first push. Do not add `private/`, generated branding, `.env` files, `dist/`, local browser reports, or operator notes. `.gitignore` is a convenience; it does not protect files that have already been tracked or force-added.
-2. Install Node 24 and the pinned pnpm 11.19.0. Run `pnpm install --frozen-lockfile`, install Playwright's Chromium with `pnpm exec playwright install chromium --only-shell`, then run `pnpm verify` and `pnpm build:storybook`.
-3. The initial Git repository is prepared locally with author François Cabouat, `main` and `develop`, and `origin` set to `https://github.com/fcabouat/cyber-shutteros.git`. Review the initial commit, then push `main` and `develop` yourself (`git push -u origin main` and `git push -u origin develop`). Push the source to the intended repository and inspect the **Verify and publish** Actions run. Every push and pull request verifies the application and tests the Pages artifact under its actual repository path.
-4. In **Settings → Pages → Build and deployment**, select **GitHub Actions** as the source. Add the repository Actions variable **`PAGES_ENABLED` = `true`** under **Settings → Secrets and variables → Actions → Variables**.
-5. Run **Verify and publish** manually on the default branch, or push a new commit to it. The deployment job runs only after verification succeeds, only on the default branch, and only when the variable is enabled. Pull requests never deploy.
-6. Open the URL reported by the `github-pages` deployment. Verify login, one situation, language switching, logout, and the browser console on that URL. A local passing build is not evidence that the remote deployment has completed.
+1. Use a GitHub repository with Actions enabled and `main` as its default branch. Forks can use the same workflow; the deployment path is derived from the repository name.
+2. Run the [release verification](verification.md) from a clean checkout. Check that the source excludes organisation assets, generated branding, `.env` files, `dist/`, and local browser reports.
+3. In **Settings → Pages → Build and deployment**, select **GitHub Actions** as the source. Add the repository Actions variable **`PAGES_ENABLED` = `true`** under **Settings → Secrets and variables → Actions → Variables**.
+4. Run **Verify and publish** manually on the default branch, or push a commit to it. The deployment job runs only after verification succeeds, only on the default branch, and only when the variable is enabled. Pull requests never deploy.
+5. Inspect the Actions run and open the URL reported by the `github-pages` deployment. Verify login, one situation, language switching, logout, and the browser console on that URL.
 
-The workflow uses pinned action revisions, a frozen lockfile, Node 24, dependency advisory checking, lint, formatting, type checks, unit tests, static and portable builds, Chromium end-to-end tests, and a Storybook build. Only the deployment job receives Pages write and OIDC permissions. It deploys the same Pages artifact that passed the browser tests; it does not rebuild after verification.
+The workflow uses pinned action revisions, a frozen lockfile, Node 24, dependency advisory checking, lint, formatting, type checks, Knip, unit tests, static and portable builds, Chromium end-to-end tests, and a Storybook build. Every push and pull request runs verification. Only the deployment job receives Pages write and OIDC permissions. It deploys the same Pages artifact that passed the browser tests; it does not rebuild after verification.
 
 ## Paths and artifacts
 

@@ -10,7 +10,7 @@ Use Node.js 22.13 or later (Node 24 is used in CI) and pnpm 11.19.0. Install fro
 pnpm install --frozen-lockfile
 ```
 
-Useful commands are `pnpm dev`, `pnpm test`, `pnpm check`, `pnpm lint`, and `pnpm build`. Run the checks relevant to a change before opening a pull request. Do not claim that a command passed unless it was run successfully in the current environment.
+Useful commands are `pnpm dev`, `pnpm test`, `pnpm check`, `pnpm lint`, and `pnpm build`. Run the checks relevant to a change before opening a pull request; see [verification](docs/verification.md) for the full release workflow.
 
 After that installation, Bun can run individual scripts, for example `bun run dev`, `bun run build`, `bun run check`, `bun run test`, and `bun run knip`. Keep Node installed. `bun test` runs a different test runner; use `bun run test` for Vitest. Use pnpm for dependency changes and the full `verify` workflow, retaining the single committed pnpm lockfile.
 
@@ -38,7 +38,7 @@ The workspace overrides `cookie@<0.7.0` to `0.7.2` for [GHSA-pxg6-pf52-xh8x](htt
 
 `main` contains the reviewed distributable version; `develop` is the integration branch. Use `codex/feature/<topic>` or `codex/bugfix/<topic>` for development, `release/<version>` for release preparation, and `hotfix/<version>` for urgent fixes from `main`. Open a pull request into `develop`, then merge a verified release into both `main` and `develop`. GitHub Pages publishes only the configured default branch after verification; keep `main` as the default.
 
-Gitflow settings are local Git configuration and are not cloned with the repository. The initial repository config uses `main`, `develop`, the prefixes above, `support/`, and version tags prefixed with `v`. The optional `git-flow` CLI is not needed to use this branch convention. Follow the [publication guide](docs/publishing.md) for the first push and Pages setup.
+Use `support/` for maintained release branches and prefix version tags with `v`. The optional `git-flow` CLI is not required; configure it locally with these branch conventions if used. Git configuration is not cloned with the repository. Follow the [deployment guide](docs/publishing.md) to publish the default branch on Pages.
 
 ## Dependency notices
 

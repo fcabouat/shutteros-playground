@@ -1,18 +1,12 @@
 # Licensing, attribution, and campaign identity
 
-Review date: 2026-09-12. These notes document the project's publishing choices and evidence; they are not a trademark clearance or a legal opinion for every deployment.
-
 ## Project identity
 
-Repository: **cyber-shutteros**. Product: **ShutterOS Playground**. Suggested public description:
-
-> ShutterOS Playground — an independent cybersecurity awareness game for European Cybersecurity Month.
-
-The campaign name describes the intended occasion. Starting with the project's own name and stating its independence avoids presenting the game as a campaign-owned product. The original description, “European Cybersecurity Month — ShutterOS Playground”, could be read as an official campaign sub-product, so the repository now uses the clearer wording above.
+**ShutterOS Playground** (`cyber-shutteros`) is an independent cybersecurity awareness game for European Cybersecurity Month, created by François Cabouat and distributed under the MIT license.
 
 The game is a personal project. It is not affiliated with, endorsed by, certified by, or an official product of European Cybersecurity Month, ENISA, the European Commission, or Cybermalveillance.gouv.fr. Listing an activity on a campaign website does not by itself establish endorsement. A deploying organisation's name and logo identify that local deployment, separately from the software's authorship.
 
-The UI uses original ShutterOS window-and-curtains artwork and familiar desktop conventions. It bundles no Microsoft, EU, ENISA, Cybermalveillance, or campaign logo. Names, logos, and third-party identifiers remain with their respective rights holders. This review does not establish that “ShutterOS” is available as a trademark in every territory or class; the product name remains configurable.
+The UI uses original ShutterOS window-and-curtains artwork and familiar desktop conventions. It bundles no Microsoft, EU, ENISA, Cybermalveillance, or campaign logo. Names, logos, and third-party identifiers remain with their respective rights holders. The software license grants no trademark rights; deploying or renaming the game does not establish rights to a product name.
 
 ## Official campaign material
 

@@ -4,7 +4,7 @@
 
 ShutterOS is a French/English cybersecurity-awareness game for a shared kiosk. A fictional desktop presents six short situations: an unknown USB drive, a suspected incident, an urgent email, sender spoofing, a look-alike web login, and an unexpected MFA request.
 
-The guided ending targets three to five minutes and should be validated with a facilitator; the global ten-minute limit is a configurable safety ceiling.
+Players explore freely or choose a guided ending designed for three to five minutes. One configurable session clock resets the game after ten minutes by default.
 
 It is a local simulation. It has no backend, account system, persistence, telemetry, CDN, or real authentication. The fictional login phrases, messages, addresses, files, and forms are game content. No input is sent to a service or retained after the current session.
 
@@ -27,6 +27,8 @@ The development server listens on port 5173. To create both distributable varian
 pnpm build
 ```
 
+The build produces the prerendered static site in `dist/` and the optional standalone artifact at `dist/portable/shutteros.html`. For kiosk use, serve `dist/` with Python's local HTTP server; `pnpm preview` is for development verification.
+
 For everyday development, you can also run the scripts with **Bun** after the locked installation above:
 
 ```sh
@@ -35,9 +37,7 @@ bun run build
 bun run check
 ```
 
-Bun is a script runner here; Node remains required by the tools. Use `bun run test` to run the project's Vitest suite, not `bun test`, which selects Bun's own test runner. The full `verify` command still orchestrates its steps with pnpm. Dependency changes and clean installations use pnpm so contributors and CI share one lockfile; `bun install` and forcing the Bun runtime with `--bun` are not part of the validated workflow.
-
-This creates the prerendered static site in `dist/` and the optional standalone artifact at `dist/portable/shutteros.html`. For kiosk use, serve `dist/` with Python's local HTTP server; `pnpm preview` is for development verification. `pnpm test` runs unit tests, and `pnpm check` runs Svelte diagnostics.
+Bun runs the package scripts, which use Node-based tools. Use `bun run test` for Vitest and `bun run check` for TypeScript and Svelte diagnostics. `bun test` selects Bun's own test runner. The full `verify` command orchestrates its steps with pnpm. Dependency changes and clean installations use pnpm so contributors and CI share one lockfile; `bun install` and forcing the Bun runtime with `--bun` are outside the supported workflow.
 
 ## Configuration and kiosk use
 
@@ -47,7 +47,7 @@ Read the [player and facilitator guide](docs/user-guide.md) and [kiosk deploymen
 
 The OS identity and the deploying organisation's name, campaign, and logo are separate. See [organisation branding](docs/branding.md) to personalise a deployment without committing organisation assets.
 
-## Project notes
+## Documentation
 
 [Architecture](docs/overview.md) describes the static runtime and boundaries. [Content notes](docs/content.md) covers the educational claims and official references. Contribution and security guidance are in [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md).
 
@@ -61,11 +61,9 @@ pnpm verify
 pnpm build:storybook
 ```
 
-`verify` runs lint, formatting, types, Knip (unused files, dependencies and exports), unit tests, build, and browser checks. Run `pnpm knip` or `bun run knip` separately for the unused-code check. Treat exact checks and counts as repository state, not as a product promise. CI also rebuilds and tests the GitHub Pages path. Publishing is opt-in and requires a successful verification on the default branch; follow the [publication guide](docs/publishing.md).
+`verify` runs lint, formatting, types, Knip (unused files, dependencies and exports), unit tests, build, and browser checks. Run `pnpm knip` or `bun run knip` separately for the unused-code check. The [verification guide](docs/verification.md) describes coverage and deployment checks. CI also rebuilds and tests the GitHub Pages path. Publishing is opt-in and requires a successful verification on the default branch; follow the [deployment guide](docs/publishing.md).
 
 Dependabot checks version updates monthly, grouped into development tools, application dependencies, and GitHub Actions. Version-update PRs are limited to two for npm and one for Actions at a time. Security alerts and security-update PRs follow [GitHub's separate security settings](https://docs.github.com/en/code-security/how-tos/secure-your-supply-chain/secure-your-dependencies/configure-security-updates), not this monthly version schedule.
-
-The [initial publication audit](docs/audit-2026-09-12.md) records the resolved findings, local verification and remaining deployment acceptance checks.
 
 ## License
 

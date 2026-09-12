@@ -36,15 +36,15 @@ The safe action is to return through a known address or bookmark. HTTPS protects
 
 ### Unexpected MFA request
 
-An unexpected authentication request should be denied and reported. Never share an OTP or approve a prompt just to stop repeated notifications. A participant who accidentally approves a real request should use their organisation's established support process immediately. If the deployment presents an optional technical follow-up, phishing-resistant authentication (passkey or security key) is a useful single recommendation; do not turn the kiosk into an authenticator tutorial.
+An unexpected authentication request should be denied and reported. Never share an OTP or approve a prompt just to stop repeated notifications. A participant who accidentally approves a real request should use their organisation's established support process immediately. The detailed lesson also introduces passkeys and security keys as options for stronger phishing resistance, while keeping the main decision focused on an unexpected prompt.
 
 ### Quiet routines
 
-The desktop may reinforce three routines without adding scenes: use a password manager and keep secrets out of sight; install company-approved system and software updates; lock the screen when stepping away. These are reminders, not extra timed challenges. Follow the organisation's update and password policies while avoiding arbitrary password rotation as a game rule.
+Three optional desktop routines reinforce password handling, company-approved system and software updates, and screen locking. Their reminders open a relevant account, update or lock view for practice. They have no additional timed challenges. Follow the organisation's update and password policies while avoiding arbitrary password rotation as a game rule.
 
 ### Teaching and facilitation
 
-The guided ending targets three to five minutes: observe a cue, choose an action, see the simulated consequence, and read one practical takeaway; the global ten-minute limit is the maximum. Optional two-choice microchecks open in a separate view after password renewal in My account and after incident/MFA feedback. The initial login lesson contains no quiz. They must not create mandatory screens or alter the primary score. Offer plausible choices, explain the consequence in about one sentence, and allow a new session to try different choices. Microcheck answers are retained for the current session.
+The guided ending targets three to five minutes: observe a cue, choose an action, see the simulated consequence, and read one practical takeaway; the global ten-minute limit is the maximum. Optional two-choice microchecks open in a separate view after password renewal in My account and after incident/MFA feedback. The login lesson contains no quiz. Microchecks are skippable and do not alter the primary score. Offer plausible choices, explain the consequence in about one sentence, and allow a new session to try different choices. Microcheck answers are retained for the current session.
 
 Use supportive language: reporting a click or an approval quickly is a protective action, not a failure. The game is a local simulator. Its sender demonstration changes a fictional display field and previews a message; it does not bypass email controls, send mail, or demonstrate a real spoofing technique.
 

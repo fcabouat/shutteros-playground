@@ -281,7 +281,7 @@ function finishExperience(state: Extract<GameState, { phase: 'session' }>): Game
       ? state.scene.id
       : nextUnanswered(state);
   const guided = { ...state, mode: 'guided' as const, pendingIncident };
-  // Guided play is designed for about five minutes, but it retains the sole global session deadline.
+  // Guided mode reuses the absolute session deadline.
   return preferred === null ? completeGuided(guided) : openGuidedChallenge(guided, preferred);
 }
 

@@ -1,11 +1,12 @@
 # Ubuntu kiosk deployment
 
-`deployment/ubuntu/` is a reviewed deployment kit for a **dedicated Ubuntu
-Server 24.04 LTS host with no active graphical display manager**. It has not
-been applied to a physical kiosk or tested against
-every graphics, touch, keyboard, GPU, display, firmware, or Snap revision. Do
-not use it as a claim of hardware lockdown. Validate it on the target device
-before a public session.
+`deployment/ubuntu/` installs ShutterOS on a **dedicated Ubuntu Server 24.04 LTS
+host with no active graphical display manager**.
+
+**Validation status:** shell analysis and sandboxed installer preflight tests
+cover the scripts. End-to-end boot integration on a fresh Ubuntu VM or physical
+kiosk is unvalidated. Complete the hardware acceptance checks below before a
+public session.
 
 The kit serves a normal ShutterOS `dist/` build on loopback HTTP and runs a
 single Chromium window inside Cage on `tty1`:
@@ -22,7 +23,7 @@ a root-owned, read-only location so the browser account cannot change game
 files. The account has a root-owned shell which always executes Cage; if Cage
 cannot start, it does not fall back to an interactive shell.
 
-## Why this design
+## Session architecture
 
 Ubuntu packages Cage, a Wayland compositor designed to run one maximized
 application. Its `-s` option explicitly enables VT switching, so the kit does
@@ -174,12 +175,10 @@ allow VT switching. Chromium policy removes developer-tool and printing entry
 points. The local application itself is not relied on for operating-system
 lockdown.
 
-There is no portable, maintained Ubuntu setting in this kit that safely
-whitelists only left-click, letters, digits, Shift, and Caps Lock while blocking
-every modifier, Fn, firmware, keyboard-controller, and context-menu path. Fn
-keys are hardware-specific, and right-click is a browser/application action,
-not a reliable security boundary. The kit intentionally does not install an
-unreviewed input filter or pretend that JavaScript can control these keys.
+The kit does not implement a system-wide key or mouse-button allowlist. Input
+handling depends on Cage, Chromium, and the device hardware. Fn keys are
+hardware-specific; context-menu restrictions do not establish a security
+boundary. Test shortcut and mouse behavior on the target device.
 
 For a public kiosk, the device owner must validate and apply the vendor's
 firmware/UEFI controls, physical port protection, boot order, Secure Boot
