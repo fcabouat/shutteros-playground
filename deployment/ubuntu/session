@@ -1,0 +1,5 @@
+#!/bin/sh
+# Root-owned login shell and systemd entrypoint. It never falls back to an interactive shell.
+set -eu
+
+exec /usr/bin/cage -d -- /usr/local/lib/shutteros-kiosk/launch-chromium

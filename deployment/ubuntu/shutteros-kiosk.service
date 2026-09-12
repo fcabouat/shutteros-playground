@@ -1,0 +1,34 @@
+[Unit]
+Description=ShutterOS Cage kiosk on tty1
+Requires=shutteros-static.service
+After=shutteros-static.service systemd-logind.service systemd-user-sessions.service dev-tty1.device
+Conflicts=getty@tty1.service
+StartLimitIntervalSec=0
+
+[Service]
+# Ubuntu 24.04's PAM helper retains the exec-status pipe: Type=exec stays activating
+# even after Cage starts. Installer checks HTTP and process stability explicitly.
+Type=simple
+User=shutteros-kiosk
+Group=shutteros-kiosk
+PAMName=login
+TTYPath=/dev/tty1
+TTYReset=yes
+TTYVHangup=yes
+TTYVTDisallocate=yes
+StandardInput=tty
+StandardOutput=journal
+StandardError=journal
+Environment=XDG_SESSION_TYPE=wayland
+Environment=XDG_CURRENT_DESKTOP=ShutterOS
+EnvironmentFile=/usr/local/lib/shutteros-kiosk/environment
+ExecStartPre=/usr/bin/test -x /usr/bin/cage
+ExecStartPre=/usr/bin/test -x /snap/bin/chromium
+ExecStart=/usr/local/lib/shutteros-kiosk/session
+Restart=always
+RestartSec=2s
+RestartSteps=5
+RestartMaxDelaySec=30s
+
+[Install]
+WantedBy=multi-user.target
