@@ -1,0 +1,16 @@
+{
+  "AutofillAddressEnabled": false,
+  "AutofillCreditCardEnabled": false,
+  "BrowserSignin": 0,
+  "DefaultPopupsSetting": 2,
+  "DeveloperToolsAvailability": 2,
+  "DownloadRestrictions": 3,
+  "ExtensionInstallBlocklist": ["*"],
+  "PasswordManagerAllowShowPasswords": false,
+  "PasswordManagerEnabled": false,
+  "PrintingEnabled": false,
+  "PromptForDownloadLocation": false,
+  "SyncDisabled": true,
+  "URLAllowlist": ["http://127.0.0.1:8080/*"],
+  "URLBlocklist": ["*", "view-source:*"]
+}

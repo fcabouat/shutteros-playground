@@ -1,0 +1,29 @@
+[Unit]
+Description=ShutterOS loopback static site
+After=local-fs.target
+ConditionPathExists=/opt/cyber-shutteros/site/index.html
+
+[Service]
+Type=exec
+User=shutteros-kiosk
+Group=shutteros-kiosk
+WorkingDirectory=/opt/cyber-shutteros/site
+ExecStart=/usr/bin/python3 -m http.server 8080 --bind 127.0.0.1 --directory /opt/cyber-shutteros/site
+Restart=on-failure
+RestartSec=2
+NoNewPrivileges=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectSystem=strict
+ProtectHome=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+ReadOnlyPaths=/opt/cyber-shutteros/site
+RestrictAddressFamilies=AF_INET AF_UNIX
+IPAddressDeny=any
+IPAddressAllow=127.0.0.1/32
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

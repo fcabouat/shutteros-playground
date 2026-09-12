@@ -1,0 +1,11 @@
+node_modules
+.svelte-kit
+build
+storybook-static
+playwright-report
+test-results
+pnpm-lock.yaml
+.operator
+private
+src/lib/branding.generated.ts
+dist/

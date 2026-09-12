@@ -1,0 +1,40 @@
+#!/bin/sh
+# This process runs as shutteros-kiosk inside its PAM/logind session.
+set -eu
+
+: "${HOME:?missing kiosk home}"
+: "${XDG_RUNTIME_DIR:?missing PAM/logind runtime directory}"
+
+profile="$HOME/snap/chromium/common/shutteros-kiosk"
+mkdir -p "$profile"
+chmod 700 "$profile"
+# A stale singleton is safe to remove before Chromium starts and avoids a crash loop after power loss.
+rm -f "$profile"/SingletonCookie "$profile"/SingletonLock "$profile"/SingletonSocket
+
+case "${SHUTTEROS_INSPECT_POLICY:-0}" in
+  0)
+    exec /snap/bin/chromium \
+      --ozone-platform=wayland \
+      --kiosk http://127.0.0.1:8080/ \
+      --incognito \
+      --no-first-run \
+      --no-default-browser-check \
+      --password-store=basic \
+      --user-data-dir="$profile"
+    ;;
+  1)
+    # A root-controlled, temporary systemd override uses the same account and Wayland session.
+    exec /snap/bin/chromium \
+      --ozone-platform=wayland \
+      --incognito \
+      --no-first-run \
+      --no-default-browser-check \
+      --password-store=basic \
+      --user-data-dir="$profile" \
+      chrome://policy
+    ;;
+  *)
+    printf '%s\n' 'invalid SHUTTEROS_INSPECT_POLICY value' >&2
+    exit 64
+    ;;
+esac

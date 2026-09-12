@@ -1,0 +1,31 @@
+[Unit]
+Description=ShutterOS Cage kiosk on tty1
+Requires=shutteros-static.service
+After=shutteros-static.service systemd-user-sessions.service dev-tty1.device
+After=network-pre.target
+Conflicts=getty@tty1.service
+ConditionPathExists=/usr/bin/cage
+ConditionPathExists=/snap/bin/chromium
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+[Service]
+Type=simple
+User=shutteros-kiosk
+Group=shutteros-kiosk
+PAMName=login
+TTYPath=/dev/tty1
+TTYReset=yes
+TTYVHangup=yes
+TTYVTDisallocate=yes
+StandardInput=tty
+StandardOutput=journal+console
+StandardError=journal+console
+Environment=XDG_SESSION_TYPE=wayland
+Environment=XDG_CURRENT_DESKTOP=ShutterOS
+ExecStart=/usr/local/lib/shutteros-kiosk/session
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,43 @@
+import type { GameConfig } from '@shutteros/core/model/configuration';
+import { initialState, transition } from '@shutteros/core/runtime/game';
+import type { GameState, Intent, ChallengeId } from '@shutteros/core/model/game';
+
+// Fixed clocks make these view scenarios stable and let their buttons remain playable.
+export const config: GameConfig = {
+  sessionDurationMs: 600_000,
+  challengeDurationMs: 90_000,
+  explorationDurationMs: 25_000,
+  idleReminderMs: 45_000,
+  eventIntervalMs: 90_000,
+  acceptedPasswords: ['Bureau2026', 'password', 'motdepasse'],
+  caseSensitivePasswords: false,
+  showPasswordHint: true,
+  organizationName: 'Atelier du numérique',
+  playerName: 'Camille Martin',
+  supportLabel: 'Équipe informatique / SSI',
+  supportContact: 'Annuaire interne · contact habituel',
+  stationLabel: 'Station blanche',
+  defaultCalmMode: true,
+  mailLegitimateAddress: 'camille@organisation.example',
+  mailImpersonatorAddress: 'usurpateur@externe.example',
+};
+export const login = initialState(0);
+function play(intents: Intent[]): GameState {
+  return intents.reduce((snapshot, intent) => transition(snapshot, intent, 0, config), login);
+}
+const enter: Intent[] = [{ type: 'login', password: 'password' }, { type: 'continue' }];
+export const intro = play([enter[0]!]);
+export const desktop = play(enter);
+export const challenge = (id: ChallengeId) => play([...enter, { type: 'open', id }]);
+export const infection = play([
+  ...enter,
+  { type: 'open', id: 'usb' },
+  { type: 'choose', choiceId: 'open' },
+]);
+export const debrief = play([
+  ...enter,
+  { type: 'open', id: 'mail' },
+  { type: 'choose', choiceId: 'verify' },
+  { type: 'continue' },
+  { type: 'debrief' },
+]);
