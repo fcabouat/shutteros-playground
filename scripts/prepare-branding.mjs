@@ -1,0 +1,125 @@
+import { existsSync, readFileSync, realpathSync, writeFileSync, mkdirSync } from 'node:fs';
+import { extname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const root = resolve(fileURLToPath(new URL('..', import.meta.url)));
+const inputPath = resolve(root, 'private/branding.json');
+const outputPath = resolve(root, 'src/lib/branding.generated.ts');
+const fallback = { applicationName: 'ShutterOS' };
+const maxJsonBytes = 32 * 1024;
+const allowedKeys = new Set([
+  'applicationName',
+  'organizationName',
+  'campaignName',
+  'organizationLogo',
+  'partnerOrganizationName',
+  'partnerOrganizationLogo',
+]);
+const allowed = new Map([
+  ['.png', 'image/png'],
+  ['.webp', 'image/webp'],
+]);
+
+function fail(message) {
+  throw new Error(`Branding: ${message}`);
+}
+
+let branding = fallback;
+// Absence means a generic public build; a present but invalid private file fails
+// below so a deployment mistake cannot silently ship the wrong organisation identity.
+if (existsSync(inputPath)) {
+  const source = readFileSync(inputPath);
+  if (source.byteLength > maxJsonBytes) fail('private/branding.json must be at most 32 KiB');
+  try {
+    branding = JSON.parse(source.toString('utf8'));
+  } catch (error) {
+    fail(`private/branding.json is not valid JSON (${error.message})`);
+  }
+}
+if (!branding || typeof branding !== 'object' || Array.isArray(branding))
+  fail('configuration must be an object');
+for (const key of Object.keys(branding)) if (!allowedKeys.has(key)) fail(`unknown key: ${key}`);
+
+const applicationName = branding.applicationName ?? fallback.applicationName;
+if (
+  typeof applicationName !== 'string' ||
+  applicationName.trim().length < 1 ||
+  applicationName.length > 80
+) {
+  fail('applicationName must be 1–80 characters');
+}
+for (const key of ['organizationName', 'partnerOrganizationName', 'campaignName']) {
+  const value = branding[key];
+  if (
+    value !== undefined &&
+    (typeof value !== 'string' || value.trim().length < 1 || value.length > 120)
+  ) {
+    fail(`${key} must be 1–120 characters`);
+  }
+}
+
+function embedPrivateLogo(reference, key) {
+  if (typeof reference !== 'string') fail(`${key} must be a private image path`);
+  const privateRoot = realpathSync(resolve(root, 'private'));
+  const logoPath = resolve(root, reference);
+  if (!logoPath.startsWith(privateRoot + '/') || !existsSync(logoPath)) {
+    fail(`${key} must point to an existing file inside private/`);
+  }
+  const resolvedLogoPath = realpathSync(logoPath);
+  // Check the symlink target as well as the requested path before embedding local bytes.
+  if (!resolvedLogoPath.startsWith(privateRoot + '/'))
+    fail(`${key} symlink must resolve inside private/`);
+  const mime = allowed.get(extname(logoPath).toLowerCase());
+  if (!mime) fail(`${key} must be PNG or WebP`);
+  const logoBytes = readFileSync(resolvedLogoPath);
+  if (logoBytes.byteLength > 256 * 1024) fail(`${key} must be at most 256 KiB`);
+  const png =
+    logoBytes.length >= 8 &&
+    logoBytes.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
+  const webp =
+    logoBytes.length >= 12 &&
+    logoBytes.subarray(0, 4).toString() === 'RIFF' &&
+    logoBytes.subarray(8, 12).toString() === 'WEBP';
+  if ((mime === 'image/png' && !png) || (mime === 'image/webp' && !webp))
+    fail(`${key} magic bytes do not match its extension`);
+  return `data:${mime};base64,${logoBytes.toString('base64')}`;
+}
+
+if (
+  branding.partnerOrganizationLogo !== undefined &&
+  branding.partnerOrganizationName === undefined
+) {
+  fail('partnerOrganizationLogo requires partnerOrganizationName');
+}
+
+const organizationLogo =
+  branding.organizationLogo === undefined
+    ? undefined
+    : embedPrivateLogo(branding.organizationLogo, 'organizationLogo');
+const partnerOrganizationLogo =
+  branding.partnerOrganizationLogo === undefined
+    ? undefined
+    : embedPrivateLogo(branding.partnerOrganizationLogo, 'partnerOrganizationLogo');
+
+mkdirSync(resolve(root, 'src/lib'), { recursive: true });
+// JSON escaping alone is insufficient inside portable HTML: the HTML parser sees
+// script end tags before JavaScript string syntax. Escape delimiters in the generated
+// module; tests/unit/branding.test.ts exercises hostile text through this boundary.
+const serializedBranding = JSON.stringify({
+  applicationName: applicationName.trim(),
+  ...(branding.organizationName ? { organizationName: branding.organizationName } : {}),
+  ...(branding.partnerOrganizationName
+    ? { partnerOrganizationName: branding.partnerOrganizationName }
+    : {}),
+  ...(branding.campaignName ? { campaignName: branding.campaignName } : {}),
+  ...(organizationLogo ? { organizationLogo } : {}),
+  ...(partnerOrganizationLogo ? { partnerOrganizationLogo } : {}),
+}).replace(
+  /[<>&\u2028\u2029]/gu,
+  (character) => `\\u${character.codePointAt(0).toString(16).padStart(4, '0')}`,
+);
+writeFileSync(
+  outputPath,
+  `// Generated by scripts/prepare-branding.mjs; do not edit.\nexport type Branding = { applicationName: string; organizationName?: string; partnerOrganizationName?: string; campaignName?: string; organizationLogo?: string; partnerOrganizationLogo?: string };\nexport const branding: Branding = ${serializedBranding};\n`,
+);
+console.log(`Prepared branding for ${applicationName.trim()}`);

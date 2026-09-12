@@ -1,0 +1,105 @@
+name: Verify and publish
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != format('refs/heads/{0}', github.event.repository.default_branch) }}
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+      - name: Validate workflow syntax
+        run: |
+          mkdir -p "$RUNNER_TEMP/actionlint"
+          curl -fsSL --retry 3 -o "$RUNNER_TEMP/actionlint.tar.gz" \
+            https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_linux_amd64.tar.gz
+          echo "8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8  $RUNNER_TEMP/actionlint.tar.gz" | sha256sum -c -
+          tar -xzf "$RUNNER_TEMP/actionlint.tar.gz" -C "$RUNNER_TEMP/actionlint" actionlint
+          "$RUNNER_TEMP/actionlint/actionlint"
+      - run: npm install --global pnpm@11.19.0
+      - run: pnpm install --frozen-lockfile
+      - name: Validate the Ubuntu kit without modifying the runner
+        run: |
+          shellcheck deployment/ubuntu/*.sh deployment/ubuntu/session deployment/ubuntu/launch-chromium deployment/ubuntu/tests/*.sh
+          for script in deployment/ubuntu/*.sh deployment/ubuntu/session deployment/ubuntu/launch-chromium deployment/ubuntu/tests/*.sh; do
+            sh -n "$script"
+          done
+          node deployment/ubuntu/tests/configuration-contract.test.mjs
+          sh deployment/ubuntu/tests/installer-refusal.test.sh
+          sh deployment/ubuntu/tests/installer-nominal.test.sh
+          python3 -m json.tool deployment/ubuntu/chromium-policy.json >/dev/null
+          python3 deployment/ubuntu/validate-config.py static/kiosk-config.json
+          sed 's|^ExecStart=/usr/local/lib/shutteros-kiosk/session$|ExecStart=/usr/bin/true|' \
+            deployment/ubuntu/shutteros-kiosk.service > "$RUNNER_TEMP/shutteros-kiosk.service"
+          cp deployment/ubuntu/shutteros-static.service "$RUNNER_TEMP/shutteros-static.service"
+          systemd-analyze verify \
+            "$RUNNER_TEMP/shutteros-static.service" "$RUNNER_TEMP/shutteros-kiosk.service"
+      - run: pnpm audit --audit-level high
+      - run: pnpm exec playwright install --with-deps chromium --only-shell
+      - run: pnpm verify
+      - run: pnpm build:storybook
+        env:
+          STORYBOOK_DISABLE_TELEMETRY: '1'
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: shutteros-static-and-portable
+          path: dist/
+          retention-days: 14
+      - name: Select the GitHub Pages base path
+        env:
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          owner="${REPOSITORY%%/*}"
+          name="${REPOSITORY#*/}"
+          if [ "${name,,}" = "${owner,,}.github.io" ]; then
+            echo 'BASE_PATH=' >> "$GITHUB_ENV"
+          else
+            echo "BASE_PATH=/$name" >> "$GITHUB_ENV"
+          fi
+      - name: Build and exercise the Pages artifact
+        run: |
+          pnpm build
+          pnpm test:e2e
+      - uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4
+        with:
+          path: dist/
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        if: failure()
+        with:
+          name: browser-test-report
+          path: playwright-report/
+          retention-days: 7
+
+  deploy:
+    needs: verify
+    if: >-
+      vars.PAGES_ENABLED == 'true' &&
+      github.event_name != 'pull_request' &&
+      github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy the verified static artifact
+        id: deployment
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4
