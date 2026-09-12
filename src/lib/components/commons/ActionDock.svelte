@@ -10,10 +10,11 @@
     scene: Extract<Scene, { kind: 'challenge' }>;
     dispatch: (intent: Intent) => void;
     open: boolean;
+    stationLabel: string;
     onOpenChange: (open: boolean) => void;
   };
 
-  let { snapshot, scene, dispatch, open, onOpenChange }: Props = $props();
+  let { snapshot, scene, dispatch, open, onOpenChange, stationLabel }: Props = $props();
   const i18n = getI18n();
   const copy = $derived(i18n.text);
   const content = $derived(i18n.challenges[scene.id]);
@@ -32,13 +33,19 @@
   // their mount before moving focus, including when collapsing by keyboard.
   $effect(() => {
     if (!open) return;
-    void tick().then(() => panel?.focus({ preventScroll: true }));
+    let cancelled = false;
+    void tick().then(() => {
+      if (!cancelled && panel?.isConnected) panel.focus({ preventScroll: true });
+    });
+    return () => {
+      cancelled = true;
+    };
   });
 
   async function collapse() {
     onOpenChange(false);
     await tick();
-    trigger?.focus({ preventScroll: true });
+    if (!open && trigger?.isConnected) trigger.focus({ preventScroll: true });
   }
 </script>
 
@@ -65,11 +72,20 @@
       </div>
 
       {#if seconds !== null}
-        <p class="qte-time" aria-label={copy.challenge.countdown}>
+        <p
+          class="qte-time"
+          class:urgent={seconds <= 15}
+          role="timer"
+          aria-live="off"
+          aria-label={copy.challenge.countdown}
+        >
           {copy.challenge.seconds(seconds)}
         </p>
       {/if}
 
+      {#if seconds !== null && seconds <= 15}<p class="text-sm" role="status">
+          {copy.challenge.lowTime}
+        </p>{/if}
       <h2 class="action-dock-question">{decision.question}</h2>
       <div class="action-dock-choices">
         {#each decision.choices as choice, index (choice.id)}
@@ -100,7 +116,9 @@
             : copy.challenge.hint}
       </button>
       {#if hintOpen}<p class="text-muted action-dock-hint-copy">
-          {scene.id === 'web' ? copy.web.inspector : content.hints[1]}
+          {scene.id === 'web' ? copy.web.inspector : content.hints[1]}{#if scene.id === 'usb'}<span
+              class="mt-2 block font-semibold">{stationLabel}</span
+            >{/if}
         </p>{/if}
     </aside>
   {:else}
@@ -171,7 +189,8 @@
 
   .choice-button {
     display: flex;
-    border: 1px solid #a7c1cd;
+    border: 1px solid #527c90;
+    background: #eef5f8;
     width: 100%;
     align-items: flex-start;
     gap: 0.625rem;
@@ -189,6 +208,17 @@
     justify-content: center;
     border-radius: 0.375rem;
     font-size: 0.75rem;
+    color: #fff;
+    background: #386c83;
+  }
+
+  .choice-button:hover {
+    border-color: var(--accent);
+    background: #dfedf3;
+  }
+
+  .qte-time.urgent {
+    color: var(--warning);
   }
 
   .action-dock-hint {

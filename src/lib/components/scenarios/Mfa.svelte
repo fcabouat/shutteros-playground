@@ -14,11 +14,8 @@
     <span class="app-icon mb-5" data-app="mfa"><Icon name="key" size={26} /></span>
     <h2 class="text-2xl font-semibold tracking-tight">{copy.mfa.request}</h2>
     <p class="text-muted mt-3 text-sm leading-relaxed">{copy.mfa.subtitle}</p>
-    <p
-      class="mfa-code my-5 text-center text-5xl font-semibold tracking-[0.2em]"
-      aria-label={`${copy.mfa.codeLabel} : ${copy.mfa.code}`}
-    >
-      {copy.mfa.code}
+    <p class="mfa-code my-5 text-center text-5xl font-semibold tracking-[0.2em]">
+      <span class="sr-only">{copy.mfa.codeLabel} : </span>{copy.mfa.code}
     </p>
     <dl class="space-y-3 text-xs">
       <div class="flex justify-between gap-3">

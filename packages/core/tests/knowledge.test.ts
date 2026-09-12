@@ -9,6 +9,7 @@ const session = (scene: Extract<GameState, { phase: 'session' }>['scene']): Game
   startedAt: 0,
   deadline: 60_000,
   calm: false,
+  loginCategory: 'displayed',
   mode: 'free',
   scene,
   results: [],
@@ -42,6 +43,12 @@ describe('knowledge service', () => {
           ...session({ kind: 'desktop' }).routines,
           password: 'done',
         },
+      }),
+    ).toBe('password');
+    expect(
+      currentKnowledgeId({
+        ...session({ kind: 'routines' }),
+        routines: { ...session({ kind: 'desktop' }).routines, password: 'done' },
       }),
     ).toBe('password');
     expect(

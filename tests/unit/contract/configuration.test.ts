@@ -132,3 +132,11 @@ describe('decodeConfiguration', () => {
     });
   });
 });
+
+// Operator labels must remain visible; whitespace is not a usable identity or contact.
+it.each(['organizationName', 'playerName', 'supportLabel', 'supportContact', 'stationLabel'])(
+  'rejects a blank %s',
+  (field) => {
+    expect(decodeConfiguration({ ...valid, [field]: '  \t ' }).ok).toBe(false);
+  },
+);

@@ -17,3 +17,4 @@ static/logo-organisation.*
 src/lib/branding.generated.ts
 portable/configuration.generated.ts
 dist/
+__pycache__/

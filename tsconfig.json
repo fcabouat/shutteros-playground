@@ -19,6 +19,7 @@
     "tests/**/*.ts",
     "stories/**/*.svelte",
     "stories/**/*.ts",
-    "*.ts"
+    "*.ts",
+    "portable/**/*.ts"
   ]
 }

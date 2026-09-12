@@ -1,11 +1,16 @@
 import { decodeConfiguration } from '../contract/configuration';
 import type { GameConfig } from '@shutteros/core/model/configuration';
-import { fr } from '@shutteros/core/data/fr';
 
 const maximumConfigurationBytes = 32_768;
 
 export type ConfigurationResult =
-  { ok: true; config: GameConfig } | { ok: false; issues: readonly string[] };
+  | { ok: true; config: GameConfig }
+  | {
+      ok: false;
+      issues: readonly (
+        { kind: 'fetch' | 'size' } | { kind: 'field'; path: string; message: string }
+      )[];
+    };
 
 /**
  * Translate the external contract into the core's units and copy mutable input data.
@@ -14,7 +19,10 @@ export type ConfigurationResult =
 export function configure(value: unknown): ConfigurationResult {
   const decoded = decodeConfiguration(value);
   if (!decoded.ok) {
-    return { ok: false, issues: decoded.issues.map((issue) => `${issue.path}: ${issue.message}`) };
+    return {
+      ok: false,
+      issues: decoded.issues.map((issue) => ({ kind: 'field' as const, ...issue })),
+    };
   }
   const dto = decoded.value;
   return {
@@ -49,15 +57,15 @@ export async function loadConfiguration(
     // Operator edits should be visible after reload; this file requires no session
     // cookies. A failed load is surfaced to the composition root, not replaced by defaults.
     const response = await fetch(url, { cache: 'no-store', credentials: 'omit', signal });
-    if (!response.ok) return { ok: false, issues: [fr.fetchError] };
+    if (!response.ok) return { ok: false, issues: [{ kind: 'fetch' }] };
     if (exceedsConfiguredSize(response.headers.get('content-length'))) {
-      return { ok: false, issues: [fr.sizeError] };
+      return { ok: false, issues: [{ kind: 'size' }] };
     }
     const body = await readBoundedText(response.body);
-    if (body === null) return { ok: false, issues: [fr.sizeError] };
+    if (body === null) return { ok: false, issues: [{ kind: 'size' }] };
     return configure(JSON.parse(body));
   } catch {
-    return { ok: false, issues: [fr.fetchError] };
+    return { ok: false, issues: [{ kind: 'fetch' }] };
   }
 }
 

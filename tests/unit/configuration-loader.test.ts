@@ -1,5 +1,4 @@
 import { describe, expect, it, vi } from 'vitest';
-import { fr } from '@shutteros/core/data/fr';
 import { configure, loadConfiguration } from '../../src/lib/infrastructure/configuration';
 
 const configuration = {
@@ -90,11 +89,11 @@ describe('loadConfiguration', () => {
 
     await expect(loadConfiguration('/kiosk-config.json', controller.signal)).resolves.toEqual({
       ok: false,
-      issues: [fr.sizeError],
+      issues: [{ kind: 'size' }],
     });
     await expect(loadConfiguration('/kiosk-config.json', controller.signal)).resolves.toEqual({
       ok: false,
-      issues: [fr.sizeError],
+      issues: [{ kind: 'size' }],
     });
     expect(cancelled).toBe(1);
     vi.unstubAllGlobals();
@@ -116,7 +115,7 @@ describe('loadConfiguration', () => {
 
     const loaded = loadConfiguration('/kiosk-config.json', controller.signal);
     controller.abort();
-    await expect(loaded).resolves.toEqual({ ok: false, issues: [fr.fetchError] });
+    await expect(loaded).resolves.toEqual({ ok: false, issues: [{ kind: 'fetch' }] });
     vi.unstubAllGlobals();
   });
 });

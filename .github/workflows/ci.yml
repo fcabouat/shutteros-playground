@@ -10,7 +10,7 @@ permissions:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  cancel-in-progress: ${{ github.ref != format('refs/heads/{0}', github.event.repository.default_branch) }}
 
 jobs:
   verify:
@@ -39,7 +39,16 @@ jobs:
           for script in deployment/ubuntu/*.sh deployment/ubuntu/session deployment/ubuntu/launch-chromium deployment/ubuntu/tests/*.sh; do
             sh -n "$script"
           done
+          node deployment/ubuntu/tests/configuration-contract.test.mjs
           sh deployment/ubuntu/tests/installer-refusal.test.sh
+          sh deployment/ubuntu/tests/installer-nominal.test.sh
+          python3 -m json.tool deployment/ubuntu/chromium-policy.json >/dev/null
+          python3 deployment/ubuntu/validate-config.py static/kiosk-config.json
+          sed 's|^ExecStart=/usr/local/lib/shutteros-kiosk/session$|ExecStart=/usr/bin/true|' \
+            deployment/ubuntu/shutteros-kiosk.service > "$RUNNER_TEMP/shutteros-kiosk.service"
+          cp deployment/ubuntu/shutteros-static.service "$RUNNER_TEMP/shutteros-static.service"
+          systemd-analyze verify \
+            "$RUNNER_TEMP/shutteros-static.service" "$RUNNER_TEMP/shutteros-kiosk.service"
       - run: pnpm audit --audit-level high
       - run: pnpm exec playwright install --with-deps chromium --only-shell
       - run: pnpm verify

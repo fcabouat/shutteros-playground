@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { GameState, ChallengeResult, Intent } from '@shutteros/core/model/game';
-  import { challengeOrder } from '@shutteros/core/projections/game';
+  import { allComplete, incidentFollowsFeedback } from '@shutteros/core/projections/game';
   import { getI18n } from '../i18n/context';
   const i18n = getI18n();
   const challenges = $derived(i18n.challenges);
@@ -17,11 +17,7 @@
     dispatch: (intent: Intent) => void;
   } = $props();
   const content = $derived(challenges[result.id]);
-  const infection = $derived(
-    result.id === 'usb' &&
-      result.outcome === 'risky' &&
-      !snapshot.results.some((r) => r.id === 'incident'),
-  );
+  const infection = $derived(incidentFollowsFeedback(snapshot, result));
 </script>
 
 <section class="feedback-card flex w-full flex-col" data-outcome={result.outcome}>
@@ -29,7 +25,16 @@
     <div class="reading-column">
       <LearningPanel
         lesson={content.lesson}
-        points={copy.education[result.id]}
+        points={[
+          ...copy.education[result.id],
+          ...(result.id === 'usb'
+            ? [copy.usb.warning, copy.usb.reminder]
+            : result.id === 'mail' || result.id === 'spoof'
+              ? [copy.mail.signatureNuance]
+              : result.id === 'mfa'
+                ? [copy.mfa.noGeoProof]
+                : []),
+        ]}
         {snapshot}
         {dispatch}
       >
@@ -44,9 +49,15 @@
           />
         </div>
         <h1 class="text-[clamp(1.5rem,3vw,2rem)] leading-tight font-semibold tracking-tight">
-          {copy.feedback[result.outcome]}
+          {result.id === 'mfa' && result.choiceId === 'ignore'
+            ? copy.feedback.mfaIgnoredTitle
+            : copy.feedback[result.outcome]}
         </h1>
-        <p class="text-muted mt-3 text-sm leading-relaxed">{content.feedback[result.outcome]}</p>
+        <p class="text-muted mt-3 text-sm leading-relaxed">
+          {result.id === 'mfa' && result.choiceId === 'ignore'
+            ? copy.feedback.mfaIgnored
+            : content.feedback[result.outcome]}
+        </p>
         {#if result.outcome === 'timeout'}<p class="text-muted mt-3 text-sm leading-relaxed">
             {copy.feedback.timeoutDetail}
           </p>{/if}
@@ -60,7 +71,7 @@
           ? copy.experience.next
           : infection
             ? copy.feedback.incident
-            : snapshot.results.length === challengeOrder.length
+            : allComplete(snapshot)
               ? copy.feedback.finish
               : copy.feedback.continue}<Icon name="arrow" size={18} /></button
       >

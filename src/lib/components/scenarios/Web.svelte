@@ -34,6 +34,13 @@
         />
       </div>
     </div>
+    <div class="browser-bookmarks border-b border-[var(--line)] px-3 py-1.5">
+      <button
+        class="rounded px-2 py-1 text-xs"
+        onclick={() => dispatch({ type: 'choose', choiceId: 'known-address' })}
+        ><Icon name="web" size={13} class="mr-2 inline" />{copy.web.knownDomain}</button
+      >
+    </div>
   </div>
   <div class="fake-portal portal-layout">
     <div class="portal-card w-full rounded-xl p-5">

@@ -2,6 +2,9 @@
  * Combine wall elapsed time (including suspension) with a monotonic elapsed clock
  * (resistant to wall-clock rollback). Forward wall-clock jumps may expire a game
  * early; the core clamps accepted samples so a rollback does not refund play time.
+ * performance.now alone may pause during system sleep on Linux; see
+ * https://github.com/w3c/hr-time/issues/115. Preserving expiry after suspension
+ * takes precedence over tolerating a forward wall-clock correction.
  * This needs a mounted browser; Game.svelte creates it inside onMount.
  */
 export function browserClock() {

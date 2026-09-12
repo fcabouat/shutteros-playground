@@ -3,10 +3,12 @@
 `deployment/ubuntu/` installs ShutterOS on a **dedicated Ubuntu Server 24.04 LTS
 host with no active graphical display manager**.
 
-**Validation status:** shell analysis and sandboxed installer preflight tests
-cover the scripts. End-to-end boot integration on a fresh Ubuntu VM or physical
-kiosk is unvalidated. Complete the hardware acceptance checks below before a
-public session.
+**Validation status:** shell analysis plus sandboxed fresh-install, reinstall,
+rollback, getty-restoration, and refusal tests cover the scripts and every
+kit-owned target path. These fixtures do not run systemd, Cage, Chromium, Snap,
+or a real display stack. End-to-end boot integration on a fresh Ubuntu VM or
+physical kiosk remains unvalidated. Complete the hardware acceptance checks
+below before a public session.
 
 The kit serves a normal ShutterOS `dist/` build on loopback HTTP and runs a
 single Chromium window inside Cage on `tty1`:
@@ -15,12 +17,14 @@ single Chromium window inside Cage on `tty1`:
 Chromium (shutteros-kiosk account)
   └─ Cage on tty1
        └─ http://127.0.0.1:8080/
-            └─ Python static service → /opt/cyber-shutteros/site
+            └─ Python static service (shutteros-static account)
+                 └─ /opt/cyber-shutteros/site
 ```
 
 It does not use the portable HTML artifact. The static directory is copied to
 a root-owned, read-only location so the browser account cannot change game
-files. The account has a root-owned shell which always executes Cage; if Cage
+files. The static server and browser use different unprivileged accounts. The
+browser account has a root-owned shell which always executes Cage; if Cage
 cannot start, it does not fall back to an interactive shell.
 
 ## Session architecture
@@ -28,6 +32,12 @@ cannot start, it does not fall back to an interactive shell.
 Ubuntu packages Cage, a Wayland compositor designed to run one maximized
 application. Its `-s` option explicitly enables VT switching, so the kit does
 not use it. See the [Ubuntu Cage manpage](https://manpages.ubuntu.com/manpages/noble/man1/cage.1.html).
+
+Cage reads `XKB_DEFAULT_LAYOUT`, `XKB_DEFAULT_MODEL`,
+`XKB_DEFAULT_VARIANT`, and `XKB_DEFAULT_OPTIONS`. The installer copies
+validated values from `/etc/default/keyboard` and copies `LANG` from
+`/etc/default/locale`. This follows Cage's documented
+[XKB environment variables](https://github.com/cage-kiosk/cage/wiki/Configuration#xkb-environment-variables).
 
 The kiosk systemd unit uses `PAMName=login` and `TTYPath=/dev/tty1`, instead of
 starting a desktop process as root. `pam_systemd` registers a login session and
@@ -64,27 +74,52 @@ sudo deployment/ubuntu/install.sh --site-dir /absolute/path/to/dist
 sudo deployment/ubuntu/verify.sh
 ```
 
-The installer installs `cage`, `python3`, and `snapd` through APT if needed,
-installs the official `chromium` Snap if absent, creates the locked,
-non-administrative `shutteros-kiosk` account, and enables two system services.
+Override a host default only when the kiosk needs a different setting:
+
+```sh
+sudo deployment/ubuntu/install.sh \
+  --site-dir /absolute/path/to/dist \
+  --locale fr_FR.UTF-8 \
+  --keyboard-layout fr \
+  --keyboard-variant oss \
+  --keyboard-options compose:ralt
+```
+
+`--keyboard-model` is also available. Invalid values are rejected before
+package or account changes.
+
+The installer installs only missing `cage`, `python3`, and `snapd` packages,
+waits for Snap seeding, and installs the official `chromium` Snap only when it
+is absent. A reinstall therefore works without repository access when those
+local dependencies are already installed. It validates `kiosk-config.json`
+against the V1 deployment contract before changing accounts or services.
+
+It creates the locked, non-administrative `shutteros-kiosk` browser account
+and the no-login `shutteros-static` server account, then enables two system
+services.
 It replaces only `/opt/cyber-shutteros/site`, files under
 `/usr/local/lib/shutteros-kiosk`, the two `shutteros-*` unit files, and its own
 Chromium policy file. It disables `getty@tty1.service` to avoid two processes
-owning the same terminal.
+owning the same terminal. The launcher creates its Snap profile below the
+kiosk-owned home; the root installer does not create root-owned `snap/` parent
+directories in that home.
 
-Before its first mutation, the installer refuses every pre-existing kiosk
-account, kiosk home, `/opt/cyber-shutteros` tree, launcher directory, unit, or
+Before its first mutation, the installer refuses every pre-existing kiosk or
+static-server account, kiosk home, `/opt/cyber-shutteros` tree, launcher
+directory, unit, or
 ShutterOS policy file. A successful installation creates a root-owned `0600`
 ownership marker that includes the original `getty@tty1` enabled and active
 state. Reinstalls accept only that exact marker and its expected account shape;
 they never adopt an existing account. This prevents a kiosk update from
 silently repurposing an administrator account or deleting an unrelated home.
 
-`verify.sh` is read-only. It asserts the ownership marker, root-owned static
-tree, site-file types and permissions, reviewed-policy byte equality, policy
-Snap connection, active services, local HTTP response, and a `127.0.0.1`-only
-TCP listener. It then prints manual acceptance checks. Before opening the kiosk,
-test all of these on the actual hardware:
+`verify.sh` is read-only. It asserts both account shapes and group sets, the
+ownership marker, root-owned static tree, site-file types and permissions,
+configuration validity, the root-owned environment and unit files, reviewed
+policy byte equality, policy Snap connection, active services, local HTTP
+response, and a `127.0.0.1`-only TCP listener. It establishes process and HTTP
+startup only; it cannot establish that a usable or confined browser is visible.
+Before opening the kiosk, test all of these on the actual hardware:
 
 1. cold boot, display wake, touch/mouse, and the whole game;
 2. browser and compositor crash recovery, then the administrator SSH recovery
@@ -113,6 +148,10 @@ is absent. Snap confinement restricts each package to declared interfaces; see
 Run `snap connections chromium` and use the policy-inspection procedure below
 after every Chromium Snap refresh. A Snap revision can change integration
 details, so a successful install alone is not proof that policy is active.
+
+The URL allowlist uses the loopback origin without a trailing wildcard; Chromium's
+[URL filter rules](https://support.google.com/chrome/a/answer/9942583?hl=en)
+use path-prefix matching and prohibit a wildcard at the end of the URL.
 
 ### Temporary policy inspection
 
@@ -151,8 +190,10 @@ sudo systemctl restart shutteros-kiosk.service
 ```
 
 The managed policy disables password managers and autofill, pop-ups, Developer
-Tools, printing, Sync, extension installation, and all downloads. It blocks
-every URL except `http://127.0.0.1:8080/*`; it also blocks `view-source:`. Chromium
+Tools, printing, Sync, Translate, metrics/crash reporting, extension
+installation, all downloads, camera and microphone capture, geolocation, and
+notifications. It forces Incognito mode. It blocks every URL except
+`http://127.0.0.1:8080`; it also blocks `view-source:`. Chromium
 documents that `DeveloperToolsAvailability: 2` disables Developer Tools, its
 keyboard shortcuts, menu entries, and element inspection. Its
 [`DownloadRestrictions: 3`](https://chromium.googlesource.com/chromium/src/+/refs/heads/main/components/policy/resources/templates/policy_definitions/Miscellaneous/DownloadRestrictions.yaml)
@@ -161,6 +202,14 @@ that it does not govern dynamically loaded data or reliably block all internal
 `chrome://` pages; use the specific policy for each sensitive capability rather
 than treating URL filtering as a complete browser boundary. See
 [URLBlocklist](https://chromium.googlesource.com/chromium/src/+/refs/heads/main/components/policy/resources/templates/policy_definitions/Miscellaneous/URLBlocklist.yaml).
+
+Chromium's current definitions document value `2` as forced Incognito and as
+the blocking value for geolocation and notifications; camera and microphone
+are disabled with their dedicated boolean policies. Confirm the effective
+values and lack of errors at `chrome://policy`, because the installed Snap
+revision is the authority on support. The source of truth used for this kit is
+Chromium's upstream
+[policy-definition tree](https://chromium.googlesource.com/chromium/src/+/refs/heads/main/components/policy/resources/templates/policy_definitions/).
 
 The launcher uses an incognito browser session and stores its required Snap
 profile only in the kiosk account's confined home directory. It does **not**
@@ -187,13 +236,29 @@ monitor/console access controls. Test them after firmware and OS updates.
 
 ## Operation, update, and rollback
 
+Both services retry indefinitely after failures. Their restart delay rises in
+five steps from 2 seconds to a 30-second ceiling, using Ubuntu's documented
+[`RestartSteps` and `RestartMaxDelaySec`](https://manpages.ubuntu.com/manpages/noble/man5/systemd.service.5.html).
+They were added in systemd 254; Ubuntu 24.04 ships
+[systemd 255](https://packages.ubuntu.com/noble/systemd). Output goes only to
+the journal so browser errors are not written on
+the public tty. A renderer that remains alive but hung is outside this process
+restart mechanism and must be covered by hardware acceptance and operational
+monitoring.
+
 To deploy a newly reviewed build, run the installer again with its new `dist/`
-directory. It rejects a source inside the kiosk root, copies and checks a
+directory, repeating any locale or keyboard overrides from installation.
+It rejects a source inside the kiosk root, copies and checks a
 staging tree first, stops both kiosk services, then swaps the site directory on
-the same filesystem. It explicitly restarts both services; if the new services
-fail and an earlier site exists, it restores that earlier site. Schedule this
-outside kiosk use. Chromium Snap refreshes can alter startup or policy behavior,
-so retest the manual acceptance list after every refresh.
+the same filesystem. It explicitly checks the static HTTP endpoint and kiosk
+unit; if either fails and an earlier site exists, it restores that earlier
+site. A first-install activation failure restores the recorded getty state and
+removes only accounts and files created by that attempt. If power loss leaves
+only `.site-rollback`, the next verified reinstall restores it before staging;
+if both site directories exist, the installer refuses to guess and requires an
+administrator to inspect them. Schedule updates outside kiosk use. Chromium
+Snap refreshes can alter startup or policy behavior, so retest the manual
+acceptance list after every refresh.
 
 To restore the normal `tty1` login while keeping Chromium and Cage installed:
 
@@ -202,8 +267,9 @@ sudo deployment/ubuntu/uninstall.sh
 ```
 
 The uninstaller refuses to run without the valid root-owned marker. It stops
-and removes only the marked ShutterOS services, account, policy, launcher, and
-static files, then restores the recorded `getty@tty1.service` enabled and
+and removes only the marked ShutterOS services, both accounts, policy,
+launcher, and static files, then restores the recorded `getty@tty1.service`
+enabled and
 active state instead of always enabling it. It never disables SSH and
 deliberately leaves the `cage`, `python3`, `snapd`, and Chromium packages in
 place for an administrator to manage under normal change control.

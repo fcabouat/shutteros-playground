@@ -14,8 +14,8 @@
     onClose?: () => void;
     children: Snippet;
     large?: boolean;
-    moveLabel?: string;
-    moveHint?: string;
+    moveLabel: string;
+    moveHint: string;
     resetScrollKey?: string;
   };
 
@@ -26,8 +26,8 @@
     onClose,
     children,
     large = false,
-    moveLabel = 'Move window',
-    moveHint = 'Use the arrow keys to move this window. Press Escape to reset its position.',
+    moveLabel,
+    moveHint,
     resetScrollKey = '',
   }: Props = $props();
 
@@ -159,6 +159,10 @@
 
 <section
   bind:this={frame}
+  role="group"
+  aria-label={title}
+  tabindex="-1"
+  data-window-focus
   class="os-window window-surface flex min-h-0 flex-col overflow-hidden rounded-2xl"
   class:large
   class:maximized

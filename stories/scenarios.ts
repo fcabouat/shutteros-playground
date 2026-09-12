@@ -1,6 +1,6 @@
 import type { GameConfig } from '@shutteros/core/model/configuration';
 import { initialState, transition } from '@shutteros/core/runtime/game';
-import type { GameState, Intent, ChallengeId } from '@shutteros/core/model/game';
+import type { GameState, Intent, ChallengeId, Scene } from '@shutteros/core/model/game';
 
 // Fixed clocks make these view scenarios stable and let their buttons remain playable.
 export const config: GameConfig = {
@@ -41,3 +41,12 @@ export const debrief = play([
   { type: 'continue' },
   { type: 'debrief' },
 ]);
+
+// Fixed presentation fixtures cover rare states without waiting on the real clock.
+export const locked = play([...enter, { type: 'practice-lock' }]);
+export const lowTime: GameState =
+  desktop.phase === 'session' ? { ...desktop, now: desktop.deadline - 20_000 } : desktop;
+export const routines: GameState =
+  desktop.phase === 'session'
+    ? { ...desktop, mode: 'guided', scene: { kind: 'routines' } satisfies Scene }
+    : desktop;

@@ -1,7 +1,18 @@
 import { describe, expect, it } from 'vitest';
 import type { GameConfig } from '../src/model/configuration';
-import type { GameState, Intent } from '../src/model/game';
-import { explorationReady, idleReminderVisible, nextAmbientEvent } from '../src/projections/game';
+import { challengeChoiceIds, choiceOutcome, type GameState, type Intent } from '../src/model/game';
+import {
+  allComplete,
+  ambientSlot,
+  assessedCount,
+  explorationReady,
+  hasResult,
+  incidentFollowsFeedback,
+  incidentIsolated,
+  idleReminderVisible,
+  nextAmbientEvent,
+  safeCount,
+} from '../src/projections/game';
 import { initialState, transition } from '../src/runtime/game';
 
 const config: GameConfig = {
@@ -55,11 +66,12 @@ describe('game runtime', () => {
     });
   });
 
-  it('normalizes and trims accepted passwords while respecting case configuration', () => {
-    expect(apply(initialState(), { type: 'login', password: '  ACCÈS  ' }, 1).phase).toBe(
-      'session',
-    );
-    expect(apply(initialState(), { type: 'login', password: 'café' }, 1).phase).toBe('session');
+  it('normalizes passwords and retains only their learning category after login', () => {
+    const displayed = apply(initialState(), { type: 'login', password: '  ACCÈS  ' }, 1);
+    expect(displayed).toMatchObject({ phase: 'session', loginCategory: 'displayed' });
+    expect(displayed).not.toHaveProperty('password');
+    const weak = apply(initialState(), { type: 'login', password: 'café' }, 1);
+    expect(weak).toMatchObject({ phase: 'session', loginCategory: 'weak' });
     const sensitive = { ...config, caseSensitivePasswords: true };
     expect(
       transition(initialState(), { type: 'login', password: 'accès' }, 1, sensitive),
@@ -243,6 +255,9 @@ describe('game runtime', () => {
       results: [{ id: 'usb', outcome: 'risky', choiceId: 'open' }],
       scene: { kind: 'challenge', id: 'incident', step: 'explore' },
     });
+    if (feedback.phase === 'session' && feedback.scene.kind === 'feedback') {
+      expect(incidentFollowsFeedback(feedback, feedback.scene.result)).toBe(true);
+    }
     expect(apply(chained, { type: 'choose', choiceId: 'bad-id' }, 4)).toEqual({
       ...chained,
       now: 4,
@@ -306,6 +321,27 @@ describe('game runtime', () => {
       scene: { kind: 'challenge', deadline: null },
     });
     expect(apply(calm, { type: 'calm', enabled: false }, 3)).toEqual({ ...calm, now: 3 });
+  });
+
+  it('clears a paused incident deadline when calm mode is enabled', () => {
+    const incident = apply(desktop(), { type: 'open', id: 'incident' }, 10);
+    const notifying = apply(
+      apply(incident, { type: 'begin-decision' }, 11),
+      { type: 'choose', choiceId: 'isolate' },
+      12,
+    );
+    const mail = apply(notifying, { type: 'open', id: 'mail' }, 13);
+    const calm = apply(mail, { type: 'calm', enabled: true }, 14);
+    expect(calm).toMatchObject({
+      phase: 'session',
+      calm: true,
+      pendingIncident: { deadline: null },
+    });
+    expect(apply(calm, { type: 'tick' }, 10_011)).toMatchObject({
+      phase: 'session',
+      scene: { kind: 'challenge', id: 'mail' },
+      results: [],
+    });
   });
 
   it('keeps a locked session inert while preserving the global deadline', () => {
@@ -390,6 +426,7 @@ describe('game runtime', () => {
       scene: { kind: 'challenge', id: 'mail', step: 'explore' },
       pendingIncident: { deadline: 10_011 },
     });
+    expect(incidentIsolated(elsewhere)).toBe(true);
     const reopened = apply(elsewhere, { type: 'open', id: 'incident' }, 14);
     expect(reopened).toMatchObject({
       phase: 'session',
@@ -415,6 +452,29 @@ describe('game runtime', () => {
         kind: 'feedback',
         result: { id: 'incident', outcome: 'timeout', choiceId: 'timeout' },
       },
+    });
+  });
+
+  it('clears an unexpired background incident deadline when guided play begins', () => {
+    const incident = apply(desktop(), { type: 'open', id: 'incident' }, 10);
+    const notifying = apply(
+      apply(incident, { type: 'begin-decision' }, 11),
+      { type: 'choose', choiceId: 'isolate' },
+      12,
+    );
+    const mail = apply(notifying, { type: 'open', id: 'mail' }, 13);
+    const guided = apply(mail, { type: 'finish-experience' }, 14);
+    expect(guided).toMatchObject({
+      phase: 'session',
+      mode: 'guided',
+      scene: { kind: 'challenge', id: 'mail', deadline: null },
+      pendingIncident: { deadline: null },
+    });
+    expect(apply(guided, { type: 'tick' }, 10_011)).toMatchObject({
+      phase: 'session',
+      mode: 'guided',
+      scene: { kind: 'challenge', id: 'mail', deadline: null },
+      results: [],
     });
   });
 
@@ -499,7 +559,9 @@ describe('game runtime', () => {
 
   it('uses ambient slots only during free exploration and hides idle reminders while guided', () => {
     const started = desktop();
+    expect(ambientSlot(started, config)).toBe(0);
     const passwordEvent = apply(started, { type: 'tick' }, 10_000);
+    expect(ambientSlot(passwordEvent, config)).toBe(1);
     expect(nextAmbientEvent(passwordEvent, config)).toBe('password');
     const passwordDone = apply(
       passwordEvent,
@@ -520,6 +582,18 @@ describe('game runtime', () => {
     expect(apply(spoof, { type: 'choose', choiceId: 'understood' }, 2)).toMatchObject({
       phase: 'session',
       scene: { kind: 'feedback', result: { id: 'spoof', outcome: 'safe', choiceId: 'understood' } },
+    });
+  });
+
+  it('shares declared choice identifiers and accepts the safe mail report action', () => {
+    expect(challengeChoiceIds('mail', 'choose')).toEqual(['reply', 'open', 'verify', 'report']);
+    expect(choiceOutcome('mail', 'choose', 'report')).toBe('safe');
+    expect(choiceOutcome('mail', 'choose', 'constructor')).toBeNull();
+
+    const mail = apply(desktop(), { type: 'open', id: 'mail' }, 1);
+    expect(apply(mail, { type: 'choose', choiceId: 'report' }, 2)).toMatchObject({
+      phase: 'session',
+      scene: { kind: 'feedback', result: { id: 'mail', outcome: 'safe', choiceId: 'report' } },
     });
   });
 
@@ -573,6 +647,10 @@ describe('game runtime', () => {
     if (state.phase === 'session') {
       expect(state.results).toHaveLength(6);
       expect(new Set(state.results.map((result) => result.id)).size).toBe(6);
+      expect(hasResult(state, 'spoof')).toBe(true);
+      expect(allComplete(state)).toBe(true);
+      expect(assessedCount(state)).toBe(5);
+      expect(safeCount(state)).toBe(5);
       expect(apply(state, { type: 'continue' }, 60)).toEqual({ ...state, now: 60 });
     }
   });

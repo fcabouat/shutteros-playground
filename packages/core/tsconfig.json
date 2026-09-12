@@ -8,7 +8,9 @@
     "strict": true,
     "noEmit": true,
     "noUncheckedIndexedAccess": true,
-    "rootDir": "src"
+    "rootDir": "src",
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true
   },
   "include": ["src/**/*.ts"]
 }

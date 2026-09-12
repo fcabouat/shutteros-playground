@@ -8,7 +8,10 @@ Use Node.js 22.13 or later (Node 24 is used in CI) and pnpm 11.19.0. Install fro
 
 ```sh
 pnpm install --frozen-lockfile
+pnpm check
 ```
+
+The first `check` generates local branding and framework types for the editor. Development and preview bind to loopback; pass `--host 0.0.0.0` explicitly when LAN access is needed.
 
 Useful commands are `pnpm dev`, `pnpm test`, `pnpm check`, `pnpm lint`, and `pnpm build`. Run the checks relevant to a change before opening a pull request; see [verification](docs/verification.md) for the full release workflow.
 
@@ -30,7 +33,7 @@ Comments describe current behavior, without design history or superseded alterna
 
 ## Content changes
 
-Write game-facing content in both French and English and repository documentation in English. Keep lessons short and supported by the official sources in `docs/content.md`. Preserve important nuance: a white station reduces exposure but is not a safety guarantee; a legitimate delegation can change a sender address; a signature does not make content harmless; and HTTPS alone does not prove that a destination is the intended service.
+Write game-facing content in both French and English and repository documentation in English. Keep lessons short and supported by the official sources in `docs/content.md`. Preserve important nuance: a dedicated media-inspection station reduces exposure but is not a safety guarantee; a legitimate delegation can change a sender address; a signature does not make content harmless; and HTTPS alone does not prove that a destination is the intended service.
 
 Use fictional data only. Configuration passwords are public game phrases, never production credentials. A new or modified configuration field needs strict contract validation, a mapping to runtime configuration, and relevant unit tests.
 

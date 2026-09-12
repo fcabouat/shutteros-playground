@@ -2,13 +2,13 @@
 
 ## For players
 
-ShutterOS is a fictional desktop exercise. Use only the fictional password shown on the sticky note. Do not enter a real password, account, or personal information.
+ShutterOS is a fictional workplace desktop exercise. Use only game phrases; the note supplies one. Do not enter a real password, account, or personal information.
 
 Explore the desktop and open a situation when you are ready. The experience has one session clock: the default global limit is ten minutes, configurable by the operator. **Finish the experience** presents the remaining situations without making you search for them again. That guided ending targets three to five minutes; it has no separate timer.
 
-The default experience is calm and lets you take your time. When challenge timing is enabled, the current situation may have a deadline; calm mode removes that challenge deadline but never extends the global session.
+The default experience is calm and lets you take your time. When challenge timing is enabled, the current situation may have a deadline; **Start → Take my time** removes active and pending challenge deadlines but never extends the global session.
 
-Double-click the USB desktop icon to inspect its simulated file explorer. Selecting the file does not execute it. Double-clicking that file, pressing Enter on it, or selecting **Open / run** executes it in the simulation. **What should I do?** opens the alternative responses. The other files are scenery. No real USB device or file is opened.
+Double-click the USB desktop icon to inspect its simulated file explorer. Selecting the file does not execute it. Double-clicking that file, pressing Enter on it, or selecting **Open / run** executes it in the simulation. **What should I do?** opens the alternative responses. Opening any listed file follows the same simulated risk branch. No real USB device or file is opened.
 
 The sender, portal, incident, and MFA screens are simulations. They do not send email, contact a service, transmit credentials, or approve a real sign-in. Treat the displayed clues as prompts to practise a real-world habit.
 
@@ -18,7 +18,7 @@ To move a window, drag its title bar. You can focus the title bar and use the ar
 
 Choosing **Leave session** opens a confirmation. Cancel keeps the current session. Confirming clears the session and returns to the fictional login. The facilitator shortcut `Ctrl+Alt+Home` returns there immediately. The same reset occurs when the global session expires.
 
-Completed situations are not replayable during the same session. Start a new session if you want to try a choice again. The recap is a learning aid, not an exportable score.
+Completed situations are not replayable during the same session. Start a new session if you want to try a choice again. The recap is a learning aid, not an exportable score. Its assessed count excludes the sender demonstration, which is marked as discovered.
 
 ## For facilitators
 
@@ -31,6 +31,8 @@ The three routine reminders cover password handling, approved system/software up
 Keep the learning tone blameless. If a participant clicks, approves, or reports late, ask what they would do next: isolate and alert support for a suspected incident; refuse and report an unexpected MFA request; verify an unusual message through a known channel.
 
 Before an event, replace the fictional support contact and organisation copy through the approved configuration. Keep all login phrases, addresses, files, and portal data fictional. Do not use a real account or ask visitors to test credentials.
+
+Password microchecks are available after the account routine, including the guided routine screen.
 
 For accessibility, use calm mode, keyboard navigation, visible focus, the skip link, and the language selector as appropriate. Sound is not required. Keep the browser zoom and display scale comfortable, and check the layout at the actual kiosk resolution.
 

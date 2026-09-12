@@ -29,7 +29,9 @@ On Linux hosts without the browser's system libraries, use `pnpm exec playwright
 | Browser behavior          | Complete HTTP and offline journeys, both languages, navigation, dialogs, drafts, timeout/reset, narrow layouts, keyboard controls, branding and About. |
 | Accessibility and privacy | Axe scans in tested states, focus behavior, unexpected external requests, page errors and persistent browser storage.                                  |
 | Maintenance               | Knip unused-file/dependency/export checks, workflow syntax, frozen dependency installation and registry advisory audit.                                |
-| Ubuntu scripts            | ShellCheck, shell syntax, and sandboxed installer refusal tests.                                                                                       |
+| Ubuntu scripts            | ShellCheck, shell/unit syntax, Python/TypeScript contract parity and sandboxed install/refusal/rollback/verification/removal tests.                    |
+
+Local challenge timing can be disabled from Start. The global session deadline remains mandatory and is not extendable by players; no WCAG timing-adjustment conformance is claimed. Operators can configure a longer session before an event.
 
 The browser fixture serves files from `dist/` on loopback port 4183. It has no development-server fallback and does not reuse an interactive preview. Keep that port available while running the suite.
 

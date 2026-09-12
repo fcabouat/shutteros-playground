@@ -8,6 +8,9 @@
     remainingSeconds,
     idleReminderVisible,
     nextAmbientEvent,
+    incidentIsolated,
+    ambientSlot,
+    hasResult,
   } from '@shutteros/core/projections/game';
   import { getI18n } from '../i18n/context';
   import Icon from '../commons/Icon.svelte';
@@ -57,7 +60,7 @@
   let settings = $state<'routines' | 'updates' | 'about' | null>(null);
   let idlePrompt = $state(false);
   let noticeExpanded = $state(false);
-  let dismissedSlot = $state(-1);
+  let dismissedSlot = $state<number | null>(null);
   const activeId = $derived(snapshot.scene.kind === 'challenge' ? snapshot.scene.id : null);
   const seconds = $derived(remainingSeconds(snapshot.deadline, snapshot.now));
   const formattedTime = $derived(
@@ -91,19 +94,13 @@
             ? copy.routines.title
             : branding.applicationName,
   );
-  const isolated = $derived(
-    snapshot.pendingIncident !== null ||
-      (snapshot.scene.kind === 'challenge' &&
-        snapshot.scene.id === 'incident' &&
-        snapshot.scene.step === 'notify') ||
-      snapshot.results.some((r) => r.id === 'incident' && r.outcome === 'safe'),
-  );
+  const isolated = $derived(incidentIsolated(snapshot));
   const clockText = $derived(
     new Intl.DateTimeFormat(i18n.locale, { hour: '2-digit', minute: '2-digit' }).format(
       snapshot.now,
     ),
   );
-  const slot = $derived(Math.floor((snapshot.now - snapshot.startedAt) / config.eventIntervalMs));
+  const slot = $derived(ambientSlot(snapshot, config));
   const ambient = $derived(nextAmbientEvent(snapshot, config));
   const notice = $derived(
     idlePrompt && !snapshot.routines.lockPracticed
@@ -200,6 +197,7 @@
         class:urgent={seconds <= 30}
         title={copy.shell.timeout}
         role="timer"
+        aria-live="off"
         aria-label={`${copy.shell.time} : ${formattedTime}`}
         ><Icon name="hourglass" size={17} /><span aria-hidden="true">{formattedTime}</span></span
       >
@@ -213,6 +211,11 @@
     use:focusScreen={sceneKey}
     inert={snapshot.locked}
   >
+    {#if !settings && (minimized || snapshot.scene.kind === 'desktop' || snapshot.scene.kind === 'challenge')}
+      <h1 class="sr-only">
+        {minimized || snapshot.scene.kind === 'desktop' ? copy.shell.desktop : windowTitle}
+      </h1>
+    {/if}
     <div class="desktop-plane">
       <Desktop
         {snapshot}
@@ -238,7 +241,7 @@
             inert={minimized || settings !== null}
           >
             {#snippet currentView()}
-              {#if snapshot.scene.kind === 'intro'}<Intro dispatch={execute} />
+              {#if snapshot.scene.kind === 'intro'}<Intro {snapshot} dispatch={execute} />
               {:else if snapshot.scene.kind === 'challenge'}<Challenge
                   {snapshot}
                   scene={snapshot.scene}
@@ -261,7 +264,12 @@
                 />{/if}
             {/snippet}
             {#if activeId === 'mfa'}
-              <section class="device-shell" aria-label={copy.mfa.app}>
+              <section
+                class="device-shell"
+                aria-label={copy.mfa.app}
+                tabindex="-1"
+                data-window-focus
+              >
                 <div class="device-controls">
                   <button
                     class="icon-button"
@@ -359,6 +367,7 @@
     {#key snapshot.scene.id}<ActionDock
         {snapshot}
         scene={snapshot.scene}
+        stationLabel={config.stationLabel}
         dispatch={execute}
         open={actionOpen}
         onOpenChange={toggleActions}
@@ -391,7 +400,7 @@
         <button
           class="os-taskbar-app taskbar-shortcut"
           class:active={activeId === id}
-          disabled={snapshot.results.some((r) => r.id === id) ||
+          disabled={hasResult(snapshot, id) ||
             (snapshot.mode === 'guided' && activeId !== id) ||
             ['intro', 'feedback', 'debrief', 'routines'].includes(snapshot.scene.kind)}
           onclick={() => execute({ type: 'open', id })}

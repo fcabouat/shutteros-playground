@@ -90,6 +90,11 @@
       dispatch({ type: 'activity' });
   }
 
+  // Document metadata is a browser effect owned by the application boundary.
+  $effect(() => {
+    document.documentElement.lang = i18n.locale;
+  });
+
   onMount(() => {
     mounted = true;
     void start();
@@ -138,7 +143,16 @@
         <h1 class="mt-4 text-2xl font-semibold">{copy.configurationError}</h1>
         <p class="text-muted mt-4 leading-relaxed">{copy.configurationHelp}</p>
         <ul class="mt-4 list-inside list-disc space-y-2 text-sm">
-          {#each result.issues as issue, index (index)}<li class="break-words">{issue}</li>{/each}
+          {#each result.issues as issue, index (index)}<li
+              class="break-words"
+              lang={issue.kind === 'field' ? 'en' : undefined}
+            >
+              {issue.kind === 'field'
+                ? `${issue.path}: ${issue.message}`
+                : issue.kind === 'fetch'
+                  ? copy.fetchError
+                  : copy.sizeError}
+            </li>{/each}
         </ul>
         <button class="button button-primary mt-6" onclick={() => void start()}>{copy.retry}</button
         >

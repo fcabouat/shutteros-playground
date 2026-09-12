@@ -2,7 +2,11 @@
 # Remove only an installation proven to be owned by deployment/ubuntu/install.sh.
 set -eu
 
+PATH=/usr/sbin:/usr/bin:/sbin:/bin
+export PATH
+
 readonly KIOSK_USER=shutteros-kiosk
+readonly STATIC_USER=shutteros-static
 readonly KIOSK_ROOT=/opt/cyber-shutteros
 readonly HOME_ROOT="/home/$KIOSK_USER"
 readonly LIB_ROOT=/usr/local/lib/shutteros-kiosk
@@ -24,7 +28,9 @@ root_owned_regular() {
 
 root_owned_directory() {
   [ -d "$1" ] && [ ! -L "$1" ] && [ "$(stat -c %u "$1")" = 0 ] &&
-    [ "$(stat -c %g "$1")" = 0 ] && [ "$(stat -c %a "$1")" = 755 ]
+    [ "$(stat -c %g "$1")" = 0 ] || return 1
+  # A more restrictive administrator mode must not prevent recovery of the console.
+  case "$(stat -c %a "$1")" in 700|750|755) return 0 ;; *) return 1 ;; esac
 }
 
 marker_value() {
@@ -33,7 +39,7 @@ marker_value() {
 }
 
 validate_marker() {
-  root_owned_directory "$KIOSK_ROOT" || die 'the kiosk root is not a root-owned 0755 directory'
+  root_owned_directory "$KIOSK_ROOT" || die 'the kiosk root is not a root-owned 0700, 0750 or 0755 directory'
   root_owned_regular "$OWNER_MARKER" || die 'no valid root-owned ownership marker is present'
   [ "$(stat -c %a "$OWNER_MARKER")" = 600 ] || die 'the ownership marker must have mode 0600'
   [ "$(wc -l < "$OWNER_MARKER")" -eq 3 ] || die 'the ownership marker has an unexpected format'
@@ -52,10 +58,25 @@ validate_account() {
   [ "$(printf '%s' "$entry" | cut -d: -f6)" = "$HOME_ROOT" ] || die 'the kiosk account home is unexpected'
   [ "$(printf '%s' "$entry" | cut -d: -f7)" = "$LIB_ROOT/session" ] || die 'the kiosk account shell is unexpected'
   [ "$(id -u "$KIOSK_USER")" -ne 0 ] || die 'the kiosk account must not be root'
+  [ "$(id -gn "$KIOSK_USER")" = "$KIOSK_USER" ] || die 'the kiosk primary group is unexpected'
   if [ ! -d "$HOME_ROOT" ] || [ -L "$HOME_ROOT" ]; then
     die 'the kiosk account home is invalid'
   fi
   [ "$(stat -c %u "$HOME_ROOT")" = "$(id -u "$KIOSK_USER")" ] || die 'the kiosk home owner is unexpected'
+}
+
+validate_static_account() {
+  entry=$(getent passwd "$STATIC_USER" || true)
+  if [ -z "$entry" ]; then
+    static_account_present=false
+    return
+  fi
+  static_account_present=true
+  [ "$(printf '%s' "$entry" | cut -d: -f6)" = /nonexistent ] || die 'the static account home is unexpected'
+  [ "$(printf '%s' "$entry" | cut -d: -f7)" = /usr/sbin/nologin ] || die 'the static account shell is unexpected'
+  [ "$(id -u "$STATIC_USER")" -ne 0 ] || die 'the static account must not be root'
+  [ "$(id -gn "$STATIC_USER")" = "$STATIC_USER" ] || die 'the static primary group is unexpected'
+  [ "$(id -G "$STATIC_USER")" = "$(id -g "$STATIC_USER")" ] || die 'the static account has unexpected supplementary groups'
 }
 
 read_original_getty_state() {
@@ -69,17 +90,18 @@ read_original_getty_state() {
 [ "$(id -u)" -eq 0 ] || die 'run this reviewed local script as root'
 validate_marker
 validate_account
+validate_static_account
 read_original_getty_state
 
 [ -z "$(find "$KIOSK_ROOT" -mindepth 1 -maxdepth 1 ! -name site ! -name .site-rollback ! -name .shutteros-kiosk-owner -print -quit)" ] ||
   die 'unexpected files exist in the kiosk root; move them aside before uninstalling'
 if [ -e "$LIB_ROOT" ] || [ -L "$LIB_ROOT" ]; then
   root_owned_directory "$LIB_ROOT" || die 'the launcher directory is unexpected'
-  [ -z "$(find "$LIB_ROOT" -mindepth 1 -maxdepth 1 ! -name session ! -name launch-chromium -print -quit)" ] ||
+  [ -z "$(find "$LIB_ROOT" -mindepth 1 -maxdepth 1 ! -name session ! -name launch-chromium ! -name environment -print -quit)" ] ||
     die 'unexpected files exist in the launcher directory; move them aside before uninstalling'
 fi
 
-for path in "$LIB_ROOT/session" "$LIB_ROOT/launch-chromium" "$STATIC_UNIT" "$KIOSK_UNIT" "$POLICY_FILE"; do
+for path in "$LIB_ROOT/session" "$LIB_ROOT/launch-chromium" "$LIB_ROOT/environment" "$STATIC_UNIT" "$KIOSK_UNIT" "$POLICY_FILE"; do
   if [ -e "$path" ] || [ -L "$path" ]; then
     root_owned_regular "$path" || die "refusing to remove unexpected path: $path"
   fi
@@ -92,6 +114,9 @@ fi
 rm -f "$STATIC_UNIT" "$KIOSK_UNIT" "$POLICY_FILE"
 if [ "$account_present" = true ]; then
   userdel --remove "$KIOSK_USER"
+fi
+if [ "$static_account_present" = true ]; then
+  userdel "$STATIC_USER"
 fi
 rm -rf "$KIOSK_ROOT" "$LIB_ROOT"
 systemctl daemon-reload

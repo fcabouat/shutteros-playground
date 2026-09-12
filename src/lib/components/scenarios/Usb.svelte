@@ -13,7 +13,7 @@
   }
 </script>
 
-<div class="usb-browser flex min-h-[300px] flex-col" aria-label={copy.usb.device}>
+<div class="usb-browser flex min-h-[300px] flex-col">
   <div
     class="browser-toolbar flex shrink-0 flex-wrap items-center gap-2 border-b border-[var(--line)] px-4 py-2 text-sm"
   >

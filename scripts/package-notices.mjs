@@ -15,17 +15,20 @@ const entries = [];
 for (const directory of manifest) {
   const pkg = JSON.parse(await readFile(path.join(directory, 'package.json'), 'utf8'));
   const licenses = (await readdir(directory))
-    .filter((name) => /^(licen[cs]e|copying)(\.|$)/i.test(name))
+    .filter((name) => /^(licen[cs]e|copying|notice)(\.|$)/i.test(name))
     .sort();
   if (licenses.length === 0)
     throw new Error(`No license text found for bundled dependency ${pkg.name}`);
   const texts = [];
+  let hasLicense = false;
   for (const name of licenses) {
     const file = path.join(directory, name);
-    if ((await stat(file)).isFile()) texts.push(await readFile(file, 'utf8'));
+    if ((await stat(file)).isFile()) {
+      texts.push(await readFile(file, 'utf8'));
+      if (/^(licen[cs]e|copying)(\.|$)/i.test(name)) hasLicense = true;
+    }
   }
-  if (texts.length === 0)
-    throw new Error(`No license file found for bundled dependency ${pkg.name}`);
+  if (!hasLicense) throw new Error(`No license file found for bundled dependency ${pkg.name}`);
   entries.push(`${pkg.name} ${pkg.version}\n${'='.repeat(60)}\n${texts.join('\n')}\n`);
 }
 entries.sort();
@@ -89,7 +92,7 @@ html = html.replace(
 // Escape it before insertion; the browser loader reads content.textContent.
 html = html.replace(
   '</body>',
-  `<template id="third-party-notices"><pre>${escape(notices)}</pre></template>\n</body>`,
+  () => `<template id="third-party-notices"><pre>${escape(notices)}</pre></template>\n</body>`,
 );
 await writeFile('dist/portable/shutteros.html', html);
 // Do not distribute intermediate artifacts or build-machine paths.

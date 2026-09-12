@@ -1,7 +1,12 @@
 <script lang="ts">
   import type { GameState, Intent } from '@shutteros/core/model/game';
   import type { GameConfig } from '@shutteros/core/model/configuration';
-  import { challengeOrder, safeCount } from '@shutteros/core/projections/game';
+  import {
+    challengeOrder,
+    safeCount,
+    assessedCount,
+    allComplete,
+  } from '@shutteros/core/projections/game';
   import { getI18n } from '../i18n/context';
   const i18n = getI18n();
   const challenges = $derived(i18n.challenges);
@@ -39,7 +44,7 @@
     <div class="reading-column wide grid gap-7 lg:grid-cols-[1.15fr_1fr]">
       <div>
         <p class="mb-1 text-base font-semibold">
-          {copy.debrief.safeCount(safeCount(snapshot), snapshot.results.length)}
+          {copy.debrief.safeCount(safeCount(snapshot), assessedCount(snapshot))}
         </p>
         <p class="text-muted mb-5 text-xs">{copy.debrief.notGrade}</p>
         <ul class="divide-y divide-[var(--line)]">
@@ -62,7 +67,11 @@
                 </p>
               </div>
               <span class="result-status" data-outcome={result?.outcome ?? 'unseen'}
-                >{result ? copy.debrief[result.outcome] : copy.debrief.notSeen}</span
+                >{result
+                  ? result.id === 'spoof'
+                    ? copy.debrief.discovered
+                    : copy.debrief[result.outcome]
+                  : copy.debrief.notSeen}</span
               >
             </li>
           {/each}
@@ -100,7 +109,7 @@
           <p class="text-muted mt-1 text-xs">{copy.debrief.privacy}</p>
         </div>
         <div class="flex flex-wrap gap-3">
-          {#if snapshot.results.length < challengeOrder.length}<button
+          {#if !allComplete(snapshot)}<button
               class="button button-soft"
               onclick={() => dispatch({ type: 'close' })}>{copy.shell.resume}</button
             >{/if}<button class="button button-primary" onclick={() => dispatch({ type: 'logout' })}

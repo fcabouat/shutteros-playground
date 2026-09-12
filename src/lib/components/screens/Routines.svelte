@@ -1,12 +1,14 @@
 <script lang="ts">
   import type { GameState, Intent } from '@shutteros/core/model/game';
   import { getI18n } from '../i18n/context';
+  import KnowledgeCheck from '../commons/KnowledgeCheck.svelte';
   import Icon from '../commons/Icon.svelte';
   let {
     snapshot,
     dispatch,
   }: { snapshot: Extract<GameState, { phase: 'session' }>; dispatch: (intent: Intent) => void } =
     $props();
+  let checkOpen = $state(false);
   const i18n = getI18n();
   const copy = $derived(i18n.text);
 </script>
@@ -45,6 +47,16 @@
         </article>
       {/each}
     </div>
+    {#if snapshot.routines.password === 'done' && snapshot.scene.kind === 'routines'}
+      <div class="mt-6 border-t border-[var(--line)] pt-5">
+        <button
+          class="button button-soft"
+          aria-expanded={checkOpen}
+          onclick={() => (checkOpen = !checkOpen)}>{copy.routines.check}</button
+        >
+        {#if checkOpen}<div class="mt-4"><KnowledgeCheck {snapshot} {dispatch} /></div>{/if}
+      </div>
+    {/if}
     {#if snapshot.scene.kind === 'routines'}<footer class="mt-7 border-t border-[var(--line)] pt-5">
         <button class="button button-primary" onclick={() => dispatch({ type: 'continue' })}
           >{copy.experience.review}<Icon name="arrow" size={17} /></button

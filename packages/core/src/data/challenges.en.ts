@@ -1,7 +1,7 @@
-import type { ChallengeId } from '../model/game';
-import type { ChallengeContent } from './challenges';
+import type { ChallengeChoiceId } from '../model/game';
+import type { Challenges } from './challenges';
 
-export const englishChallenges: Record<ChallengeId, ChallengeContent> = {
+export const englishChallenges: Challenges = {
   usb: {
     title: 'One drive. Lots of curiosity.',
     app: 'File explorer',
@@ -15,7 +15,7 @@ export const englishChallenges: Record<ChallengeId, ChallengeContent> = {
       { id: 'open', label: 'Open the drive', detail: 'Just to find out who it belongs to.' },
       {
         id: 'station',
-        label: 'Use the white station',
+        label: 'Use the media-inspection station',
         detail: 'Follow the procedure for external media.',
       },
       {
@@ -27,12 +27,12 @@ export const englishChallenges: Record<ChallengeId, ChallengeContent> = {
     feedback: {
       safe: 'The drive stays off the workstation. You avoided a risk before opening a file.',
       risky:
-        'Bingo: in this simulation, the drive infected the workstation. It should have gone through the required check first.',
+        'Curiosity triggered the simulated infection. The media should have gone through the required check first.',
       timeout:
         'An unknown drive can wait. Asking support is safer than plugging it in out of curiosity.',
     },
     lesson:
-      'Do not plug unknown media into your workstation. Give it to support or the designated white station: a dedicated, isolated computer. Analysis reduces risk without guaranteeing safety.',
+      'Do not plug unknown media into your workstation. Give it to support or the designated media-inspection station: a dedicated, isolated computer. Analysis reduces risk without guaranteeing safety.',
     shortLesson: 'Unknown media goes through the checking procedure first.',
   },
   incident: {
@@ -92,6 +92,11 @@ export const englishChallenges: Record<ChallengeId, ChallengeContent> = {
         id: 'verify',
         label: 'Contact HR via the directory',
         detail: 'Check through a second, already known channel.',
+      },
+      {
+        id: 'report',
+        label: 'Report the message',
+        detail: 'Send it through the organisation’s reporting channel.',
       },
     ],
     feedback: {
@@ -196,4 +201,11 @@ export const englishIncidentNotify = {
     { id: 'notify', label: 'My usual support', detail: 'From another device or a known channel.' },
     { id: 'delete', label: 'Nobody; delete the files', detail: 'Fix the problem myself.' },
   ],
-} satisfies { question: string; choices: readonly { id: string; label: string; detail: string }[] };
+} satisfies {
+  question: string;
+  choices: readonly {
+    id: ChallengeChoiceId<'incident', 'notify'>;
+    label: string;
+    detail: string;
+  }[];
+};

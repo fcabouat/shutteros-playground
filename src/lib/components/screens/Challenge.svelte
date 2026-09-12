@@ -21,7 +21,7 @@
   } = $props();
 </script>
 
-<section class="challenge-window" data-challenge={scene.id} data-step={scene.step}>
+<div class="challenge-window" data-challenge={scene.id} data-step={scene.step}>
   {#if scene.id === 'usb'}<Usb {dispatch} />
   {:else if scene.id === 'incident'}<Incident
       step={scene.step === 'notify' ? 'notify' : 'choose'}
@@ -32,4 +32,4 @@
   {:else if scene.id === 'spoof'}<Spoof {config} {dispatch} />
   {:else if scene.id === 'web'}<Web {dispatch} />
   {:else if scene.id === 'mfa'}<Mfa />{/if}
-</section>
+</div>

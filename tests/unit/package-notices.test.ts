@@ -83,6 +83,45 @@ describe('portable artifact packaging', () => {
     }
   });
 
+  it('preserves replacement tokens literally and redistributes supplemental NOTICE text', async () => {
+    const root = await fixtureFor(
+      '<html><head><style></style></head><body><script>0;</script></body></html>',
+    );
+    try {
+      const text = "Legal tokens: $& $` $' <example>";
+      await writeFile(resolve(root, 'node_modules/tailwindcss/NOTICE'), text);
+      await execFileAsync(
+        process.execPath,
+        [resolve(root, 'scripts/package-notices.mjs'), '--update-source'],
+        { cwd: root },
+      );
+      const packaged = await readFile(resolve(root, 'dist/portable/shutteros.html'), 'utf8');
+      expect(packaged).toContain("Legal tokens: $&amp; $` $' &lt;example&gt;");
+      expect(packaged.match(/<body>/g)).toHaveLength(1);
+      expect(packaged.match(/<script>/g)).toHaveLength(1);
+      expect(await readFile(resolve(root, 'dist/THIRD-PARTY-NOTICES.txt'), 'utf8')).toContain(text);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
+  it('does not accept a NOTICE file as a substitute for a missing license', async () => {
+    const root = await fixtureFor(
+      '<html><head><style></style></head><body><script>0;</script></body></html>',
+    );
+    try {
+      await rm(resolve(root, 'node_modules/tailwindcss/LICENSE'));
+      await writeFile(resolve(root, 'node_modules/tailwindcss/NOTICE'), 'Acknowledgement only');
+      await expect(
+        execFileAsync(process.execPath, [resolve(root, 'scripts/package-notices.mjs')], {
+          cwd: root,
+        }),
+      ).rejects.toThrow('No license file found');
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
   it('rejects case-insensitive script termination in generated content', async () => {
     const root = await fixtureFor(
       '<html><head><style>body { color: black; }</style></head><body><script>const value = "</ScRiPt data-breakout><script>globalThis.compromised = true</script>";</script></body></html>',

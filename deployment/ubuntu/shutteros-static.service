@@ -1,16 +1,21 @@
 [Unit]
 Description=ShutterOS loopback static site
 After=local-fs.target
-ConditionPathExists=/opt/cyber-shutteros/site/index.html
+StartLimitIntervalSec=0
 
 [Service]
 Type=exec
-User=shutteros-kiosk
-Group=shutteros-kiosk
+User=shutteros-static
+Group=shutteros-static
 WorkingDirectory=/opt/cyber-shutteros/site
+ExecStartPre=/usr/bin/test -f /opt/cyber-shutteros/site/index.html
 ExecStart=/usr/bin/python3 -m http.server 8080 --bind 127.0.0.1 --directory /opt/cyber-shutteros/site
 Restart=on-failure
-RestartSec=2
+RestartSec=2s
+RestartSteps=5
+RestartMaxDelaySec=30s
+StandardOutput=journal
+StandardError=journal
 NoNewPrivileges=yes
 PrivateTmp=yes
 PrivateDevices=yes

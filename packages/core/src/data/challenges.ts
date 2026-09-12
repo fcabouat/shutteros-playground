@@ -1,24 +1,31 @@
-import type { ChallengeId, Outcome } from '../model/game';
+import type {
+  ChallengeChoiceId,
+  ChallengeDecisionChoiceId,
+  ChallengeId,
+  Outcome,
+} from '../model/game';
 
-export interface Choice {
-  id: string;
+interface Choice<Id extends ChallengeId> {
+  id: ChallengeDecisionChoiceId<Id>;
   label: string;
   detail: string;
 }
 
-export interface ChallengeContent {
+interface ChallengeContent<Id extends ChallengeId = ChallengeId> {
   title: string;
   app: string;
   tagline: string;
   question: string;
   hints: readonly [string, string];
-  choices: readonly Choice[];
+  choices: readonly Choice<Id>[];
   feedback: Record<Outcome, string>;
   lesson: string;
   shortLesson: string;
 }
 
-export const challenges: Record<ChallengeId, ChallengeContent> = {
+export type Challenges = { [Id in ChallengeId]: ChallengeContent<Id> };
+
+export const challenges: Challenges = {
   usb: {
     title: 'Une clé. Beaucoup de curiosité.',
     app: 'Explorateur de fichiers',
@@ -32,7 +39,7 @@ export const challenges: Record<ChallengeId, ChallengeContent> = {
       { id: 'open', label: 'Ouvrir la clé', detail: 'Juste pour savoir à qui elle appartient.' },
       {
         id: 'station',
-        label: 'Passer par la station blanche',
+        label: 'Passer par la station d’inspection',
         detail: 'Suivre la procédure prévue pour les supports externes.',
       },
       { id: 'report', label: 'La remettre au support', detail: 'Sans la brancher sur mon poste.' },
@@ -40,12 +47,12 @@ export const challenges: Record<ChallengeId, ChallengeContent> = {
     feedback: {
       safe: 'La clé reste hors du poste de travail. Vous avez évité un risque avant même d’ouvrir un fichier.',
       risky:
-        'Bingo : dans cette simulation, la clé a infecté le poste. Son contenu aurait dû passer par le contrôle prévu avant toute utilisation.',
+        'La curiosité a déclenché l’infection simulée. Le support aurait dû passer par le contrôle prévu avant toute utilisation.',
       timeout:
         'Une clé inconnue peut attendre. Mieux vaut demander au support que la brancher par curiosité.',
     },
     lesson:
-      'Ne branchez pas un support inconnu sur votre poste. Confiez-le au support ou à la station blanche prévue : un poste dédié et isolé. Une analyse réduit le risque, sans garantir l’innocuité.',
+      'Ne branchez pas un support inconnu sur votre poste. Confiez-le au support ou à la station d’inspection prévue : un poste dédié et isolé. Une analyse réduit le risque, sans garantir l’innocuité.',
     shortLesson: 'Un support inconnu passe d’abord par la procédure de contrôle.',
   },
   incident: {
@@ -105,6 +112,11 @@ export const challenges: Record<ChallengeId, ChallengeContent> = {
         id: 'verify',
         label: 'Contacter les RH via l’annuaire',
         detail: 'Vérifier par un second canal déjà connu.',
+      },
+      {
+        id: 'report',
+        label: 'Signaler le message',
+        detail: 'Le transmettre au canal de signalement prévu.',
       },
     ],
     feedback: {
@@ -222,4 +234,11 @@ export const incidentNotify = {
       detail: 'Pour effacer le problème moi-même.',
     },
   ],
-} satisfies { question: string; choices: readonly Choice[] };
+} satisfies {
+  question: string;
+  choices: readonly {
+    id: ChallengeChoiceId<'incident', 'notify'>;
+    label: string;
+    detail: string;
+  }[];
+};

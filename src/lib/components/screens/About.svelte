@@ -18,6 +18,7 @@
   <div class="flex items-start gap-4">
     <span class="app-icon" data-app="shield"><Icon name="shield" size={26} /></span>
     <div class="min-w-0">
+      <!-- Product attribution remains independent of the fictional OS and deployment brand. -->
       <p class="text-accent text-xs font-semibold uppercase tracking-wide">ShutterOS Playground</p>
       <h1 id="about-title" class="mt-2 text-2xl font-semibold">{copy.about.title}</h1>
       <p class="text-muted mt-2 text-sm leading-relaxed">{copy.about.description}</p>
@@ -33,6 +34,7 @@
         >{copy.about.projectLicense}<Icon name="down" size={16} /></summary
       >
       {#if legalNotices}<pre
+          lang="en"
           class="about-notice">{legalNotices.projectLicense}</pre>{:else if legalNoticesFailed}<p
           class="text-muted p-4 text-sm"
         >
@@ -45,6 +47,7 @@
     >
       <summary class="about-summary">{copy.about.thirdParty}<Icon name="down" size={16} /></summary>
       {#if legalNotices}<pre
+          lang="en"
           class="about-notice">{legalNotices.thirdPartyNotices}</pre>{:else if legalNoticesFailed}<p
           class="text-muted p-4 text-sm"
         >

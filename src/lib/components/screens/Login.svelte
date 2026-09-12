@@ -82,7 +82,11 @@
               }
             }}
             placeholder={copy.login.placeholder}
-            aria-describedby={snapshot.failedAttempts >= 3 ? 'password-help' : undefined}
+            aria-describedby={snapshot.failedAttempts >= 3
+              ? 'password-help password-error'
+              : snapshot.failedAttempts > 0
+                ? 'password-error'
+                : undefined}
             aria-invalid={snapshot.failedAttempts > 0}
             class="min-w-0 flex-1 bg-transparent px-4 py-3.5 text-base outline-none"
           />
@@ -94,6 +98,7 @@
             {copy.login.helper}
           </p>{/if}
         {#if snapshot.failedAttempts > 0}<p
+            id="password-error"
             role="alert"
             class="login-error mt-3 rounded-lg p-3 text-sm"
           >
@@ -120,7 +125,9 @@
         aria-label={copy.login.postitTitle}
       >
         <span class="tape" aria-hidden="true"></span>
-        <p class="break-words py-6 text-center font-mono text-lg">{config.acceptedPasswords[0]}</p>
+        <p class="post-it-phrase break-words py-6 text-center font-mono text-lg">
+          {config.acceptedPasswords[0]}
+        </p>
       </aside>
     {:else}
       <aside

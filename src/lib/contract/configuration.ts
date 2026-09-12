@@ -154,8 +154,8 @@ function validateText(
   maximum: number,
   issues: ConfigurationIssue[],
 ): void {
-  if (typeof value !== 'string' || value.length < 1 || value.length > maximum) {
-    issues.push({ path, message: `must be a string from 1 to ${maximum} characters` });
+  if (typeof value !== 'string' || value.trim().length < 1 || value.length > maximum) {
+    issues.push({ path, message: `must be a non-blank string from 1 to ${maximum} characters` });
   }
 }
 
@@ -170,6 +170,7 @@ function validateOptionalLogo(value: unknown, issues: ConfigurationIssue[]): voi
   if (
     typeof value !== 'string' ||
     value.length > 120 ||
+    value.trim() !== value ||
     !/^[a-z0-9][a-z0-9._-]*\.(png|webp|svg)$/i.test(value)
   ) {
     issues.push({
@@ -186,6 +187,7 @@ function validateEmail(value: unknown, path: string, issues: ConfigurationIssue[
     typeof value !== 'string' ||
     value.length < 3 ||
     value.length > 120 ||
+    value.trim() !== value ||
     !/^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(value)
   ) {
     issues.push({ path, message: 'must be a simple email address from 3 to 120 characters' });

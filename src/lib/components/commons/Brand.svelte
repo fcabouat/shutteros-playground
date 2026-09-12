@@ -2,7 +2,7 @@
   let { name = 'ShutterOS', compact = false }: { name?: string; compact?: boolean } = $props();
 </script>
 
-<div class="flex items-center gap-3" aria-label={name}>
+<div class="flex items-center gap-3" role="img" aria-label={name}>
   <span class="brand-symbol" aria-hidden="true">
     <svg
       width="24"

@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { GameState, Intent, ChallengeId } from '@shutteros/core/model/game';
-  import { canExplore, challengeOrder } from '@shutteros/core/projections/game';
+  import { canExplore, challengeOrder, hasResult } from '@shutteros/core/projections/game';
   import { getI18n } from '../i18n/context';
   import Icon from '../commons/Icon.svelte';
   import Brand from '../commons/Brand.svelte';
@@ -18,6 +18,7 @@
   } = $props();
   const i18n = getI18n();
   const copy = $derived(i18n.text);
+  const helpId = $props.id();
   let selected = $state<ChallengeId | null>(null);
 
   function activate(id: ChallengeId, event: MouseEvent) {
@@ -29,19 +30,20 @@
 </script>
 
 <div class="desktop-canvas relative flex flex-1">
-  <h1 class="sr-only">{copy.shell.desktop}</h1>
+  <span id={helpId} class="sr-only">{copy.desktop.doubleClick}</span>
   <nav
     class="desktop-icons grid auto-rows-min grid-cols-[112px] content-start gap-2"
     aria-label={copy.shell.desktop}
   >
     {#each challengeOrder as id (id)}
-      {@const done = snapshot.results.some((result) => result.id === id)}
+      {@const done = hasResult(snapshot, id)}
       <button
         class="desktop-icon relative flex flex-col items-center justify-center gap-2 rounded-lg text-center"
         class:selected={selected === id}
         class:running={activeId === id}
         disabled={done || !canExplore(snapshot)}
         onclick={(event) => activate(id, event)}
+        aria-describedby={done ? undefined : helpId}
         title={done ? copy.desktop.done : copy.desktop.doubleClick}
         aria-label={`${copy.desktop[id]}${done ? ` · ${copy.desktop.done}` : ''}`}
       >

@@ -1,44 +1,15 @@
 import type { GameConfig } from '../model/configuration';
+import { allComplete, hasResult } from '../projections/game';
 import { currentKnowledgeId, knowledgeAnswer } from '../services/knowledge';
-import type {
-  ChallengeId,
-  ChallengeResult,
-  GameState,
-  Intent,
-  Outcome,
-  Scene,
+import {
+  challengeOrder,
+  choiceOutcome,
+  type ChallengeId,
+  type ChallengeResult,
+  type GameState,
+  type Intent,
+  type Scene,
 } from '../model/game';
-
-const challengeIds: readonly ChallengeId[] = ['usb', 'incident', 'mail', 'spoof', 'web', 'mfa'];
-
-const choices: Readonly<
-  Record<ChallengeId, Readonly<Record<'choose' | 'notify', Readonly<Record<string, Outcome>>>>>
-> = {
-  usb: {
-    choose: { open: 'risky', station: 'safe', report: 'safe' },
-    notify: {},
-  },
-  incident: {
-    choose: { isolate: 'safe', restart: 'risky', ignore: 'risky' },
-    notify: { notify: 'safe', 'call-number': 'risky', delete: 'risky' },
-  },
-  mail: {
-    choose: { reply: 'risky', open: 'risky', verify: 'safe' },
-    notify: {},
-  },
-  spoof: {
-    choose: { understood: 'safe' },
-    notify: {},
-  },
-  web: {
-    choose: { submit: 'risky', 'known-address': 'safe', 'trust-lock': 'risky' },
-    notify: {},
-  },
-  mfa: {
-    choose: { approve: 'risky', 'deny-report': 'safe', ignore: 'risky' },
-    notify: {},
-  },
-};
 
 /** The zero-time default lets the static shell render without consulting a browser clock. */
 export function initialState(now = 0): GameState {
@@ -153,8 +124,9 @@ function transitionLogin(
   config: GameConfig,
 ): GameState {
   switch (intent.type) {
-    case 'login':
-      if (!passwordAccepted(intent.password, config)) {
+    case 'login': {
+      const loginCategory = passwordCategory(intent.password, config);
+      if (loginCategory === null) {
         return { ...state, now, failedAttempts: Math.min(3, state.failedAttempts + 1) };
       }
       return {
@@ -164,6 +136,7 @@ function transitionLogin(
         startedAt: now,
         deadline: now + config.sessionDurationMs,
         calm: config.defaultCalmMode,
+        loginCategory,
         mode: 'free',
         scene: { kind: 'intro' },
         results: [],
@@ -179,6 +152,7 @@ function transitionLogin(
         locked: false,
         pendingIncident: null,
       };
+    }
     case 'logout':
       return loginState(state.generation + 1, now, 'logout');
     case 'tick':
@@ -202,8 +176,11 @@ function transitionLogin(
   }
 }
 
-function passwordAccepted(password: string, config: GameConfig): boolean {
-  if (typeof password !== 'string') return false;
+function passwordCategory(
+  password: string,
+  config: GameConfig,
+): Extract<GameState, { phase: 'session' }>['loginCategory'] | null {
+  if (typeof password !== 'string') return null;
   // Tolerate typing and Unicode composition differences in public game phrases;
   // this is an accessibility choice for the simulation, not an authentication policy.
   const normalize = (value: string) => {
@@ -211,9 +188,11 @@ function passwordAccepted(password: string, config: GameConfig): boolean {
     return config.caseSensitivePasswords ? trimmed : trimmed.toLowerCase();
   };
   const entered = normalize(password);
-  return config.acceptedPasswords.some(
+  const index = config.acceptedPasswords.findIndex(
     (candidate) => typeof candidate === 'string' && normalize(candidate) === entered,
   );
+  if (index < 0) return null;
+  return index === 0 ? 'displayed' : 'weak';
 }
 
 function continueScene(
@@ -282,7 +261,8 @@ function openChallenge(
 /**
  * Continue the active situation before filling gaps in the fixed guided order.
  * Preserve an incident's isolation progress so the player is asked to report it,
- * rather than repeating isolation. transition settles expired attempts first.
+ * rather than repeating isolation. Guided play deliberately clears local timing;
+ * transition settles an already-expired attempt before this function is reached.
  */
 function finishExperience(state: Extract<GameState, { phase: 'session' }>): GameState {
   if (state.mode === 'guided') return state;
@@ -293,15 +273,17 @@ function finishExperience(state: Extract<GameState, { phase: 'session' }>): Game
       ? {
           startedAt: state.scene.startedAt,
           exploreUntil: state.scene.exploreUntil,
-          deadline: state.scene.deadline,
+          deadline: null,
         }
-      : state.pendingIncident;
+      : state.pendingIncident === null
+        ? null
+        : { ...state.pendingIncident, deadline: null };
   const preferred =
     state.scene.kind === 'challenge' && !hasResult(state, state.scene.id)
       ? state.scene.id
       : nextUnanswered(state);
   const guided = { ...state, mode: 'guided' as const, pendingIncident };
-  // Only scene deadlines are removed by openGuidedChallenge; the session deadline
+  // Local deadlines are removed before guided progress resumes; the session deadline
   // comes from the unchanged state spread above.
   return preferred === null ? completeGuided(guided) : openGuidedChallenge(guided, preferred);
 }
@@ -371,10 +353,8 @@ function choose(
   if (typeof choiceId !== 'string') return state;
   // Native surfaces can emit choices during exploration (for example opening the
   // USB file). The action drawer is one input path, not a mandatory permission gate.
-  const availableChoices = choices[scene.id][scene.step === 'notify' ? 'notify' : 'choose'];
-  if (!Object.prototype.hasOwnProperty.call(availableChoices, choiceId)) return state;
-  const outcome = availableChoices[choiceId];
-  if (outcome === undefined) return state;
+  const outcome = choiceOutcome(scene.id, scene.step === 'notify' ? 'notify' : 'choose', choiceId);
+  if (outcome === null) return state;
 
   // Isolation is only the first half of the response. Reporting must complete the
   // situation, and moving to that step does not grant a fresh decision-time budget.
@@ -441,8 +421,22 @@ function setCalm(state: Extract<GameState, { phase: 'session' }>, enabled: boole
   if (state.scene.kind === 'challenge') {
     // Relaxing the active timer is allowed; arming one mid-situation would surprise
     // a player who began reading without a deadline.
-    if (!enabled || state.calm) return state;
-    return { ...state, calm: true, scene: { ...state.scene, deadline: null } };
+    if (!enabled) return state;
+    return {
+      ...state,
+      calm: true,
+      pendingIncident:
+        state.pendingIncident === null ? null : { ...state.pendingIncident, deadline: null },
+      scene: { ...state.scene, deadline: null },
+    };
+  }
+  if (enabled) {
+    return {
+      ...state,
+      calm: true,
+      pendingIncident:
+        state.pendingIncident === null ? null : { ...state.pendingIncident, deadline: null },
+    };
   }
   return { ...state, calm: enabled };
 }
@@ -520,16 +514,8 @@ function answerKnowledge(
   return { ...state, knowledge: [...state.knowledge, answer] };
 }
 
-function hasResult(state: Extract<GameState, { phase: 'session' }>, id: ChallengeId): boolean {
-  return state.results.some((result) => result.id === id);
-}
-
-function allComplete(state: Extract<GameState, { phase: 'session' }>): boolean {
-  return challengeIds.every((id) => hasResult(state, id));
-}
-
 function nextUnanswered(state: Extract<GameState, { phase: 'session' }>): ChallengeId | null {
-  return challengeIds.find((id) => !hasResult(state, id)) ?? null;
+  return challengeOrder.find((id) => !hasResult(state, id)) ?? null;
 }
 
 function routinesComplete(state: Extract<GameState, { phase: 'session' }>): boolean {
@@ -541,7 +527,7 @@ function routinesComplete(state: Extract<GameState, { phase: 'session' }>): bool
 }
 
 function isChallengeId(value: unknown): value is ChallengeId {
-  return challengeIds.includes(value as ChallengeId);
+  return challengeOrder.includes(value as ChallengeId);
 }
 
 function isRoutineId(value: unknown): value is 'password' | 'update' {

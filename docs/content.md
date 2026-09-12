@@ -6,7 +6,7 @@ ShutterOS teaches practical checks, not incident response for a live compromise.
 
 ### Simulated login
 
-The login accepts only configured fictional phrases. It is a game gate, not authentication. Never ask a participant to enter a real password on a shared kiosk. The teaching point is that a password on a visible post-it is exposed; recommend a long, unique secret kept in a password manager. Change a password promptly when it is compromised or suspected compromised. Follow company password renewal requirements and apply the system/software updates scheduled by IT. A suspected compromise requires immediate action, regardless of the next scheduled change. The game does not prescribe its own rotation calendar or character-mix rules.
+The login accepts only configured fictional phrases. It is a game gate, not authentication. Never ask a participant to enter a real password on a shared kiosk. The teaching point is that a password on a visible note is exposed; recommend a long, unique secret kept in a password manager. Change a password promptly when it is compromised or suspected compromised. Follow company password renewal requirements and apply the system/software updates scheduled by IT. A suspected compromise requires immediate action, regardless of the next scheduled change. The game does not prescribe its own rotation calendar or character-mix rules.
 
 Keep professional and personal passwords separate. MFA adds protection, but a participant must never disclose a password, one-time code, or approve an authentication prompt they did not initiate.
 
@@ -44,13 +44,13 @@ Three optional desktop routines reinforce password handling, company-approved sy
 
 ### Teaching and facilitation
 
-The guided ending targets three to five minutes: observe a cue, choose an action, see the simulated consequence, and read one practical takeaway; the global ten-minute limit is the maximum. Optional two-choice microchecks open in a separate view after password renewal in My account and after incident/MFA feedback. The login lesson contains no quiz. Microchecks are skippable and do not alter the primary score. Offer plausible choices, explain the consequence in about one sentence, and allow a new session to try different choices. Microcheck answers are retained for the current session.
+The guided ending targets three to five minutes: observe a cue, choose an action, see the simulated consequence, and read one practical takeaway; the global ten-minute limit is the maximum. Optional two-choice microchecks open in a separate view after the password routine (My account or guided routines) and after incident/MFA feedback. The login lesson contains no quiz. Microchecks are skippable and do not alter the primary score. Offer plausible choices, explain the consequence in about one sentence, and allow a new session to try different choices. Microcheck answers are retained for the current session.
 
 Use supportive language: reporting a click or an approval quickly is a protective action, not a failure. The game is a local simulator. Its sender demonstration changes a fictional display field and previews a message; it does not bypass email controls, send mail, or demonstrate a real spoofing technique.
 
 ## Editorial rules
 
-Keep claims specific and proportionate. Do not imply that an inspection station, a padlock icon, a signature, MFA, or a single visual signal guarantees safety. Do not add real brands, real login forms, executable files, tracking, external embeds, or network-backed demonstrations.
+Keep claims specific and proportionate. Do not imply that an inspection station, a padlock icon, a signature, MFA, or a single visual signal guarantees safety. Familiar desktop conventions are acceptable; use original artwork and fictional service identities. Do not add real brands, real login forms, executable files, tracking, external embeds, or network-backed demonstrations.
 
 ## Official references
 

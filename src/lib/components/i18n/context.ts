@@ -1,13 +1,12 @@
 import { getContext, setContext } from 'svelte';
 import type { Catalog, Locale } from '@shutteros/core/data/catalog';
-import type { ChallengeContent } from '@shutteros/core/data/challenges';
-import type { ChallengeId } from '@shutteros/core/model/game';
+import type { Challenges } from '@shutteros/core/data/challenges';
 import type { incidentNotify } from '@shutteros/core/data/challenges';
 
 export interface Translations {
   readonly locale: Locale;
   readonly text: Catalog;
-  readonly challenges: Record<ChallengeId, ChallengeContent>;
+  readonly challenges: Challenges;
   readonly incidentNotify: { question: string; choices: typeof incidentNotify.choices };
   changeLocale(locale: Locale): void;
 }
