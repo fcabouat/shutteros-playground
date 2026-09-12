@@ -1,6 +1,7 @@
 import { readFile, writeFile, readdir, stat, rm, realpath } from 'node:fs/promises';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
+import { parse } from 'parse5';
 
 // Inventory rendered JavaScript in both deliveries. Tailwind's emitted CSS also needs its license.
 const manifests = ['dist/bundled-packages.json', 'dist/portable/bundled-packages.json'];
@@ -58,31 +59,29 @@ await writeFile('dist/LICENSE', license);
 const escape = (text) =>
   text.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
 let html = await readFile('dist/portable/index.html', 'utf8');
-// Check the single-file plugin's output shape before granting CSP script hashes.
-// Hashing every discovered script would also authorize an injected extra element.
-// This is a guard on this controlled build format, not a general HTML sanitizer;
-// tests/unit/package-notices.test.ts includes mixed-case end-tag breakout attempts.
-const scriptOpenings = html.match(/<script\b/gi) ?? [];
-const scriptClosings = html.match(/<\/script\b/gi) ?? [];
-if (scriptOpenings.length !== 1 || scriptClosings.length !== 1) {
+// Parse with HTML rules before granting CSP hashes: tag casing, attributes and
+// raw-text termination must agree with the browser. This validates our generated
+// single-file format; it does not sanitize arbitrary HTML or authorize extra scripts.
+const nodes = [...walk(parse(html, { sourceCodeLocationInfo: true }))];
+const scripts = nodes.filter((node) => node.tagName === 'script');
+const styles = nodes.filter((node) => node.tagName === 'style');
+if (scripts.length !== 1) {
   throw new Error(
-    `Portable artifact must contain exactly one script element (found ${scriptOpenings.length} opening and ${scriptClosings.length} closing tags)`,
+    `Portable artifact must contain exactly one script element (found ${scripts.length})`,
   );
 }
-const styleOpenings = html.match(/<style\b/gi) ?? [];
-const styleClosings = html.match(/<\/style\b/gi) ?? [];
-if (styleOpenings.length !== 1 || styleClosings.length !== 1) {
+if (styles.length !== 1) {
   throw new Error(
-    `Portable artifact must contain exactly one style element (found ${styleOpenings.length} opening and ${styleClosings.length} closing tags)`,
+    `Portable artifact must contain exactly one style element (found ${styles.length})`,
   );
 }
-const scripts = [...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)].map(
-  (match) => match[1],
-);
-if (scripts.length !== 1) throw new Error('Unable to identify the portable inline script');
-const hashes = scripts
-  .map((script) => `'sha256-${createHash('sha256').update(script).digest('base64')}'`)
-  .join(' ');
+const script = scripts[0];
+if (!script.sourceCodeLocation?.endTag || script.attrs.some((attr) => attr.name === 'src')) {
+  throw new Error('Portable artifact requires a closed inline script');
+}
+// The parser normalizes HTML line endings, as the browser does before CSP checks.
+const scriptText = script.childNodes.map((node) => node.value ?? '').join('');
+const hashes = `'sha256-${createHash('sha256').update(scriptText).digest('base64')}'`;
 const policy = `default-src 'none'; script-src ${hashes}; script-src-attr 'none'; style-src 'unsafe-inline'; img-src data:; font-src data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'`;
 html = html.replace(
   '<head>',
@@ -100,3 +99,10 @@ for (const file of [...manifests, 'dist/portable/index.html']) await rm(file);
 console.log(
   `Portable artifact: dist/portable/shutteros.html (${Math.round(Buffer.byteLength(html) / 1024)} KiB; ${entries.length} bundled package notices).`,
 );
+
+function* walk(node) {
+  yield node;
+  for (const child of node.childNodes ?? []) yield* walk(child);
+  // Template content is a separate fragment; do not hide extra scripts there.
+  if (node.content) yield* walk(node.content);
+}
