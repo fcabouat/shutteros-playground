@@ -10,6 +10,7 @@ export const challengeOrder: readonly ChallengeId[] = Object.freeze([
   'mfa',
 ]);
 
+/** Keep launch affordances aligned with the navigation states accepted by openChallenge. */
 export function canExplore(state: GameState): boolean {
   return (
     state.phase === 'session' &&
@@ -34,6 +35,7 @@ export function remainingSeconds(deadline: number, now: number): number {
   return Math.max(0, Math.ceil((deadline - now) / 1000));
 }
 
+/** A hint may be shown after discovery time; this does not gate direct scenario actions. */
 export function explorationReady(state: GameState): boolean {
   return state.phase === 'session' && state.scene.kind === 'challenge'
     ? state.now >= state.scene.exploreUntil
@@ -58,6 +60,11 @@ export type AmbientEventId = 'password' | 'update' | 'lock';
 
 const ambientOrder: readonly AmbientEventId[] = ['password', 'update', 'lock'];
 
+/**
+ * Derive the current slot from session time instead of queuing notifications.
+ * Returning from an inactive tab therefore shows at most the current reminder,
+ * not a backlog. Guided mode has its own routine screen and suppresses this channel.
+ */
 export function nextAmbientEvent(
   state: GameState,
   config: Pick<GameConfig, 'eventIntervalMs'>,

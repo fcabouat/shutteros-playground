@@ -1,3 +1,4 @@
+/** Editable V1 wire format; runtime units/defaults belong to the infrastructure mapper. */
 type KioskConfigV1 = {
   version: 1;
   sessionMinutes: number;
@@ -51,6 +52,12 @@ const optionalKeys = [
   'organizationLogo',
 ] as const;
 
+/**
+ * Accumulate field diagnostics so an operator can fix the file in one pass.
+ * Unknown keys are rejected to make misspelled settings visible. Optional absence
+ * is valid here; configure supplies defaults without repairing invalid values.
+ * This checks an already-parsed value; the loader bounds bytes before JSON.parse.
+ */
 export function decodeConfiguration(value: unknown): DecodeConfigurationResult {
   if (!isPlainRecord(value)) {
     return { ok: false, issues: [{ path: '', message: 'must be an object' }] };
@@ -157,6 +164,8 @@ function validateBoolean(value: unknown, path: string, issues: ConfigurationIssu
 }
 
 function validateOptionalLogo(value: unknown, issues: ConfigurationIssue[]): void {
+  // A basename keeps the image at the deployment's own base path. URLs, fragments
+  // and directory traversal are outside this contract; image contents are not decoded here.
   if (value === undefined) return;
   if (
     typeof value !== 'string' ||
@@ -171,6 +180,8 @@ function validateOptionalLogo(value: unknown, issues: ConfigurationIssue[]): voi
 }
 
 function validateEmail(value: unknown, path: string, issues: ConfigurationIssue[]): void {
+  // These are display addresses in a local simulation, not deliverability checks.
+  // A bounded, readable shape is sufficient; no DNS or mail service is consulted.
   if (
     typeof value !== 'string' ||
     value.length < 3 ||

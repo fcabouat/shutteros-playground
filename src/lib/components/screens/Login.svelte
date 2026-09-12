@@ -65,6 +65,8 @@
           >{copy.login.password}</label
         >
         <div class="password-field flex items-center overflow-hidden rounded-lg">
+          <!-- A fictional access phrase uses a text input outside a credential form.
+               This reduces password-manager prompts; autocomplete is only a browser hint. -->
           <input
             id="session-code"
             type="text"

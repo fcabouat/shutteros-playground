@@ -47,6 +47,8 @@
   } = $props();
   const i18n = getI18n();
   const copy = $derived(i18n.text);
+  // Window chrome belongs to this mounted view; outcomes, timing and routine progress
+  // come from snapshot. Game.svelte's generation key resets both lifetimes together.
   let guideOpen = $state(false);
   let exitOpen = $state(false);
   let actionOpen = $state(false);
@@ -64,6 +66,8 @@
       .padStart(2, '0')}:${(seconds % 60).toString().padStart(2, '0')}`,
   );
   const guideId = $derived(activeId ?? nextChallenge(snapshot));
+  // Focus/scroll follow presentation changes. Window identity is deliberately coarser:
+  // advancing a challenge step should not reconstruct its local form fields.
   const sceneKey = $derived(
     settings
       ? settings
@@ -125,6 +129,8 @@
       snapshot.scene.kind === 'challenge'
         ? `${snapshot.mode}:${snapshot.scene.id}:${snapshot.scene.step === 'notify' ? 'notify' : 'main'}`
         : 'none';
+    // Explore -> choose keeps the player's drawer choice; notify is a new question
+    // that opens the drawer. Clock-only snapshots should not reopen a collapsed panel.
     if (key !== actionKey) {
       actionKey = key;
       actionOpen =
@@ -145,6 +151,7 @@
     }
     settings = null;
     minimized = false;
+    // Restore a minimized app without starting a new core attempt or resetting its timer.
     if (intent.type === 'open' && intent.id === activeId) return;
     dispatch(intent);
   }
@@ -223,6 +230,8 @@
         !settings}
     >
       {#if snapshot.scene.kind !== 'desktop'}
+        <!-- Keep drafts mounted behind settings/minimization, but remove hidden views
+             from pointer and keyboard interaction. tests/e2e/game.spec.ts covers restore. -->
         {#key windowId}<div
             class="view-host"
             hidden={minimized || settings !== null}

@@ -28,6 +28,8 @@
   let trigger = $state<HTMLButtonElement>();
   let hintOpen = $state(false);
 
+  // The expanded panel and collapsed trigger are alternative DOM branches. Wait for
+  // their mount before moving focus, including when collapsing by keyboard.
   $effect(() => {
     if (!open) return;
     void tick().then(() => panel?.focus({ preventScroll: true }));

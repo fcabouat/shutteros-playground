@@ -2,7 +2,12 @@ import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import type { Plugin } from 'vite';
 
-/** Locate the nearest package root for every rendered node_modules module. */
+/**
+ * Inventory packages contributing rendered JS, rather than the entire lockfile.
+ * Absolute package roots let the packaging step read the matching installed licenses;
+ * package-notices.mjs consumes and removes this build-only manifest before distribution.
+ * Tailwind's generated CSS is added there because it does not appear as rendered JS.
+ */
 export function bundleInventory(): Plugin {
   return {
     name: 'shutteros-bundle-inventory',

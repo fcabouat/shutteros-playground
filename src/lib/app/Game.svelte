@@ -28,6 +28,8 @@
     configurationUrl?: string;
     embeddedOrganizationLogo?: string;
   } = $props();
+  // The prerender and first client render share this neutral loading state. Browser
+  // configuration and time enter after onMount, avoiding a hydration-time state split.
   let result = $state.raw<ConfigurationResult | null>(null);
   let game = $state.raw<GameState>(initialState());
   let runtime: ReturnType<typeof createRuntime> | undefined;
@@ -38,6 +40,8 @@
   let mounted = false;
   let loadGeneration = 0;
 
+  // Retry owns a new generation as well as cancellation: an old fetch may finish
+  // after abort, but it must not install a runtime over a newer configuration load.
   async function start() {
     const generation = ++loadGeneration;
     abort?.abort();
@@ -55,6 +59,8 @@
       runtime = createRuntime(loaded.config, browserClock(), (state) => (game = state));
   }
 
+  // About is an independent resource. Its error state must not replace a playable
+  // configuration or erase the current session while notices are being fetched.
   async function loadNotices() {
     noticesAbort?.abort();
     const controller = new AbortController();
@@ -72,11 +78,14 @@
   function operatorShortcut(event: KeyboardEvent) {
     activity();
     if (event.ctrlKey && event.altKey && event.key === 'Home') {
+      // This operator path intentionally bypasses the player's exit confirmation.
       event.preventDefault();
       dispatch({ type: 'logout' });
     }
   }
   function activity() {
+    // Pointer movement is noisy; a second-level activity timestamp is enough for
+    // the idle reminder and avoids reducing/publishing on every movement event.
     if (game.phase === 'session' && game.now - game.routines.lastActivityAt >= 1000)
       dispatch({ type: 'activity' });
   }
@@ -99,6 +108,8 @@
 <svelte:head><title>{branding.applicationName} — {copy.tagline}</title></svelte:head>
 
 {#if result?.ok}
+  <!-- Resetting the domain alone would leave component drafts and dialogs alive.
+       The generation key remounts them; tests/e2e/game.spec.ts covers an open-dialog reset. -->
   {#key game.generation}
     {#if game.phase === 'login'}<Login
         snapshot={game}

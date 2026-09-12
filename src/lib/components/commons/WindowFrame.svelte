@@ -54,6 +54,8 @@
   }
 
   function clamp(point: Point, rect: DOMRect, bounds: DOMRect): Point {
+    // If the window exceeds the available size, pin its leading edge instead of
+    // producing an inverted range that can push the title-bar controls out of reach.
     const margin = 12;
     const minX = bounds.left + margin - rect.left;
     const maxX = bounds.right - margin - rect.right;
@@ -81,6 +83,8 @@
     if (!dragging || pointerId !== event.pointerId || !dragRect) return;
     const bounds = workspace()?.getBoundingClientRect();
     if (!bounds) return;
+    // DOM rectangles include the applied transform. Remove the starting offset
+    // before clamping the new absolute offset, otherwise repeated drags accumulate drift.
     const baseRect = new DOMRect(
       dragRect.left - dragOffset.x,
       dragRect.top - dragOffset.y,
@@ -143,6 +147,8 @@
   }
 
   onMount(() => {
+    // A new viewport invalidates the old drag bounds. Recenter so zoom/rotation does
+    // not strand the controls beyond the usable workspace.
     const resetOnResize = () => {
       offset = { x: 0, y: 0 };
     };

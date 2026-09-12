@@ -11,6 +11,8 @@ const execFileAsync = promisify(execFile);
 const script = fileURLToPath(new URL('../../scripts/package-notices.mjs', import.meta.url));
 const fixtureNotices = `ShutterOS — Third-party software notices\n\n${`tailwindcss 1.2.3\n${'='.repeat(60)}\nDependency license\n`}`;
 
+// A minimal installed-package tree isolates packaging rules from Vite and the current
+// lockfile. Tailwind is present because its CSS attribution is an explicit inventory input.
 async function fixtureFor(html: string) {
   const root = await mkdtemp(resolve(tmpdir(), 'shutteros-notices-'));
   const dependency = resolve(root, 'node_modules/tailwindcss');
@@ -47,6 +49,8 @@ describe('portable artifact packaging', () => {
       expect(packaged).toContain(`script-src 'sha256-${hash}'`);
       expect(packaged).toContain("script-src-attr 'none'");
       expect(packaged).toContain('Dependency license');
+      // The app bundle embeds MIT; this packaging-only fixture has no app bundle.
+      // Packaging copies LICENSE as a file but must not append another copy to the HTML.
       expect(packaged.match(/Application license/g)).toBeNull();
       expect(packaged).not.toContain('bundled-packages.json');
     } finally {

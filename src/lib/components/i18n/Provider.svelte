@@ -8,6 +8,8 @@
   import { provideI18n } from './context';
 
   let { initialLocale = 'fr', children }: { initialLocale?: Locale; children: Snippet } = $props();
+  // Locale is presentation state for the mounted app, not a game rule or stored
+  // participant preference. Getters keep context consumers reactive without a global store.
   let locale = $state<Locale>(untrack(() => initialLocale));
   provideI18n({
     get locale() {

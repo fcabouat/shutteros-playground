@@ -7,6 +7,10 @@ const maximumConfigurationBytes = 32_768;
 export type ConfigurationResult =
   { ok: true; config: GameConfig } | { ok: false; issues: readonly string[] };
 
+/**
+ * Translate the external contract into the core's units and copy mutable input data.
+ * HTTP and portable startup both use this path so their defaults and validation agree.
+ */
 export function configure(value: unknown): ConfigurationResult {
   const decoded = decodeConfiguration(value);
   if (!decoded.ok) {
@@ -42,6 +46,8 @@ export async function loadConfiguration(
   signal: AbortSignal,
 ): Promise<ConfigurationResult> {
   try {
+    // Operator edits should be visible after reload; this file requires no session
+    // cookies. A failed load is surfaced to the composition root, not replaced by defaults.
     const response = await fetch(url, { cache: 'no-store', credentials: 'omit', signal });
     if (!response.ok) return { ok: false, issues: [fr.fetchError] };
     if (exceedsConfiguredSize(response.headers.get('content-length'))) {
@@ -60,6 +66,11 @@ function exceedsConfiguredSize(contentLength: string | null): boolean {
   return Number(contentLength) > maximumConfigurationBytes;
 }
 
+/**
+ * Content-Length is only an early rejection hint: it may be absent or inaccurate.
+ * Count received bytes before decoding/parsing the complete body. Stream cancellation
+ * and absent-length cases are covered by tests/unit/configuration-loader.test.ts.
+ */
 async function readBoundedText(body: ReadableStream<Uint8Array> | null): Promise<string | null> {
   if (body === null) return '';
 

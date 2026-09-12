@@ -10,6 +10,7 @@ export type ChallengeResult = {
   choiceId: string;
 };
 
+/** Current learning step, independent of window placement or minimization. */
 export type Scene =
   | { kind: 'intro' }
   | { kind: 'desktop' }
@@ -18,6 +19,7 @@ export type Scene =
       id: ChallengeId;
       startedAt: number;
       exploreUntil: number;
+      // Null means this attempt has no local timer; the session deadline still applies.
       deadline: number | null;
       step: 'explore' | 'choose' | 'notify';
     }
@@ -25,6 +27,13 @@ export type Scene =
   | { kind: 'routines' }
   | { kind: 'debrief' };
 
+/**
+ * Session-owned data. Clock values are absolute milliseconds on the injected clock's
+ * timeline; the core does not read a system clock or serialize this state.
+ *
+ * `generation` identifies a reset boundary. Game.svelte keys its component subtree
+ * with it so local drafts and open dialogs are discarded along with domain state.
+ */
 export type GameState =
   | {
       phase: 'login';
@@ -42,6 +51,7 @@ export type GameState =
       calm: boolean;
       mode: 'free' | 'guided';
       scene: Scene;
+      // First outcomes are retained by recordResult; optional knowledge answers are separate.
       results: readonly ChallengeResult[];
       knowledge: readonly KnowledgeAnswer[];
       usbInfected: boolean;
@@ -53,6 +63,8 @@ export type GameState =
         idleDismissed: boolean;
       };
       locked: boolean;
+      // Isolation is already done, but reporting is outstanding. This survives leaving
+      // the incident window so its notification step can resume with the same deadline.
       pendingIncident: {
         startedAt: number;
         exploreUntil: number;
@@ -60,6 +72,11 @@ export type GameState =
       } | null;
     };
 
+/**
+ * Internal commands shared by live views and injected Storybook scenarios.
+ * These describe player intent, not a trusted outcome; transition decides whether
+ * a command is available. External configuration has a separate decoder.
+ */
 export type Intent =
   | { type: 'login'; password: string }
   | { type: 'tick' }

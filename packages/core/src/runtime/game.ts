@@ -40,6 +40,7 @@ const choices: Readonly<
   },
 };
 
+/** The zero-time default lets the static shell render without consulting a browser clock. */
 export function initialState(now = 0): GameState {
   return {
     phase: 'login',
@@ -50,6 +51,16 @@ export function initialState(now = 0): GameState {
   };
 }
 
+/**
+ * Reduce one internal command against validated configuration and caller-supplied time.
+ * Expiration is checked when a command arrives, not only on ticks: a delayed browser
+ * callback must not let a late click earn a result or extend the session.
+ *
+ * Order matters: global expiry, explicit logout, lock handling, then local deadlines
+ * before scene commands. See the deadline-boundary and background-incident cases in
+ * packages/core/tests/game.test.ts. Unknown Intent variants are compile-time errors
+ * through assertNever; this function is not a decoder for arbitrary external objects.
+ */
 export function transition(
   state: GameState,
   intent: Intent,
@@ -84,6 +95,8 @@ export function transition(
       choiceId: 'timeout',
     });
   }
+  // A hidden reporting step still owns its deadline. Settle it before commands such
+  // as finish-experience can switch to guided mode and remove local challenge timing.
   const pendingDeadline = timed.pendingIncident?.deadline;
   if (pendingDeadline !== undefined && pendingDeadline !== null && currentNow >= pendingDeadline) {
     return recordResult(
@@ -191,6 +204,8 @@ function transitionLogin(
 
 function passwordAccepted(password: string, config: GameConfig): boolean {
   if (typeof password !== 'string') return false;
+  // Tolerate typing and Unicode composition differences in public game phrases;
+  // this is an accessibility choice for the simulation, not an authentication policy.
   const normalize = (value: string) => {
     const trimmed = value.normalize('NFC').trim();
     return config.caseSensitivePasswords ? trimmed : trimmed.toLowerCase();
@@ -264,6 +279,11 @@ function openChallenge(
   return { ...available, scene };
 }
 
+/**
+ * Continue the active situation before filling gaps in the fixed guided order.
+ * Preserve an incident's isolation progress so the player is asked to report it,
+ * rather than repeating isolation. transition settles expired attempts first.
+ */
 function finishExperience(state: Extract<GameState, { phase: 'session' }>): GameState {
   if (state.mode === 'guided') return state;
   const pendingIncident =
@@ -281,7 +301,8 @@ function finishExperience(state: Extract<GameState, { phase: 'session' }>): Game
       ? state.scene.id
       : nextUnanswered(state);
   const guided = { ...state, mode: 'guided' as const, pendingIncident };
-  // Guided mode reuses the absolute session deadline.
+  // Only scene deadlines are removed by openGuidedChallenge; the session deadline
+  // comes from the unchanged state spread above.
   return preferred === null ? completeGuided(guided) : openGuidedChallenge(guided, preferred);
 }
 
@@ -309,6 +330,7 @@ function openGuidedChallenge(
     startedAt: state.now,
     exploreUntil: state.now,
     deadline: null,
+    // The sender demonstration needs its compose/preview interaction before acknowledgement.
     step: id === 'spoof' ? 'explore' : 'choose',
   };
   return { ...state, scene };
@@ -347,11 +369,15 @@ function choose(
   const scene = state.scene;
   if (scene.kind !== 'challenge' || hasResult(state, scene.id)) return state;
   if (typeof choiceId !== 'string') return state;
+  // Native surfaces can emit choices during exploration (for example opening the
+  // USB file). The action drawer is one input path, not a mandatory permission gate.
   const availableChoices = choices[scene.id][scene.step === 'notify' ? 'notify' : 'choose'];
   if (!Object.prototype.hasOwnProperty.call(availableChoices, choiceId)) return state;
   const outcome = availableChoices[choiceId];
   if (outcome === undefined) return state;
 
+  // Isolation is only the first half of the response. Reporting must complete the
+  // situation, and moving to that step does not grant a fresh decision-time budget.
   if (scene.id === 'incident' && scene.step === 'choose' && choiceId === 'isolate') {
     return { ...state, scene: { ...scene, step: 'notify' } };
   }
@@ -364,6 +390,11 @@ function choose(
   return recordResult(state, { id: scene.id, outcome, choiceId });
 }
 
+/**
+ * First outcome wins, including timeout: re-opening or duplicate clicks cannot
+ * replace a learning consequence with a better score. The hasResult guard protects
+ * insertion; duplicate-result journeys in packages/core/tests/game.test.ts exercise it.
+ */
 function recordResult(
   state: Extract<GameState, { phase: 'session' }>,
   result: ChallengeResult,
@@ -385,6 +416,11 @@ function closeScene(state: Extract<GameState, { phase: 'session' }>): GameState 
   return state;
 }
 
+/**
+ * Ordinary exploration attempts can be abandoned. An isolated incident instead
+ * leaves a reporting obligation, with its timing, in pendingIncident. Minimizing
+ * is different: Session.svelte hides the view without sending a close command.
+ */
 function leaveFreeChallenge(
   state: Extract<GameState, { phase: 'session' }>,
 ): Extract<GameState, { phase: 'session' }> {
@@ -403,6 +439,8 @@ function leaveFreeChallenge(
 function setCalm(state: Extract<GameState, { phase: 'session' }>, enabled: boolean): GameState {
   if (typeof enabled !== 'boolean') return state;
   if (state.scene.kind === 'challenge') {
+    // Relaxing the active timer is allowed; arming one mid-situation would surprise
+    // a player who began reading without a deadline.
     if (!enabled || state.calm) return state;
     return { ...state, calm: true, scene: { ...state.scene, deadline: null } };
   }
@@ -518,6 +556,10 @@ function finiteTime(value: number, fallback: number): number {
   return Number.isFinite(value) ? value : fallback;
 }
 
+/**
+ * Stale/non-finite samples do not refund play time: finiteTime and Math.max keep
+ * the accepted lower bound. See the monotonic-clock cases in packages/core/tests/game.test.ts.
+ */
 function monotonicNow(previous: number, candidate: number): number {
   const safePrevious = finiteTime(previous, 0);
   return Math.max(safePrevious, finiteTime(candidate, safePrevious));

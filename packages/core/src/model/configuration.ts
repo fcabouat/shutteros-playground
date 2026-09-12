@@ -1,3 +1,8 @@
+/**
+ * Validated runtime configuration. The infrastructure mapper converts the editable
+ * JSON's seconds/minutes to milliseconds and supplies optional defaults before play.
+ * Accepted passwords and addresses are fictional scenario content, not credentials.
+ */
 export type GameConfig = {
   sessionDurationMs: number;
   challengeDurationMs: number;

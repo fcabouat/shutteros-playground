@@ -21,6 +21,8 @@ const configuration = {
 
 const encoder = new TextEncoder();
 
+// An open stream with a cancellation observer exposes whether the byte limit stops
+// consumption itself, rather than waiting for end-of-body and rejecting JSON afterward.
 function streamFor(text: string, onCancel?: () => void): ReadableStream<Uint8Array> {
   return new ReadableStream({
     start(controller) {

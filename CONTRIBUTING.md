@@ -22,6 +22,12 @@ Keep `packages/core` independent of Svelte, the DOM, storage, system time, and p
 
 Do not add real credential collection, network-backed scenarios, trackers, persistence, external embeds, CDNs, or claims that the page provides operating-system isolation. Do not turn the fictional content into a real assessment of participants.
 
+## Code comments
+
+Document the reasoning a reader cannot recover from names and types: state ownership and lifetime, boundary assumptions, ordering constraints, failure policy, and non-obvious product rules. Put a short contract beside a module or public operation when it helps callers; keep detailed explanations next to the relevant decision. Straightforward helpers and declarative markup do not need narration.
+
+Comments describe current behavior, without design history or superseded alternatives. A guarantee such as “never”, “every” or “exactly” must identify its structural mechanism or a test that demonstrates the stated scope. Test comments explain why a fake or boundary value matters rather than repeating the test name. Update the explanation with the implementation; do not add a comment-count gate.
+
 ## Content changes
 
 Write game-facing content in both French and English and repository documentation in English. Keep lessons short and supported by the official sources in `docs/content.md`. Preserve important nuance: a white station reduces exposure but is not a safety guarantee; a legitimate delegation can change a sender address; a signature does not make content harmless; and HTTPS alone does not prove that a destination is the intended service.

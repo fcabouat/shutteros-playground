@@ -24,6 +24,9 @@ try {
 }
 
 let embeddedOrganizationLogo;
+// Preserve the versioned JSON as unknown for the runtime decoder. Only the asset
+// reference needs build-time resolution; the data URL travels as a separate prop so
+// the external contract can keep rejecting URLs in organizationLogo.
 const organizationLogo = configuration?.organizationLogo;
 if (organizationLogo !== undefined) {
   if (
@@ -52,6 +55,8 @@ if (organizationLogo !== undefined) {
   if (extension === '.png' && png) mime = 'image/png';
   else if (extension === '.webp' && webp) mime = 'image/webp';
   else if (extension === '.svg') {
+    // This is a format check, not SVG sanitization. The publisher supplies the file,
+    // and OrganizationBrand renders it as an image, not inline SVG or an embedded document.
     let svg;
     try {
       svg = new TextDecoder('utf-8', { fatal: true }).decode(logo);
@@ -66,6 +71,9 @@ if (organizationLogo !== undefined) {
   embeddedOrganizationLogo = `data:${mime};base64,${logo.toString('base64')}`;
 }
 
+// The generated module ends up inside a script element in the portable artifact.
+// Escape HTML delimiters as well as JSON syntax; portable-configuration.test.ts
+// checks that decoded values are preserved without literal script termination.
 function scriptSafeJson(value) {
   const serialized = JSON.stringify(value);
   if (serialized === undefined) return 'undefined';

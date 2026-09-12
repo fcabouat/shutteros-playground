@@ -23,6 +23,8 @@ function fail(message) {
 }
 
 let branding = fallback;
+// Absence means a generic public build; a present but invalid private file fails
+// below so a deployment mistake cannot silently ship the wrong organisation identity.
 if (existsSync(inputPath)) {
   const source = readFileSync(inputPath);
   if (source.byteLength > maxJsonBytes) fail('private/branding.json must be at most 32 KiB');
@@ -64,6 +66,7 @@ if (branding.organizationLogo !== undefined) {
     fail('organizationLogo must point to an existing file inside private/');
   }
   const resolvedLogoPath = realpathSync(logoPath);
+  // Check the symlink target as well as the requested path before embedding local bytes.
   if (!resolvedLogoPath.startsWith(privateRoot + '/'))
     fail('organizationLogo symlink must resolve inside private/');
   const mime = allowed.get(extname(logoPath).toLowerCase());
@@ -83,6 +86,9 @@ if (branding.organizationLogo !== undefined) {
 }
 
 mkdirSync(resolve(root, 'src/lib'), { recursive: true });
+// JSON escaping alone is insufficient inside portable HTML: the HTML parser sees
+// script end tags before JavaScript string syntax. Escape delimiters in the generated
+// module; tests/unit/branding.test.ts exercises hostile text through this boundary.
 const serializedBranding = JSON.stringify({
   applicationName: applicationName.trim(),
   ...(branding.organizationName ? { organizationName: branding.organizationName } : {}),

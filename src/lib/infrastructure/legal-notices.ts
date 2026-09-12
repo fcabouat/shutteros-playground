@@ -9,6 +9,11 @@ export type LegalNotices = {
 
 export type LegalNoticesResult = { ok: true; notices: LegalNotices } | { ok: false };
 
+/**
+ * Use the portable artifact's inert template when present; otherwise load the static
+ * notice file. Failure is separate from game configuration so About can report it
+ * without blocking a session. The project license is bundled in both distributions.
+ */
 export async function loadLegalNotices(
   url: string,
   signal: AbortSignal,
@@ -39,6 +44,8 @@ function embeddedThirdPartyNotices(): string | null {
   if (typeof document === 'undefined') return null;
   const template = document.getElementById('third-party-notices');
   if (template?.tagName !== 'TEMPLATE') return null;
+  // Read text from the template fragment, not innerHTML: license markup is content,
+  // not an instruction to create DOM. About renders the returned string as text too.
   const text = (template as HTMLTemplateElement).content.textContent;
   return text === null || text.length === 0 ? null : text;
 }
@@ -48,6 +55,7 @@ function exceedsConfiguredSize(contentLength: string | null): boolean {
   return Number(contentLength) > maximumNoticesBytes;
 }
 
+/** Bound streamed bytes as well as the advertised size; see tests/unit/legal-notices.test.ts. */
 async function readBoundedText(body: ReadableStream<Uint8Array> | null): Promise<string | null> {
   if (body === null) return '';
 

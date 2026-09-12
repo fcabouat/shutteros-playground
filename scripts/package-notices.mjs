@@ -38,6 +38,8 @@ try {
 } catch (error) {
   if (error?.code !== 'ENOENT') throw error;
 }
+// Development/About reads the committed notice file. Require explicit reconciliation
+// with the actual bundle inventory so source previews and shipped licenses agree.
 if (sourceNotices?.trimEnd() !== notices.trimEnd()) {
   if (process.argv.includes('--update-source')) {
     await writeFile(sourceNoticesPath, notices);
@@ -53,6 +55,10 @@ await writeFile('dist/LICENSE', license);
 const escape = (text) =>
   text.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
 let html = await readFile('dist/portable/index.html', 'utf8');
+// Check the single-file plugin's output shape before granting CSP script hashes.
+// Hashing every discovered script would also authorize an injected extra element.
+// This is a guard on this controlled build format, not a general HTML sanitizer;
+// tests/unit/package-notices.test.ts includes mixed-case end-tag breakout attempts.
 const scriptOpenings = html.match(/<script\b/gi) ?? [];
 const scriptClosings = html.match(/<\/script\b/gi) ?? [];
 if (scriptOpenings.length !== 1 || scriptClosings.length !== 1) {
@@ -79,6 +85,8 @@ html = html.replace(
   '<head>',
   `<head>\n<meta http-equiv="Content-Security-Policy" content="${policy}">`,
 );
+// A template keeps the offline notice text available without another request.
+// Escape it before insertion; the browser loader reads content.textContent.
 html = html.replace(
   '</body>',
   `<template id="third-party-notices"><pre>${escape(notices)}</pre></template>\n</body>`,

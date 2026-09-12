@@ -8,6 +8,8 @@ describe('runtime lifecycle', () => {
   it('catches up after a suspended clock and stops publishing once disposed', () => {
     const decoded = configure(configuration);
     if (!decoded.ok) throw new Error('Invalid test configuration');
+    // Separate time advancement from tick delivery to model a suspended browser
+    // without real sleeps. Keeping the callback also lets us deliver it after cleanup.
     let now = 0;
     let tick = () => {};
     let unsubscribed = false;

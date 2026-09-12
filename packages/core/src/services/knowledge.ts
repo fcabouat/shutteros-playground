@@ -7,6 +7,11 @@ const answers: Readonly<Record<KnowledgeId, Readonly<Record<string, boolean>>>> 
   mfa: { 'never-share': true, 'share-code': false },
 };
 
+/**
+ * Optional questions belong to a learning context, not to a separate game phase.
+ * Password practice is available in mail after renewal; incident/MFA checks follow
+ * their feedback. Answers stay outside primary challenge results and progression.
+ */
 export function currentKnowledgeId(state: GameState): KnowledgeId | null {
   if (state.phase !== 'session') return null;
   if (state.scene.kind === 'challenge' && state.scene.id === 'mail') {

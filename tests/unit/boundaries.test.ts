@@ -7,6 +7,8 @@ const root = fileURLToPath(new URL('../..', import.meta.url));
 const eslint = new ESLint({ cwd: root, overrideConfigFile: 'eslint.config.js' });
 
 async function lintCore(source: string) {
+  // A production-path virtual file selects the real flat-config overrides. Inspect
+  // rule IDs so an unrelated lint error cannot masquerade as a working boundary.
   const results = await eslint.lintText(source, { filePath: 'packages/core/src/probe.ts' });
   return results.flatMap((result) => result.messages.map((message) => message.ruleId));
 }
