@@ -52,3 +52,5 @@ Use `support/` for maintained release branches and prefix version tags with `v`.
 ## Dependency notices
 
 The build compares its actual redistributed dependency inventory with `static/THIRD-PARTY-NOTICES.txt`, which also makes notices available in development. If a dependency update makes the build report stale notices, run `pnpm notices:update` against those build intermediates, review the notice changes, then rerun `pnpm build` and the checks. Always distribute only a completely successful build.
+
+For releasable changes, run `pnpm changeset` and commit the generated note with your PR. See the [three-command release procedure](docs/publishing.md#prepare-a-release).

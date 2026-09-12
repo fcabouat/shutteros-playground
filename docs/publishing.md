@@ -30,6 +30,22 @@ The browser test fixture serves only files from `dist/` on loopback port 4183, u
 
 GitHub documents the required publishing source, artifact, permissions, and environment in [custom Pages workflows](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages).
 
+## Prepare a release
+
+Install GitHub CLI (`gh`) and run `gh auth login` once. In repository **Settings → Actions → General → Workflow permissions**, enable **Allow GitHub Actions to create and approve pull requests**. Keep branch protections and required `verify` checks; the automation does not merge PRs. Tag rules must allow Actions to create `v*` tags.
+
+Include `pnpm changeset` and its short English release note in each releasable feature or fix PR. The application and core share one version. After these PRs are merged into `develop`, use a clean checkout:
+
+```sh
+git switch develop && git pull --ff-only
+pnpm release:prepare
+pnpm release:push
+```
+
+Preparation consumes pending changesets, updates both versions and changelogs, and commits on `release/X.Y.Z`. The push command opens a release PR into `main`; retry it safely if PR creation fails. Accept that PR after `verify` passes. The main push runs verification, publishes Pages when enabled, creates the immutable `vX.Y.Z` tag and GitHub release, and opens a `main` → `develop` synchronization PR. Accept that PR too; do not delete `main`.
+
+The synchronization PR is created using `GITHUB_TOKEN`, so the workflow explicitly dispatches verification on its head commit. No personal token is stored in Actions. Tag creation and release publication are retryable by rerunning the failed release job, but an existing tag pointing elsewhere is never overwritten. Resolve synchronization conflicts normally before starting the next release.
+
 ## Maintenance and release review
 
 - Rehearse with representative players and the target kiosk before a public event. Automated accessibility checks do not replace keyboard, screen-reader, zoom, and comprehension testing with people.
