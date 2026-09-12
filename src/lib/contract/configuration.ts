@@ -1,4 +1,4 @@
-export type KioskConfigV1 = {
+type KioskConfigV1 = {
   version: 1;
   sessionMinutes: number;
   challengeSeconds: number;
@@ -19,7 +19,7 @@ export type KioskConfigV1 = {
   defaultCalmMode: boolean;
 };
 
-export type ConfigurationIssue = { path: string; message: string };
+type ConfigurationIssue = { path: string; message: string };
 export type DecodeConfigurationResult =
   { ok: true; value: KioskConfigV1 } | { ok: false; issues: readonly ConfigurationIssue[] };
 

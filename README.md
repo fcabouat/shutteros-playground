@@ -14,7 +14,7 @@ The login begins with a single sticky note. The assistant stays collapsed until 
 
 ## Run and build
 
-Node.js 22.13 or later (Node 24 is used in CI) and pnpm 11.19.0 are required.
+Use Node.js 22.13 or later (Node 24 is used in CI). Dependency installation and CI use pnpm 11.19.0 with the committed lockfile:
 
 ```sh
 pnpm install --frozen-lockfile
@@ -26,6 +26,16 @@ The development server listens on port 5173. To create both distributable varian
 ```sh
 pnpm build
 ```
+
+For everyday development, you can also run the scripts with **Bun** after the locked installation above:
+
+```sh
+bun run dev
+bun run build
+bun run check
+```
+
+Bun is a script runner here; Node remains required by the tools. Use `bun run test` to run the project's Vitest suite, not `bun test`, which selects Bun's own test runner. The full `verify` command still orchestrates its steps with pnpm. Dependency changes and clean installations use pnpm so contributors and CI share one lockfile; `bun install` and forcing the Bun runtime with `--bun` are not part of the validated workflow.
 
 This creates the prerendered static site in `dist/` and the optional standalone artifact at `dist/portable/shutteros.html`. For kiosk use, serve `dist/` with Python's local HTTP server; `pnpm preview` is for development verification. `pnpm test` runs unit tests, and `pnpm check` runs Svelte diagnostics.
 
@@ -51,7 +61,9 @@ pnpm verify
 pnpm build:storybook
 ```
 
-`verify` runs the repository's configured lint, formatting, type, test, build, and browser checks. Treat exact checks and counts as repository state, not as a product promise. CI also rebuilds and tests the GitHub Pages path. Publishing is opt-in and requires a successful verification on the default branch; follow the [publication guide](docs/publishing.md).
+`verify` runs lint, formatting, types, Knip (unused files, dependencies and exports), unit tests, build, and browser checks. Run `pnpm knip` or `bun run knip` separately for the unused-code check. Treat exact checks and counts as repository state, not as a product promise. CI also rebuilds and tests the GitHub Pages path. Publishing is opt-in and requires a successful verification on the default branch; follow the [publication guide](docs/publishing.md).
+
+Dependabot checks version updates monthly, grouped into development tools, application dependencies, and GitHub Actions. Version-update PRs are limited to two for npm and one for Actions at a time. Security alerts and security-update PRs follow [GitHub's separate security settings](https://docs.github.com/en/code-security/how-tos/secure-your-supply-chain/secure-your-dependencies/configure-security-updates), not this monthly version schedule.
 
 The [initial publication audit](docs/audit-2026-09-12.md) records the resolved findings, local verification and remaining deployment acceptance checks.
 

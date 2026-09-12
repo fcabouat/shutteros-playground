@@ -25,10 +25,6 @@ export function nextChallenge(state: GameState): ChallengeId | null {
   return challengeOrder.find((id) => !complete.has(id)) ?? null;
 }
 
-export function completedCount(state: GameState): number {
-  return state.phase === 'session' ? state.results.length : 0;
-}
-
 export function safeCount(state: GameState): number {
   if (state.phase !== 'session') return 0;
   return state.results.filter((result) => result.outcome === ('safe' as Outcome)).length;

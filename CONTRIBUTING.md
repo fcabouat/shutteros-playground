@@ -12,6 +12,10 @@ pnpm install --frozen-lockfile
 
 Useful commands are `pnpm dev`, `pnpm test`, `pnpm check`, `pnpm lint`, and `pnpm build`. Run the checks relevant to a change before opening a pull request. Do not claim that a command passed unless it was run successfully in the current environment.
 
+After that installation, Bun can run individual scripts, for example `bun run dev`, `bun run build`, `bun run check`, `bun run test`, and `bun run knip`. Keep Node installed. `bun test` runs a different test runner; use `bun run test` for Vitest. Use pnpm for dependency changes and the full `verify` workflow, retaining the single committed pnpm lockfile.
+
+Knip runs in `verify` and detects unused files, dependencies and exports across the application and core workspace. Framework entry points come from its plugins; `knip.jsonc` adds only the static test-server entry and checks core entry exports. Remove unused code or document a real entry point instead of adding broad ignore rules.
+
 ## Scope and design
 
 Keep `packages/core` independent of Svelte, the DOM, storage, system time, and package dependencies. It is a standalone workspace package so the rules can be type-checked separately from the browser application. Keep the versioned external JSON contract in `src/lib/contract` independent of `@shutteros/core`. UI components render props and emit intents; they do not contain game outcomes or timing rules. Preserve the state-machine invariants: absolute deadlines, monotonic time, no duplicate result for a challenge, and a full reset on logout or global expiry.

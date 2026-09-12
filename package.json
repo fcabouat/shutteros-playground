@@ -15,8 +15,9 @@
     "notices:update": "node scripts/package-notices.mjs --update-source",
     "preview": "vite preview --host 0.0.0.0",
     "check:core": "tsc -p packages/core/tsconfig.json",
-    "check": "node scripts/prepare-branding.mjs && pnpm check:core && svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+    "check": "node scripts/prepare-branding.mjs && tsc -p packages/core/tsconfig.json && svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "lint": "eslint .",
+    "knip": "node scripts/prepare-branding.mjs && node scripts/prepare-portable-configuration.mjs && knip",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "vitest run",
@@ -24,12 +25,12 @@
     "test:e2e": "playwright test",
     "storybook": "node scripts/prepare-branding.mjs && storybook dev -p 6006 --no-open",
     "build:storybook": "node scripts/prepare-branding.mjs && storybook build",
-    "verify": "pnpm lint && pnpm format:check && pnpm check && pnpm test && pnpm build && pnpm test:e2e"
+    "verify": "pnpm lint && pnpm format:check && pnpm check && pnpm knip && pnpm test && pnpm build && pnpm test:e2e"
   },
   "dependencies": {
-    "@shutteros/core": "workspace:*",
     "@internationalized/date": "^3.8.1",
     "@lucide/svelte": "^0.577.0",
+    "@shutteros/core": "workspace:*",
     "bits-ui": "2.19.2"
   },
   "devDependencies": {
@@ -46,6 +47,7 @@
     "eslint": "^9.39.0",
     "eslint-plugin-svelte": "^3.13.0",
     "globals": "^16.0.0",
+    "knip": "6.35.1",
     "prettier": "^3.6.0",
     "prettier-plugin-svelte": "^3.4.0",
     "storybook": "10.6.0",
@@ -55,8 +57,8 @@
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.46.0",
     "vite": "8.3.0",
-    "vitest": "5.0.0",
-    "vite-plugin-singlefile": "^2.3.0"
+    "vite-plugin-singlefile": "^2.3.0",
+    "vitest": "5.0.0"
   },
   "author": {
     "name": "François Cabouat",
