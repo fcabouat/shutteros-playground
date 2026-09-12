@@ -4,11 +4,12 @@ The source is a personal MIT project. The public demo uses the generic ShutterOS
 
 ## Configure Pages
 
-1. Use a GitHub repository with Actions enabled and `main` as its default branch. Forks can use the same workflow; the deployment path is derived from the repository name.
+1. Use a GitHub repository with Actions enabled, `develop` as its default integration branch, and `main` for releases and Pages. Forks can use the same workflow; the deployment path is derived from the repository name.
 2. Run the [release verification](verification.md) from a clean checkout. Check that the source excludes organisation assets, generated branding, `.env` files, `dist/`, and local browser reports.
 3. In **Settings → Pages → Build and deployment**, select **GitHub Actions** as the source. Add the repository Actions variable **`PAGES_ENABLED` = `true`** under **Settings → Secrets and variables → Actions → Variables**.
-4. Run **Verify and publish** manually on the default branch, or push a commit to it. The deployment job runs only after verification succeeds, only on the default branch, and only when the variable is enabled. Pull requests never deploy.
-5. Inspect the Actions run and open the URL reported by the `github-pages` deployment. Verify login, one situation, language switching, logout, and the browser console on that URL.
+4. Run **Verify and publish** manually on `main`, or push a commit to it. The deployment job runs only after verification succeeds, only on `main`, and only when the variable is enabled. Pull requests never deploy.
+5. In **Settings → Environments → github-pages**, restrict deployment branches to `main`.
+6. Inspect the Actions run and open the URL reported by the `github-pages` deployment. Verify login, one situation, language switching, logout, and the browser console on that URL.
 
 The workflow uses pinned action revisions, a frozen lockfile, Node 24, dependency advisory checking, lint, formatting, type checks, Knip, unit tests, static and portable builds, Chromium end-to-end tests, and a Storybook build. Every push and pull request runs verification. Only the deployment job receives Pages write and OIDC permissions. It deploys the same Pages artifact that passed the browser tests; it does not rebuild after verification.
 

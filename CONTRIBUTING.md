@@ -45,9 +45,9 @@ The workspace overrides `cookie@<0.7.0` to `0.7.2` for [GHSA-pxg6-pf52-xh8x](htt
 
 ## Git workflow
 
-`main` contains the reviewed distributable version; `develop` is the integration branch. Use `feature/<topic>` or `bugfix/<topic>` for development, `release/<version>` for release preparation, and `hotfix/<version>` for urgent fixes from `main`. Open a pull request into `develop`, then merge a verified release into both `main` and `develop`. GitHub Pages publishes only the configured default branch after verification; keep `main` as the default.
+`main` contains the reviewed distributable version; `develop` is the integration branch. Use `feature/<topic>` or `bugfix/<topic>` for development, `release/<version>` for release preparation, and `hotfix/<version>` for urgent fixes from `main`. Open a pull request into `develop`, then merge a verified release into both `main` and `develop`. Keep `develop` as the default branch for contributions and dependency updates. GitHub Pages publishes only `main` after verification.
 
-Use `support/` for maintained release branches and prefix version tags with `v`. The optional `git-flow` CLI is not required; configure it locally with these branch conventions if used. Git configuration is not cloned with the repository. Follow the [deployment guide](docs/publishing.md) to publish the default branch on Pages.
+Use `support/` for maintained release branches and prefix version tags with `v`. The optional `git-flow` CLI is not required; configure it locally with these branch conventions if used. Git configuration is not cloned with the repository. Follow the [deployment guide](docs/publishing.md) to publish `main` on Pages.
 
 ## Dependency notices
 

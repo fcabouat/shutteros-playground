@@ -63,7 +63,7 @@ pnpm verify
 pnpm build:storybook
 ```
 
-`verify` runs lint, formatting, types, Knip (unused files, dependencies and exports), unit tests, build, and browser checks. Run `pnpm knip` or `bun run knip` separately for the unused-code check. The [verification guide](docs/verification.md) describes coverage and deployment checks. CI also rebuilds and tests the GitHub Pages path. Publishing is opt-in and requires a successful verification on the default branch; follow the [deployment guide](docs/publishing.md).
+`verify` runs lint, formatting, types, Knip (unused files, dependencies and exports), unit tests, build, and browser checks. Run `pnpm knip` or `bun run knip` separately for the unused-code check. The [verification guide](docs/verification.md) describes coverage and deployment checks. CI also rebuilds and tests the GitHub Pages path. Publishing is opt-in and requires a successful verification on `main`; follow the [deployment guide](docs/publishing.md).
 
 Dependabot checks version updates monthly, grouped into development tools, application dependencies, and GitHub Actions. Version-update PRs are limited to two for npm and one for Actions at a time. Security alerts and security-update PRs follow [GitHub's separate security settings](https://docs.github.com/en/code-security/how-tos/secure-your-supply-chain/secure-your-dependencies/configure-security-updates), not this monthly version schedule.
 
