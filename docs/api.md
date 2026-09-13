@@ -1,14 +1,12 @@
 # Core API
 
-ShutterOS has a small, framework-independent TypeScript core. It models the exercise, reduces player intents into the next state, and exposes read-only projections and learning services for the UI, Storybook scenarios, and tests. The generated TypeDoc reference covers the model, runtime, projections and services; this page is a map of those concepts.
+This reference documents the TypeScript game library in `packages/core`. It has no HTTP endpoints. The application supplies validated configuration, player actions and the current time; the core returns game state without accessing the browser.
 
-The core is a domain library, not an HTTP API. It does not open ports, send requests, persist session data, or retain the entered password. Callers provide the current time and validated configuration, and receive a new immutable state.
+## Start here
 
-## Main modules
+- [`model/game.ts`](https://github.com/fcabouat/shutteros-playground/blob/main/packages/core/src/model/game.ts) defines `GameState`, `Intent` and the scenario identifiers. [`model/configuration.ts`](https://github.com/fcabouat/shutteros-playground/blob/main/packages/core/src/model/configuration.ts) defines the configuration received by the core.
+- [`runtime/game.ts`](https://github.com/fcabouat/shutteros-playground/blob/main/packages/core/src/runtime/game.ts) contains `initialState()` and `transition()`. These create a session and process actions, including expiry, guided progression and replay.
+- [`projections/game.ts`](https://github.com/fcabouat/shutteros-playground/blob/main/packages/core/src/projections/game.ts) derives what the UI needs: remaining time, available situations, results and reminders.
+- [`services/passwords.ts`](https://github.com/fcabouat/shutteros-playground/blob/main/packages/core/src/services/passwords.ts) checks fictional login phrases; [`services/knowledge.ts`](https://github.com/fcabouat/shutteros-playground/blob/main/packages/core/src/services/knowledge.ts) handles the optional learning questions.
 
-- **Model** — `GameState`, `Scene`, `Intent`, challenge identifiers and result types define the domain vocabulary. `GameConfig` describes the validated runtime configuration. See [`model/game.ts`](https://github.com/fcabouat/shutteros-playground/blob/main/packages/core/src/model/game.ts) and [`model/configuration.ts`](https://github.com/fcabouat/shutteros-playground/blob/main/packages/core/src/model/configuration.ts).
-- **Runtime** — `initialState()` creates the login state; `transition()` is the authoritative pure reducer. It applies intents against caller-supplied time, enforces the global deadline, and handles login, logout, lock, guided finish, replay, routines, and debrief. See [`runtime/game.ts`](https://github.com/fcabouat/shutteros-playground/blob/main/packages/core/src/runtime/game.ts).
-- **Projections** — Read-only helpers such as `nextChallenge`, `allComplete`, `assessedCount`, `remainingSeconds`, `nextAmbientEvent`, and `incidentIsolated` derive UI facts without changing state. See [`projections/game.ts`](https://github.com/fcabouat/shutteros-playground/blob/main/packages/core/src/projections/game.ts).
-- **Services** — `passwordHint()` and `passwordCategory()` implement the demo password lesson; `currentKnowledgeId()` and `knowledgeAnswer()` implement optional learning checks. See [`services/passwords.ts`](https://github.com/fcabouat/shutteros-playground/blob/main/packages/core/src/services/passwords.ts) and [`services/knowledge.ts`](https://github.com/fcabouat/shutteros-playground/blob/main/packages/core/src/services/knowledge.ts).
-
-Content and translations live beside the domain code in `data/`; they supply labels and scenario explanations while the model and runtime retain the valid identifiers and their effects.
+The `data/` folder holds scenario text and translations. For how this library connects to Svelte and the browser, see the [architecture overview](https://github.com/fcabouat/shutteros-playground/blob/main/docs/overview.md).

@@ -1,36 +1,31 @@
 # Architecture overview
 
-ShutterOS is designed for a shared kiosk: a short learning experience, simple deployment, and a fresh session for each participant. The architecture keeps the simulation independent of browser behavior and organisation-specific configuration.
+ShutterOS is a static Svelte application with a separate TypeScript core. The core decides what happens in the game; the browser supplies time, configuration and player actions. Session data stays in memory, with no backend or saved scores.
 
-## Key decisions
+## Code organisation
 
-- **Static delivery.** SvelteKit prerenders the shell; the browser runs the game. Deployment needs a static file server, with no application backend, account system or participant database.
-- **Ephemeral state.** Progress stays in memory. Reset discards domain state and remounts the session components to clear their drafts and dialogs. Saved games and score exports are outside the product scope.
-- **Explicit configuration.** A versioned JSON contract is validated before mapping to runtime units and defaults. Invalid settings produce diagnostics instead of a silently repaired configuration.
-- **One session deadline.** Free exploration and guided progression share the same state machine and global clock. Guided mode covers unanswered situations without granting extra session time.
+| Location                 | Owns                                                                        |
+| ------------------------ | --------------------------------------------------------------------------- |
+| `packages/core`          | Game state, decisions, progression and derived view data.                   |
+| `src/lib/contract`       | Validation of the external configuration JSON.                              |
+| `src/lib/infrastructure` | Browser clock, configuration loading and mapping, images and legal notices. |
+| `src/lib/components`     | Rendering, input drafts, window layout and focus.                           |
+| `src/lib/app`            | Connecting the core to the browser and managing their lifetimes.            |
 
-## Boundaries and ownership
+A player action follows **component → app runtime → core transition → updated state → component**. Components emit intents; the core returns the next state. For example, disconnecting the simulated network moves the incident to its reporting step. Moving or minimising its window is handled by the view.
 
-| Layer                    | Responsibility                                                                                     |
-| ------------------------ | -------------------------------------------------------------------------------------------------- |
-| `packages/core`          | Pure transitions, outcomes, timing rules and projections; receives configuration and numeric time. |
-| `src/lib/contract`       | External JSON shape and validation, independent of the core model.                                 |
-| `src/lib/infrastructure` | Browser clock, bounded file loading, legal notices and contract-to-core mapping.                   |
-| `src/lib/components`     | Props-based views, local drafts, window geometry and focus; emits player intents.                  |
-| `src/lib/app`            | Composition, runtime subscriptions, resource loading, cancellation and cleanup.                    |
+The core compiles without DOM types or external dependencies. ESLint restricts imports between layers, and [boundary tests](../tests/unit/boundaries.test.ts) check these restrictions. Configuration passes through a strict decoder before reaching the core; invalid settings produce an error screen.
 
-The interaction path is **view intent → app runtime → core transition → snapshot → view props**. Outcomes belong to the core; window placement and presentation belong to components. Minimizing keeps a view mounted but hidden and inert. Closing sends a domain intent. Language belongs to the mounted application, independently of a player's score. Translation entries own complete phrases, including articles and agreement; configurable names remain standalone labels rather than grammatical fragments.
+## Session behaviour
 
-The core is a separate package because its manifest, ES2022-only TypeScript environment and import restrictions enforce a useful boundary. Other layers remain folders: they have no independent consumer or release lifecycle. [Boundary tests](../tests/unit/boundaries.test.ts) exercise forbidden imports and ambient clocks. A global event log or normalized entity store would add machinery without serving this bounded simulation.
+There is one deadline, set at login. Before handling an action, the runtime reads the current time and the core checks whether the session has expired. A click after the deadline therefore resets the session, even if a background tab delayed the clock callback. Periodic callbacks refresh the display and trigger expiry when nobody interacts. There are no per-scenario countdowns.
 
-## Runtime invariants
+Guided finish continues an unfinished situation, then covers the remaining ones using the same deadline. Replays show new consequences without replacing the first recorded result. An incident’s completed isolation step survives navigation, so the player can return to reporting it. See the [transition code](../packages/core/src/runtime/game.ts) and [game-rule tests](../packages/core/tests/game.test.ts).
 
-Player actions and ticks both settle elapsed time before progression. First outcomes and outstanding incident-reporting steps survive navigation. Replaying shows the new consequence while retaining the first result and the original session deadline. These rules are documented beside the [transition](../packages/core/src/runtime/game.ts) and exercised by its [tests](../packages/core/tests/game.test.ts).
+Minimising preserves a window’s draft. Logout and expiry create a new session generation: Svelte remounts the session views, clearing drafts and dialogs as well as game progress. Language is owned outside that reset boundary, so the player’s language choice survives. Browser resources are created after mount and disposed when the application is replaced or unmounted.
 
-Browser configuration and time enter after mount to preserve hydration consistency. The composition root owns load cancellation, runtime disposal and the session reset boundary.
+## Distribution
 
-## Delivery and verification
+`pnpm build` produces the static game in `dist/` and a standalone file in `dist/portable/shutteros.html`. The static game loads its configuration at startup; the standalone edition embeds it during the build.
 
-The HTTP edition loads configuration from `dist/`; the portable edition embeds it at build time in `dist/portable/shutteros.html`. Both use the same decoder, application and core, and include license notices.
-
-Storybook injects bounded scenarios into screens. CI exercises unit rules, static and portable browser journeys, packaging, and the Pages base path. See [verification](verification.md) for coverage and acceptance checks. Comprehension, accessibility on the target device, host isolation and Ubuntu boot integration require deployment validation; the web simulation does not provide an OS security boundary.
+`pnpm build:site` assembles the public product site in `dist/site/`, including a demo built for `/demo/`, translated guides, the generated core API and Storybook. Documentation generation is separate from the game runtime. See [publication](publishing.md) for base paths and artifacts, [verification](verification.md) for checks, and [kiosk setup](kiosk.md) for host responsibilities.

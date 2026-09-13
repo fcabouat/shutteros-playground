@@ -40,7 +40,7 @@ An unexpected authentication request should be denied and reported. Never share 
 
 ### AI assistant and work information
 
-The seventh situation takes about a minute: choose an internal or commercial tool, inspect the exercise policy, preview a prepared message, then send it. There is no real login, free-text entry, upload or AI request. Five variants cover routine car park meeting notes and security notes, each with or without names, plus a general template request. Neutral titles and an interleaved order encourage reading the drafts; the security notes carry only a “[Security]” marker.
+In the AI situation, choose an internal or commercial tool, inspect the exercise policy, preview a prepared message, then send it. There is no real login, free-text entry, upload or AI request. Five variants cover routine car park meeting notes and security notes, each with or without names, plus a general template request. Neutral titles and an interleaved order encourage reading the drafts; the security notes carry only a “[Security]” marker.
 
 The fictional policy permits both versions of the routine project and general templates in the internal tool. The commercial tool permits the anonymised routine project and the general template. Neither accepts either version of the restricted security notes: removing names does not remove access vulnerabilities or remediation dates. Feedback explains the distinction after sending. Approval of this fictional draft is not a guarantee that removing names adequately anonymises a real document. These exercise rules do not replace the deploying organisation’s policy or AI usage charter.
 
@@ -52,7 +52,7 @@ Three optional desktop routines reinforce password handling, company-approved sy
 
 ### Teaching and facilitation
 
-The guided ending targets three to five minutes: observe a cue, choose an action, see the simulated consequence, and read one practical takeaway; the global fifteen-minute limit is the maximum. Optional two-choice microchecks open in a separate view after the password routine (My account or guided routines) and after incident/MFA feedback. The login lesson contains no quiz. Microchecks are skippable and do not alter the primary score. Offer plausible choices, explain the consequence in about one sentence, and allow a new session to try different choices. Microcheck answers are retained for the current session.
+The guided ending targets three to five minutes: observe a cue, choose an action, see the simulated consequence, and read one practical takeaway; the session deadline still applies (fifteen minutes by default, configurable before deployment). Optional two-choice microchecks open in a separate view after the password routine (My account or guided routines) and after incident/MFA feedback. The login lesson contains no quiz. Microchecks are skippable and do not alter the primary score. Offer plausible choices, explain the consequence in about one sentence, and let participants replay situations to try different choices. Microcheck answers are retained for the current session.
 
 Use supportive language: reporting a click or an approval quickly is a protective action, not a failure. The game is a local simulator. Its sender demonstration changes a fictional display field and previews a message; it does not bypass email controls, send mail, or demonstrate a real spoofing technique.
 
