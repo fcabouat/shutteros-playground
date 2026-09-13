@@ -2,7 +2,8 @@
 type KioskConfigV1 = {
   version: 1;
   sessionMinutes: number;
-  challengeSeconds: number;
+  /** V1 compatibility field; accepted and validated but unused by the runtime. */
+  challengeSeconds?: number;
   explorationSeconds?: number;
   idleReminderSeconds?: number;
   eventIntervalSeconds?: number;
@@ -19,7 +20,8 @@ type KioskConfigV1 = {
   stationLabel: string;
   mailLegitimateAddress: string;
   mailImpersonatorAddress: string;
-  defaultCalmMode: boolean;
+  /** V1 compatibility field; accepted and validated but unused by the runtime. */
+  defaultCalmMode?: boolean;
 };
 
 type ConfigurationIssue = { path: string; message: string };
@@ -57,6 +59,8 @@ const optionalKeys = [
   'organizationLogo',
   'partnerOrganizationName',
   'partnerOrganizationLogo',
+  'challengeSeconds',
+  'defaultCalmMode',
 ] as const;
 
 /**
@@ -86,7 +90,7 @@ export function decodeConfiguration(value: unknown): DecodeConfigurationResult {
 
   if (value.version !== 1) issues.push({ path: 'version', message: 'must equal 1' });
   validateNumber(value.sessionMinutes, 'sessionMinutes', 1, 30, issues);
-  validateNumber(value.challengeSeconds, 'challengeSeconds', 10, 120, issues);
+  validateOptionalNumber(value.challengeSeconds, 'challengeSeconds', 10, 120, issues);
   validateOptionalNumber(value.explorationSeconds, 'explorationSeconds', 0, 60, issues);
   validateOptionalNumber(value.idleReminderSeconds, 'idleReminderSeconds', 10, 300, issues);
   validateOptionalNumber(value.eventIntervalSeconds, 'eventIntervalSeconds', 30, 300, issues);
@@ -110,7 +114,8 @@ export function decodeConfiguration(value: unknown): DecodeConfigurationResult {
   validateEmail(value.mailImpersonatorAddress, 'mailImpersonatorAddress', issues);
   validateBoolean(value.caseSensitivePasswords, 'caseSensitivePasswords', issues);
   validateBoolean(value.showPasswordHint, 'showPasswordHint', issues);
-  validateBoolean(value.defaultCalmMode, 'defaultCalmMode', issues);
+  if (value.defaultCalmMode !== undefined)
+    validateBoolean(value.defaultCalmMode, 'defaultCalmMode', issues);
 
   if (issues.length > 0) return { ok: false, issues };
   return { ok: true, value: value as unknown as KioskConfigV1 };

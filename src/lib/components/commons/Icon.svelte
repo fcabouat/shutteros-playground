@@ -1,6 +1,7 @@
 <script lang="ts">
   import ArrowRight from '@lucide/svelte/icons/arrow-right';
   import ArrowUpRight from '@lucide/svelte/icons/arrow-up-right';
+  import BotMessageSquare from '@lucide/svelte/icons/bot-message-square';
   import Check from '@lucide/svelte/icons/check';
   import ChevronDown from '@lucide/svelte/icons/chevron-down';
   import ChevronLeft from '@lucide/svelte/icons/chevron-left';
@@ -70,6 +71,7 @@
     shield: Shield,
     secure: ShieldCheck,
     sparkles: Sparkles,
+    ai: BotMessageSquare,
     usb: Usb,
     user: UserRound,
     wifi: Wifi,

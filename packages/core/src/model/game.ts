@@ -1,12 +1,13 @@
 import type { KnowledgeAnswer } from './knowledge';
 
-export type ChallengeId = 'usb' | 'incident' | 'mail' | 'spoof' | 'web' | 'mfa';
+export type ChallengeId = 'usb' | 'incident' | 'mail' | 'spoof' | 'web' | 'mfa' | 'ai';
 
-export type Outcome = 'safe' | 'risky' | 'timeout';
+export type AiTool = 'internal' | 'commercial';
+export type AiPrompt = 'full' | 'masked' | 'generic';
+
+export type Outcome = 'safe' | 'risky';
 
 export type DecisionStep = 'choose' | 'notify';
-
-export type DecisionOutcome = Exclude<Outcome, 'timeout'>;
 
 /** Fixed journey order shared by the runtime and read-only UI projections. */
 export const challengeOrder = [
@@ -16,6 +17,7 @@ export const challengeOrder = [
   'spoof',
   'web',
   'mfa',
+  'ai',
 ] as const satisfies readonly ChallengeId[];
 
 /**
@@ -23,6 +25,19 @@ export const challengeOrder = [
  * catalogue, while the pure core owns which identifiers are valid and their effect.
  */
 const challengeChoices = {
+  // The fictional policy approves only general templates in the internal tool.
+  // Removing names leaves identifying details and confidential business data.
+  ai: {
+    choose: {
+      'internal-full': 'risky',
+      'internal-masked': 'risky',
+      'internal-generic': 'safe',
+      'commercial-full': 'risky',
+      'commercial-masked': 'risky',
+      'commercial-generic': 'risky',
+    },
+    notify: {},
+  },
   usb: {
     choose: { open: 'risky', eject: 'safe', station: 'safe', report: 'safe' },
     notify: {},
@@ -48,7 +63,7 @@ const challengeChoices = {
     notify: {},
   },
 } as const satisfies Readonly<
-  Record<ChallengeId, Readonly<Record<DecisionStep, Readonly<Record<string, DecisionOutcome>>>>>
+  Record<ChallengeId, Readonly<Record<DecisionStep, Readonly<Record<string, Outcome>>>>>
 >;
 
 export type ChallengeChoiceId<
@@ -63,8 +78,8 @@ export function choiceOutcome(
   id: ChallengeId,
   step: DecisionStep,
   choiceId: string,
-): DecisionOutcome | null {
-  const choices = challengeChoices[id][step] as Readonly<Record<string, DecisionOutcome>>;
+): Outcome | null {
+  const choices = challengeChoices[id][step] as Readonly<Record<string, Outcome>>;
   if (!Object.prototype.hasOwnProperty.call(choices, choiceId)) return null;
   return choices[choiceId] ?? null;
 }
@@ -89,8 +104,6 @@ export type Scene =
       id: ChallengeId;
       startedAt: number;
       exploreUntil: number;
-      // Null means this attempt has no local timer; the session deadline still applies.
-      deadline: number | null;
       step: 'explore' | DecisionStep;
     }
   | { kind: 'feedback'; result: ChallengeResult }
@@ -118,7 +131,6 @@ export type GameState =
       now: number;
       startedAt: number;
       deadline: number;
-      calm: boolean;
       // Category only: player input is never retained after a successful login.
       loginCategory: 'displayed' | 'weak';
       mode: 'free' | 'guided';
@@ -136,11 +148,10 @@ export type GameState =
       };
       locked: boolean;
       // Isolation is already done, but reporting is outstanding. This survives leaving
-      // the incident window so its notification step can resume with the same deadline.
+      // the incident window so its notification step can resume without repeating isolation.
       pendingIncident: {
         startedAt: number;
         exploreUntil: number;
-        deadline: number | null;
       } | null;
     };
 
@@ -158,8 +169,8 @@ export type Intent =
   | { type: 'finish-experience' }
   | { type: 'begin-decision' }
   | { type: 'choose'; choiceId: string }
+  | { type: 'send-ai'; tool: AiTool; prompt: AiPrompt }
   | { type: 'close' }
-  | { type: 'calm'; enabled: boolean }
   | { type: 'debrief' }
   | { type: 'answer-check'; answerId: string }
   | { type: 'activity' }

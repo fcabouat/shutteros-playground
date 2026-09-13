@@ -26,6 +26,25 @@ interface ChallengeContent<Id extends ChallengeId = ChallengeId> {
 export type Challenges = { [Id in ChallengeId]: ChallengeContent<Id> };
 
 export const challenges: Challenges = {
+  ai: {
+    title: 'Un bon prompt. Les bonnes données ?',
+    app: 'Assistant IA',
+    tagline: 'Un compte rendu à préparer, deux outils possibles.',
+    question: 'Que pouvez-vous confier à cet outil ?',
+    hints: [
+      'L’assistant IA peut vous aider à rédiger. Regardez quel outil est autorisé et relisez le message avant de l’envoyer.',
+      'La charte de l’exercice se trouve dans le chat. Retirer un nom ne retire ni les détails reconnaissables, ni les informations confidentielles.',
+    ],
+    choices: [],
+    feedback: {
+      safe: 'Vous avez utilisé l’outil autorisé avec une demande générale, sans notes internes ni données personnelles. Complétez la trame dans vos outils de travail et relisez le résultat.',
+      risky:
+        'Le choix de l’outil et celui des données doivent tous deux respecter les règles de votre organisation.',
+    },
+    lesson:
+      'Utilisez les outils IA et la charte d’usage de votre organisation. N’envoyez que les informations autorisées et nécessaires : retirer les noms ne rend pas forcément un document anonyme ou partageable.',
+    shortLesson: 'Outil autorisé, données nécessaires, charte respectée.',
+  },
   usb: {
     title: 'Une clé. Beaucoup de curiosité.',
     app: 'Explorateur de fichiers',
@@ -61,8 +80,6 @@ export const challenges: Challenges = {
       safe: 'Vous avez choisi le circuit de contrôle de l’organisation avant d’exécuter le programme.',
       risky:
         'La curiosité a déclenché l’infection simulée. La clé aurait dû passer par le contrôle prévu avant toute utilisation.',
-      timeout:
-        'Une clé inconnue peut attendre. Mieux vaut demander au support que la brancher par curiosité.',
     },
     lesson:
       'Ne branchez pas un support inconnu sur votre poste. Confiez-le au support ou à la station de décontamination prévue (station blanche) : un poste dédié et isolé. Une analyse réduit le risque, sans garantir l’innocuité.',
@@ -98,8 +115,6 @@ export const challenges: Challenges = {
       safe: 'Poste isolé, équipes de sécurité informatique prévenues : vous avez limité la propagation et permis la prise en charge de l’incident.',
       risky:
         'Attendre, redémarrer ou effacer des traces peut compliquer la prise en charge. La priorité est d’isoler le réseau, puis d’alerter.',
-      timeout:
-        'L’important n’est pas d’improviser un dépannage. Retenez les deux étapes : isoler le poste, puis prévenir les équipes de sécurité informatique.',
     },
     lesson:
       'Isolez le poste du réseau, puis contactez rapidement les équipes de sécurité informatique par un canal connu. Évitez de redémarrer, d’éteindre ou de supprimer des fichiers sans leurs consignes.',
@@ -137,8 +152,6 @@ export const challenges: Challenges = {
       safe: 'Vous avez quitté le canal potentiellement piégé. Votre contact habituel peut confirmer la demande, indépendamment du message reçu.',
       risky:
         'Le lien et la réponse restent dans le canal choisi par l’expéditeur. Un imposteur peut confirmer sa propre histoire.',
-      timeout:
-        'L’urgence fait partie du piège. Vous n’avez pas besoin d’obéir à un délai imposé par un message douteux.',
     },
     lesson:
       'Vérifiez l’adresse complète et la cohérence de la demande. Au moindre doute, contactez la personne par un numéro ou un canal déjà connu. L’absence de signature numérique ne suffit pas à prouver une fraude.',
@@ -158,8 +171,6 @@ export const challenges: Challenges = {
       safe: 'Quelques caractères ont suffi à changer l’identité affichée. Ce que vous voyez dans l’en-tête ne constitue pas, à lui seul, une preuve d’identité.',
       risky:
         'Un nom familier et une signature en bas de message peuvent être recopiés. Revenez à un contact connu pour vérifier.',
-      timeout:
-        'Le champ « De » ne raconte pas toute l’histoire. Une délégation peut être légitime ; un nom affiché peut aussi imiter quelqu’un.',
     },
     lesson:
       'Une adresse d’envoi déléguée peut être légitime. Le nom affiché reste facile à modifier. Même si la messagerie vérifie l’expéditeur, une demande inhabituelle mérite une vérification auprès de votre contact connu.',
@@ -191,8 +202,6 @@ export const challenges: Challenges = {
       safe: 'Vous reprenez un chemin connu vers le service. Le piège ne reçoit aucun identifiant.',
       risky:
         'Le portail aurait pu récupérer vos identifiants. Son apparence et sa connexion chiffrée ne prouvent pas son identité.',
-      timeout:
-        'Vous pouvez laisser ce formulaire de côté et retrouver le service par votre chemin habituel.',
     },
     lesson:
       'Le cadenas indique que les échanges avec ce site sont protégés, même si le site est frauduleux. Comparez son adresse et utilisez votre favori habituel. Ici, les champs étaient fictifs : aucune donnée réelle n’a été transmise.',
@@ -220,8 +229,6 @@ export const challenges: Challenges = {
       safe: 'Vous avez refusé la connexion et donné l’alerte. Les demandes répétées n’ont pas obtenu votre accord.',
       risky:
         'Approuver pourrait ouvrir votre compte à un tiers. Ignorer les demandes sans les signaler laisse une tentative en cours sans prise en charge.',
-      timeout:
-        'Aucune validation n’a eu lieu. Pensez aussi à signaler cette demande inattendue : quelqu’un peut tenter d’utiliser votre compte.',
     },
     lesson:
       'Une demande de confirmation de connexion que vous n’avez pas déclenchée se refuse et se signale. Si vous avez accepté par erreur, contactez immédiatement les équipes de sécurité informatique. Le lieu affiché peut être approximatif ; le signal clé est que vous n’avez rien demandé.',

@@ -77,6 +77,22 @@ describe('decodeConfiguration', () => {
     });
   });
 
+  it('accepts the current global-session shape without legacy timer fields', () => {
+    const current: Record<string, unknown> = { ...valid };
+    delete current.challengeSeconds;
+    delete current.defaultCalmMode;
+    expect(decodeConfiguration(current)).toEqual({ ok: true, value: current });
+  });
+
+  it('keeps validating legacy timer fields when supplied', () => {
+    expect(decodeConfiguration({ ...valid, challengeSeconds: 10, defaultCalmMode: true }).ok).toBe(
+      true,
+    );
+    expect(decodeConfiguration({ ...valid, challengeSeconds: 9 }).ok).toBe(false);
+    expect(decodeConfiguration({ ...valid, challengeSeconds: 121 }).ok).toBe(false);
+    expect(decodeConfiguration({ ...valid, defaultCalmMode: 'false' }).ok).toBe(false);
+  });
+
   it('accepts only a local organisation logo basename', () => {
     expect(decodeConfiguration({ ...valid, organizationLogo: 'logo-organisation.svg' })).toEqual({
       ok: true,

@@ -9,7 +9,6 @@ from pathlib import Path
 REQUIRED = {
     "version",
     "sessionMinutes",
-    "challengeSeconds",
     "acceptedPasswords",
     "caseSensitivePasswords",
     "showPasswordHint",
@@ -19,7 +18,6 @@ REQUIRED = {
     "stationLabel",
     "mailLegitimateAddress",
     "mailImpersonatorAddress",
-    "defaultCalmMode",
 }
 OPTIONAL = {
     "organizationName",
@@ -29,6 +27,9 @@ OPTIONAL = {
     "idleReminderSeconds",
     "eventIntervalSeconds",
     "organizationLogo",
+    # V1 compatibility fields: accepted and validated when supplied, then unused.
+    "challengeSeconds",
+    "defaultCalmMode",
 }
 # Python's isspace/strip differs from ECMAScript (notably U+0085 and U+FEFF).
 JS_WHITESPACE = "\t\n\v\f\r \u00a0\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u2028\u2029\u202f\u205f\u3000\ufeff"
@@ -97,7 +98,8 @@ def main() -> int:
         issues,
     )
     number(config, "sessionMinutes", 1, 30, issues)
-    number(config, "challengeSeconds", 10, 120, issues)
+    if "challengeSeconds" in config:
+        number(config, "challengeSeconds", 10, 120, issues)
     for key, minimum, maximum in (
         ("explorationSeconds", 0, 60),
         ("idleReminderSeconds", 10, 300),
@@ -137,8 +139,10 @@ def main() -> int:
             f"{key}: must be a simple email address from 3 to 120 characters",
             issues,
         )
-    for key in ("caseSensitivePasswords", "showPasswordHint", "defaultCalmMode"):
+    for key in ("caseSensitivePasswords", "showPasswordHint"):
         reject(type(config.get(key)) is not bool, f"{key}: must be a boolean", issues)
+    if "defaultCalmMode" in config:
+        reject(type(config["defaultCalmMode"]) is not bool, "defaultCalmMode: must be a boolean", issues)
     for key in ("organizationLogo", "partnerOrganizationLogo"):
         if key not in config:
             continue

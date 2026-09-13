@@ -352,6 +352,10 @@ button:active:not(:disabled) {
   --app-bg: #92dace;
   --app-ink: #21534c;
 }
+.app-icon[data-app='ai'] {
+  --app-bg: #d5eacb;
+  --app-ink: #315835;
+}
 .app-icon[data-app='mfa'] {
   --app-bg: #c5b9f2;
   --app-ink: #4b3b78;
@@ -595,8 +599,7 @@ button:active:not(:disabled) {
   background: var(--success-soft);
   color: var(--success);
 }
-.result-status[data-outcome='risky'],
-.result-status[data-outcome='timeout'] {
+.result-status[data-outcome='risky'] {
   background: var(--warning-soft);
   color: var(--warning);
 }
@@ -883,7 +886,8 @@ button:active:not(:disabled) {
 }
 .desktop-icons {
   grid-template-rows: repeat(6, min-content);
-  grid-auto-flow: row;
+  grid-auto-flow: column;
+  grid-auto-columns: 112px;
   gap: 0;
   padding-top: 24px;
 }
@@ -1044,8 +1048,8 @@ button:active:not(:disabled) {
 }
 @media (max-height: 800px) {
   .desktop-icons {
-    grid-template-rows: repeat(6, min-content);
-    grid-auto-flow: row;
+    grid-template-rows: repeat(5, min-content);
+    grid-auto-flow: column;
   }
   .desktop-icon {
     min-height: 82px;

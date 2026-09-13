@@ -33,17 +33,17 @@ Use this artifact where a single local file is preferable. Because the configura
 
 ## Configuration
 
-`static/kiosk-config.json` uses version 1. It sets the fictional accepted passwords, session and challenge durations, organisation labels, optional local organisation-logo filename, security contact details, calm-mode default, and the two addresses used only in the sender-spoofing demonstration.
+`static/kiosk-config.json` uses version 1. It sets the fictional accepted passwords, global session duration, organisation labels, optional local organisation-logo filename, security contact details, and the two addresses used only in the sender-spoofing demonstration. The global session duration defaults to fifteen minutes.
 
 `supportLabel` and `supportContact` identify the organisation’s security reporting channel. Configure that direct contact; the general help desk can be a fallback if your procedure requires it. Routine workstation maintenance remains an IT responsibility.
 
-The default configuration has a fifteen-minute global safety ceiling; the guided ending targets three to five minutes, to validate with a human facilitator. Challenge deadlines are optional and apply only when enabled for a challenge. The visible sticky note uses the first entry of `acceptedPasswords`. The built-in phrase adapts to French (`Bureau2026`) or English (`Office2026`), provided that translation is also in the accepted list. A custom first phrase stays unchanged. Other entries silently accept common weak passwords. Leading/trailing spaces and letter case are tolerated by default. After three unsuccessful attempts, a hint helps the participant continue.
+The guided ending targets three to five minutes, to validate with a human facilitator. The visible sticky note uses the first entry of `acceptedPasswords`. The built-in phrase adapts to French (`Bureau2026`) or English (`Office2026`), provided that translation is also in the accepted list. A custom first phrase stays unchanged. Other entries silently accept common weak passwords. Leading/trailing spaces and letter case are tolerated by default. After three unsuccessful attempts, a hint helps the participant continue.
 
 On page load, the first supported French or English browser language is selected, with French as the fallback. The FR/EN selector remains available; its choice survives next-player resets until the page reloads. No language preference is stored.
 
-Set `showPasswordHint` to `false` to remove the digital note and use a physical one on the monitor. Write only the chosen fictional password on it. `defaultCalmMode` is true by default, so there are no local challenge timers. Setting it to false enables a configurable limit (90 seconds by default) when response choices first open in free mode, including automatically on the phone. Guided mode has no local deadline. Free exploration, nudges, guided finish, and idle reminders (45 seconds by default) are configurable; all share the same global session deadline.
+Set `showPasswordHint` to `false` to remove the digital note and use a physical one on the monitor. Write only the chosen fictional password on it. Free exploration, nudges, guided finish, and idle reminders (45 seconds by default) are configurable within the global session.
 
-Session duration accepts 1 to 30 minutes; challenge duration accepts 10 to 120 seconds. Address fields are bounded, simple email addresses. The UI shows a clear validation error for malformed, unknown, or out-of-range values and starts no game until valid configuration is available.
+Session duration accepts 1 to 30 minutes. Address fields are bounded, simple email addresses. The UI shows a clear validation error for malformed, unknown, or out-of-range values and starts no game until valid configuration is available. Older V1 files may still include `challengeSeconds` and `defaultCalmMode`; these keys remain accepted and validated for compatibility but are unused.
 
 Treat the accepted passwords as public game content. They are not credentials and must never be copied from a real account. The simulated login uses an ordinary text input, outside a form, with autocomplete disabled; Enter and the session button both work. Its value is not stored, logged, or sent. There is no HTML password input. This avoids the normal credential-form trigger, but a web page cannot control every browser or password-manager extension: [autocomplete is only a browser hint](https://developer.mozilla.org/en-US/docs/Web/Security/Practical_implementation_guides/Turning_off_form_autocompletion).
 
@@ -65,7 +65,7 @@ This is a convenience guard, not OS confinement: capture can fail, a long Escape
 can release it, and the host still owns crash recovery. The game does not retry
 fullscreen without another login gesture.
 
-Calm mode removes challenge timers for accessibility or facilitation. The configured global session remains in force. The game has no persistent progress, so refreshing the page, closing the browser, or using the in-game logout begins a new session.
+The game has no persistent progress, so refreshing the page, closing the browser, or using the in-game logout begins a new session.
 
 ## Before opening the kiosk
 
@@ -75,7 +75,7 @@ For `file:///` use, open `dist/portable/shutteros.html` directly when the option
 
 After updating files or configuration, reload the page or restart Chromium. An open tab keeps its loaded code and configuration; leaving the game session does not reload them. There is no service worker, but browser or hosting caches can still affect delivery: verify the deployed version after reloading. The Ubuntu installer restarts the kiosk browser during an update. For development verification, restart `pnpm preview` after rebuilding.
 
-The web timer is checked against elapsed time and resynchronises on visibility/focus changes. If the browser process is suspended, the reset takes effect when it can run again. Host-level recovery from a process crash remains the operator’s responsibility.
+The session clock is checked against elapsed time and resynchronises on visibility/focus changes. If the browser process is suspended, the reset takes effect when it can run again. Host-level recovery from a process crash remains the operator’s responsibility.
 
 ## Output directories
 
