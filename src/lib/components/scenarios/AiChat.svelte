@@ -6,6 +6,13 @@
   let { dispatch }: { dispatch: (intent: Intent) => void } = $props();
   const i18n = getI18n();
   const copy = $derived(i18n.text.ai);
+  const promptOptions = [
+    'routine',
+    'routineAnonymised',
+    'confidential',
+    'confidentialAnonymised',
+    'generic',
+  ] as const satisfies readonly AiPrompt[];
   // These are fictional draft selections, discarded with the mounted session.
   // The core evaluates the submitted pair; this view never awards an outcome.
   let tool = $state<AiTool>('internal');
@@ -73,8 +80,7 @@
       <fieldset>
         <legend class="mb-3 text-sm font-semibold">{copy.choosePrompt}</legend>
         <div class="ai-prompts">
-          {#each ['full', 'masked', 'generic'] as value (value)}
-            {@const id = value as AiPrompt}
+          {#each promptOptions as id (id)}
             <label class="ai-prompt" class:chosen={prompt === id}>
               <input type="radio" name="ai-prompt" value={id} bind:group={prompt} />{copy[id]}
             </label>
@@ -151,8 +157,8 @@
     gap: 0.625rem;
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  .ai-prompts {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+  .ai-prompt:last-child {
+    grid-column: 1 / -1;
   }
   .ai-tool,
   .ai-prompt {

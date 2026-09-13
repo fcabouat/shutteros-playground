@@ -5,19 +5,19 @@ export const englishChallenges: Challenges = {
   ai: {
     title: 'A good prompt. The right data?',
     app: 'AI assistant',
-    tagline: 'Meeting minutes to prepare, two possible tools.',
+    tagline: 'Routine project or confidential document: choose the right scope.',
     question: 'What can you share with this tool?',
     hints: [
-      'The AI assistant can help you draft. Check which tool is approved and review the message before sending.',
-      'The exercise policy is available in the chat. Removing a name removes neither identifying details nor confidential information.',
+      'The AI assistant can help with a real work task. Compare the car park and security notes, then check the exercise policy.',
+      'Names needed to assign actions may be permitted internally. Also check confidentiality labels: they matter even without names.',
     ],
     choices: [],
     feedback: {
-      safe: 'You used the approved tool with a general request, without internal notes or personal data. Fill in the template in your work tools and review the result.',
+      safe: 'You chose an approved use for this tool. Check the minutes before sharing them.',
       risky: 'Both the tool and the data must comply with your organisation’s rules.',
     },
     lesson:
-      'Protect confidentiality, even without names. Careful anonymisation can help, but does not make every document suitable for a commercial service. An internal tool can suit information of low sensitivity within its approved scope. Always follow your organisation’s policy and AI usage charter.',
+      'Names can be useful and permitted in the internal tool for routine work. Confidential documents need a different approved scope: removing names is not enough, especially before sending to a commercial AI service. Always check how sensitive the information is, your organisation’s policy and its AI usage charter.',
     shortLesson: 'Approved tool, necessary data, policy followed.',
   },
   usb: {

@@ -3,7 +3,8 @@ import type { KnowledgeAnswer } from './knowledge';
 export type ChallengeId = 'usb' | 'incident' | 'mail' | 'spoof' | 'web' | 'mfa' | 'ai';
 
 export type AiTool = 'internal' | 'commercial';
-export type AiPrompt = 'full' | 'masked' | 'generic';
+export type AiPrompt =
+  'routine' | 'routineAnonymised' | 'confidential' | 'confidentialAnonymised' | 'generic';
 
 export type Outcome = 'safe' | 'risky';
 
@@ -25,15 +26,19 @@ export const challengeOrder = [
  * catalogue, while the pure core owns which identifiers are valid and their effect.
  */
 const challengeChoices = {
-  // Both tools permit general templates in the exercise. The meeting notes
-  // remain confidential and identifying even after their names are removed.
+  // Removing names does not change the exercise policy's permitted scope:
+  // routine work stays internal, restricted notes stay out, templates suit either.
   ai: {
     choose: {
-      'internal-full': 'risky',
-      'internal-masked': 'risky',
+      'internal-routine': 'safe',
+      'internal-routineAnonymised': 'safe',
+      'internal-confidential': 'risky',
+      'internal-confidentialAnonymised': 'risky',
       'internal-generic': 'safe',
-      'commercial-full': 'risky',
-      'commercial-masked': 'risky',
+      'commercial-routine': 'risky',
+      'commercial-routineAnonymised': 'risky',
+      'commercial-confidential': 'risky',
+      'commercial-confidentialAnonymised': 'risky',
       'commercial-generic': 'safe',
     },
     notify: {},
