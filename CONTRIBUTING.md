@@ -47,7 +47,7 @@ Dependabot checks version updates monthly, grouped into application dependencies
 
 ## Git workflow
 
-`main` contains the reviewed distributable version; `develop` is the integration branch. Use `feature/<topic>` or `bugfix/<topic>` for development, `release/<version>` for release preparation, and `hotfix/<version>` for urgent fixes from `main`. Open a pull request into `develop`, then use merge commits for release → `main` and `main` → `develop` to preserve release ancestry. Feature PRs into `develop` may use rebase. Keep `develop` as the default branch for contributions and dependency updates. GitHub Pages publishes only `main` after verification.
+`main` contains the reviewed distributable version; `develop` is the integration branch. Use `feature/<topic>` or `bugfix/<topic>` for development, `release/<version>` for release preparation, and `hotfix/<version>` for urgent fixes from `main`. Open a pull request into `develop`, then use merge commits for release → `main` and release → `develop` to preserve release ancestry. Feature PRs into `develop` may use rebase. Keep `develop` as the default branch for contributions and dependency updates. GitHub Pages publishes only `main` after verification.
 
 Use `support/` for maintained release branches and prefix version tags with `v`. The optional `git-flow` CLI is not required; configure it locally with these branch conventions if used. Git configuration is not cloned with the repository. Follow the [deployment guide](docs/publishing.md) to publish `main` on Pages.
 
@@ -55,4 +55,4 @@ Use `support/` for maintained release branches and prefix version tags with `v`.
 
 The build compares its actual redistributed dependency inventory with `static/THIRD-PARTY-NOTICES.txt`, which also makes notices available in development. If a dependency update makes the build report stale notices, run `pnpm notices:update` against those build intermediates, review the notice changes, then rerun `pnpm build` and the checks. Always distribute only a completely successful build.
 
-For releasable changes, run `pnpm changeset` and commit the generated note with your PR. See the [three-command release procedure](docs/publishing.md#prepare-a-release).
+For releasable changes, run `pnpm changeset` and commit the generated note with your PR. Merging into `develop` does not publish anything. When ready to ship, run `pnpm release patch` (or `minor`) from a clean `develop`; GitHub handles versioning, technical PRs, tags, publication and the release return. See [releasing from develop](docs/publishing.md#release-from-develop).

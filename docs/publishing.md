@@ -45,27 +45,51 @@ The browser test fixture serves only the selected build directory on loopback po
 
 GitHub documents the required publishing source, artifact, permissions, and environment in [custom Pages workflows](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages).
 
-## Prepare a release
+## Release from develop
 
-Install GitHub CLI (`gh`) and run `gh auth login` once. In repository **Settings → Actions → General → Workflow permissions**, enable **Allow GitHub Actions to create and approve pull requests**. Keep branch protections and required `verify` checks; the automation does not merge PRs. Tag rules must allow Actions to create `v*` tags.
+Merge feature and dependency PRs into `develop` as usual. Include a `pnpm changeset` note for releasable changes. These merges do not trigger a release.
 
-Include `pnpm changeset` and its short English release note in each releasable feature or fix PR. The application and core share one version. After these PRs are merged into `develop`, use a clean checkout:
+When you decide to publish, switch to a clean local `develop` and run:
 
 ```sh
-git switch develop && git pull --ff-only
-pnpm release:prepare
-pnpm release:push
+pnpm release patch
+# or: pnpm release minor
 ```
 
-Preparation plans the next version with Changesets and builds `release/X.Y.Z` in a temporary worktree. Failed versioning, formatting or commits leave `develop` and its changesets unchanged; fix the cause and rerun the same command. An existing release branch is never replaced. Successful preparation switches to the committed release branch. The push command opens a release PR into `main`; retry it safely if PR creation fails. Accept that PR with **Create a merge commit** after `verify` and CodeQL pass. The main push runs verification, publishes Pages when enabled, creates the immutable `vX.Y.Z` tag and GitHub release, and opens a `main` → `develop` synchronization PR. Accept that PR with **Create a merge commit** too; do not delete `main`. Rebase is fine for feature PRs into `develop`, but avoid squash/rebase for these two release merges.
+The command fast-forwards your local branch if necessary, starts GitHub Actions, and exits. You can close the terminal immediately. You can also use **Actions → Verify and publish → Run workflow**, choose **develop**, enable **prepare_release**, and choose **release_type**. There is no need to wait for the preceding develop CI run: the release workflow verifies the requested commit itself.
 
-The synchronization PR is created using `GITHUB_TOKEN`; approve its workflows if GitHub requests it. The workflow also explicitly dispatches verification on `main`. No personal token is stored in Actions. The publication summary reports verification, Pages and release separately. A green `verify` is not proof of publication: follow the tag/release links in the release job summary and check the Pages deployment and CodeQL result. Pages and release publication are independent because the portable/kiosk distribution remains useful without Pages. Resolve synchronization conflicts normally before starting the next release.
+The requested type is a minimum: stronger pending Changesets take precedence. With no argument, `pnpm release` uses only the pending Changesets; without any, it creates no release. Explicit patch/minor/major requests also work without a prewritten note.
 
-### Recover an incomplete publication
+This is the decision to publish, not just to draft a PR. GitHub then:
 
-For a transient failure, rerun the failed release job. To run corrected workflow code, start a **new** run of **Verify and publish** on current `main` and enable **resume_release** (CLI: `gh workflow run ci.yml --ref main -f resume_release=true`). This reruns verification before publication; ordinary manual verification leaves release publication disabled.
+1. Verifies develop and lets Changesets calculate the version and changelog.
+2. Creates `release/X.Y.Z` and its PR to `main`, tests the proposed merge, waits for required checks, and merges with a merge commit.
+3. Verifies main, creates the tag and GitHub release, and deploys Pages when enabled.
+4. Opens, verifies and merges a return PR from the same release branch into `develop`.
 
-The publisher accepts the current main version if no tag exists, or resumes an existing tag only when it resolves to that exact commit. It never moves a published tag. If a code fix is needed after tagging, prepare a new patch release. Merge any workflow fix through a reviewed PR first: rerunning an old job uses its old workflow. Existing tags/releases/PRs are reused, and permissions/API failures remain failures rather than being treated as absence. A draft release must be reviewed and published before retrying.
+The technical PRs remain visible; normal delivery needs no further manual merge. Failed checks, conflicts or branch changes stop the affected stage. A prepared release is reused on retry, and published tags are never moved. If a release is already in progress, another request resumes that delivery rather than cutting a second one.
+
+Automated messages follow the same templates for PR titles and merge commits:
+
+- `chore(release): prepare vX.Y.Z` for the versioning commit.
+- `chore(release): merge vX.Y.Z into main` for delivery.
+- `chore(release): merge vX.Y.Z into develop` for the return.
+
+Hotfix merges use `chore(hotfix)`. Merge commit bodies retain the PR link; GitHub releases and annotated tags use `ShutterOS Playground vX.Y.Z`.
+
+### Repository setup
+
+Install GitHub CLI (`gh`) and run `gh auth login` once for the local launcher. Under **Settings → Actions → General**, allow Actions to create pull requests. Allow merge commits, keep `verify` required on `main` and `develop`, and permit Actions to create version tags. Required human reviews or environment approvals will still pause delivery; for this solo-maintainer workflow, leave their required count at zero. No admin bypass is used.
+
+The built-in Actions token needs no stored personal token. Each bot merge explicitly dispatches the next workflow because token-authored pushes do not normally trigger another run. If a separate required workflow, such as CodeQL, awaits approval, approve it in GitHub; the release does not bypass that check. See [GitHub's workflow trigger rules](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/trigger-a-workflow).
+
+### Recovery and publication status
+
+Run `pnpm release` again from develop to resume preparation or an open delivery/return PR. If develop advanced during initial verification, rerun to include and verify its new head. For a transient job failure, rerun the failed job; for a moved PR base, start a new run so the proposed merge is tested again. The internal **release_pr** input identifies that PR when dispatching on its `release/X.Y.Z` branch.
+
+To resume an interrupted publication, run **Verify and publish** on current `main` with **resume_release** enabled. It reuses completed stages and requires the version tag, if present, to identify that exact main commit. An already-tagged version with changed content needs a new release. Rerunning an old job retains its old workflow code.
+
+Check **verification, CodeQL, Pages, tag/release creation, and the return PR separately**. A green `verify` is not proof that delivery finished. Pages and release publication are independent because kiosk use does not require Pages. Actions summaries provide the publication and PR links.
 
 ## Maintenance and release review
 

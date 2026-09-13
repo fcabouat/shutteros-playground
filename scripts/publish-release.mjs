@@ -1,3 +1,4 @@
+import { releaseMessages } from './release-messages.mjs';
 import { execFileSync } from 'node:child_process';
 import { appendFileSync, readFileSync } from 'node:fs';
 
@@ -26,6 +27,37 @@ try {
   const tags = read('git', 'tag', '--list', tag);
   if (tags && read('git', 'rev-parse', `${tag}^{}`) !== sha) {
     throw new Error(`${tag} already belongs to another commit. Prepare a new version.`);
+  }
+  const mergedPulls = JSON.parse(read('gh', 'api', `repos/${repository}/commits/${sha}/pulls`));
+  const deliveryPulls = mergedPulls.filter((pr) => {
+    const expectedHead =
+      pr.head?.ref === `release/${version}` || pr.head?.ref === `hotfix/${version}`;
+    return (
+      expectedHead &&
+      pr.merged_at &&
+      pr.merge_commit_sha === sha &&
+      pr.base?.ref === 'main' &&
+      pr.base?.repo?.full_name === repository &&
+      pr.head?.repo?.full_name === repository
+    );
+  });
+  if (deliveryPulls.length !== 1)
+    throw new Error(
+      `Expected one merged release/${version} or hotfix/${version} PR for current main.`,
+    );
+  const deliveryPull = deliveryPulls[0];
+  const deliveryBranch = deliveryPull.head.ref;
+  const deliverySha = deliveryPull.head.sha;
+  if (!/^[0-9a-f]{40}$/i.test(deliverySha)) throw new Error('Expected a full delivery head SHA.');
+  try {
+    read('git', 'cat-file', '-e', `${deliverySha}^{commit}`);
+  } catch {
+    run('git', 'fetch', 'origin', deliverySha);
+  }
+  try {
+    read('git', 'merge-base', '--is-ancestor', deliverySha, sha);
+  } catch {
+    throw new Error(`Verified ${deliveryBranch} head is not an ancestor of current main.`);
   }
   // Check API access before creating a tag. gh errors (including 403/422) fail
   // normally; only a successful inventory can establish release absence.
@@ -67,15 +99,24 @@ try {
   if (release.tagName !== tag || release.isDraft)
     throw new Error('Expected a published release for this tag.');
   summary.push(`- Published release: ${release.url}`);
-  // Bot-created PR workflows may require approval. Explicit dispatch verifies
-  // main without recursively publishing (resume_release defaults to false).
-  if (read('git', 'diff', '--name-only', 'origin/develop', 'HEAD')) {
+  // The delivery head, rather than main, is returned to develop. This preserves
+  // classic Gitflow ancestry and lets retries recognize a completed return merge.
+  try {
+    read('git', 'merge-base', '--is-ancestor', deliverySha, 'origin/develop');
+    summary.push(`- ${deliveryBranch} is already integrated into develop.`);
+  } catch {
+    const remoteHead = read('git', 'ls-remote', 'origin', `refs/heads/${deliveryBranch}`).split(
+      /\s+/,
+    )[0];
+    if (remoteHead && remoteHead !== deliverySha)
+      throw new Error(`${deliveryBranch} exists at a different commit; refusing to move it.`);
+    if (!remoteHead) run('git', 'push', 'origin', `${deliverySha}:refs/heads/${deliveryBranch}`);
     let pr = read(
       'gh',
       'pr',
       'list',
       '--head',
-      'main',
+      deliveryBranch,
       '--base',
       'develop',
       '--json',
@@ -89,18 +130,17 @@ try {
         'pr',
         'create',
         '--head',
-        'main',
+        deliveryBranch,
         '--base',
         'develop',
         '--title',
-        `Sync ${tag} into develop`,
+        releaseMessages(version, deliveryBranch.split('/')[0]).develop,
         '--body',
-        'Merge with a merge commit after verification to preserve release ancestry. Keep main.',
+        'Return the published release to develop. Automation verifies the merge and preserves release ancestry with a merge commit.',
       );
-    summary.push(`- Integration PR (human merge required): ${pr}`);
-    run('gh', 'workflow', 'run', 'ci.yml', '--ref', 'main');
-  } else {
-    summary.push('- develop already has the published content.');
+    summary.push(`- Integration PR queued for verification and merge: ${pr}`);
+    const { number } = JSON.parse(read('gh', 'pr', 'view', pr, '--json', 'number'));
+    run('gh', 'workflow', 'run', 'ci.yml', '--ref', deliveryBranch, '-f', `release_pr=${number}`);
   }
 } catch (error) {
   summary.push(
