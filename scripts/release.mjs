@@ -1,3 +1,4 @@
+import { releaseMessages } from './release-messages.mjs';
 import { execFileSync } from 'node:child_process';
 import { readFileSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -102,7 +103,7 @@ if (process.argv[2] === 'plan') {
         'CHANGELOG.md',
         'packages/core/CHANGELOG.md',
       );
-      inCheckout('git', 'commit', '-m', `chore: release v${next}`);
+      inCheckout('git', 'commit', '-m', releaseMessages(next).prepare);
       committed = true;
     });
   } finally {
@@ -142,7 +143,7 @@ if (process.argv[2] === 'plan') {
       '--head',
       branch(),
       '--title',
-      `Release v${next}`,
+      releaseMessages(next).main,
       '--body',
       'Apply the prepared versions and changelogs. After verification and merge, CI creates the release tag and proposes synchronization back to develop.',
     );

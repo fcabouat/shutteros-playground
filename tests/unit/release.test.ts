@@ -49,7 +49,7 @@ switch (action) {
   case 'release create': state.release = true; break;
   case 'release view': if (!state.release) process.exit(1); console.log(JSON.stringify({tagName:'v0.1.1', isDraft: state.fail === 'draft', url:'https://github.com/fixture/test/releases/tag/v0.1.1'})); break;
   case 'pr list': console.log(state.pr ? 'https://github.com/fixture/test/pull/2' : ''); break;
-  case 'pr create': state.pr = true; console.log('https://github.com/fixture/test/pull/2'); break;
+  case 'pr create': if (args[args.indexOf('--title') + 1] !== 'chore(release): merge v0.1.1 into develop') process.exit(2); state.pr = true; console.log('https://github.com/fixture/test/pull/2'); break;
   case 'pr view': console.log(JSON.stringify({number:2})); break;
   case 'workflow run': if (args[args.indexOf('--ref') + 1] !== 'release/0.1.1' || args.at(-1) !== 'release_pr=2') process.exit(2); break;
   default: console.error('Unexpected gh call', args); process.exit(2);
@@ -270,6 +270,7 @@ test('plan and prepare resolve the same explicit release and leave develop untou
   ).newVersion;
   f.invoke('minor', 'prepare');
   expect(planned).toBe('0.2.0');
+  expect(f.git('log', '-1', '--format=%s')).toBe('chore(release): prepare v0.2.0');
   expect(f.git('branch', '--show-current')).toBe('release/0.2.0');
   expect(JSON.parse(readFileSync(join(f.repo, 'package.json'), 'utf8')).version).toBe(planned);
   expect(f.git('show', 'develop:package.json')).toContain('"version":"0.1.1"');

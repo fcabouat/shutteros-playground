@@ -1,3 +1,4 @@
+import { releaseMessages } from './release-messages.mjs';
 import { execFileSync } from 'node:child_process';
 import { appendFileSync, readFileSync } from 'node:fs';
 
@@ -133,7 +134,7 @@ try {
         '--base',
         'develop',
         '--title',
-        `Merge ${deliveryBranch} into develop`,
+        releaseMessages(version, deliveryBranch.split('/')[0]).develop,
         '--body',
         'Return the published release to develop. Automation verifies the merge and preserves release ancestry with a merge commit.',
       );

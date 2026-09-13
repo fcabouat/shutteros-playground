@@ -1,3 +1,4 @@
+import { releaseMessages } from './release-messages.mjs';
 import { execFileSync } from 'node:child_process';
 
 const run = (command, ...args) => execFileSync(command, args, { stdio: 'inherit' });
@@ -59,7 +60,20 @@ const currentBaseSha = json('api', `repos/${repository}/git/ref/heads/${base}`).
 if (currentBaseSha !== verifiedBaseSha)
   throw new Error(`${base} changed after verification; refusing to merge.`);
 
-run('gh', 'pr', 'merge', number, '--merge', '--match-head-commit', headSha);
+const [kind, version] = branch.split('/');
+run(
+  'gh',
+  'pr',
+  'merge',
+  number,
+  '--merge',
+  '--match-head-commit',
+  headSha,
+  '--subject',
+  releaseMessages(version, kind)[base],
+  '--body',
+  `Merge ${branch} into ${base}.\n\nPull request: https://github.com/${repository}/pull/${number}`,
+);
 pull = getPull();
 if (validate(pull) !== base) throw new Error('Pull request base changed during merge.');
 if (!pull.merged) throw new Error('GitHub did not report the pull request as merged.');

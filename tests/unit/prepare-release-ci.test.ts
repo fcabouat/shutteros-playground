@@ -150,6 +150,13 @@ test('manual request prepares only a release branch and pull request', () => {
   expect(f.git('ls-remote', '--heads', 'origin', 'main')).toBe('');
   expect(f.git('ls-remote', '--tags', 'origin')).toBe('');
   expect(f.state().open).toHaveLength(1);
+  expect(
+    f
+      .state()
+      .calls.some((call: string) =>
+        call.includes('--title chore(release): merge v0.3.0 into main'),
+      ),
+  ).toBe(true);
 });
 
 test('retry after PR creation failure pushes the prepared branch', () => {

@@ -85,14 +85,23 @@ fs.writeFileSync(file, JSON.stringify(state));
   return { state, update, run, head };
 }
 
-test('waits for required checks, merge-commits the exact head, and resumes publication', () => {
-  const f = fixture();
-  f.run();
-  expect(f.state().pull.merged).toBe(true);
-  expect(f.state().calls).toContain('pr checks 42 --watch --required --fail-fast --interval 10');
-  expect(f.state().calls).toContain(`pr merge 42 --merge --match-head-commit ${f.head}`);
-  expect(f.state().calls).toContain('workflow run ci.yml --ref main -f resume_release=true');
-});
+test.each(['main', 'develop'])(
+  'merges the exact head into %s with the standard subject',
+  (base) => {
+    const f = fixture(base);
+    f.run();
+    expect(f.state().pull.merged).toBe(true);
+    expect(f.state().calls).toContain('pr checks 42 --watch --required --fail-fast --interval 10');
+    expect(f.state().calls).toContain(
+      `pr merge 42 --merge --match-head-commit ${f.head} --subject chore(release): merge v1.2.3 into ${base} --body Merge release/1.2.3 into ${base}.\n\nPull request: https://github.com/fixture/repo/pull/42`,
+    );
+    expect(f.state().calls).toContain(
+      base === 'main'
+        ? 'workflow run ci.yml --ref main -f resume_release=true'
+        : 'workflow run ci.yml --ref develop',
+    );
+  },
+);
 
 test('an already merged PR dispatches its base without another merge', () => {
   const f = fixture('develop');

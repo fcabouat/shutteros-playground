@@ -69,6 +69,14 @@ This is the decision to publish, not just to draft a PR. GitHub then:
 
 The technical PRs remain visible; normal delivery needs no further manual merge. Failed checks, conflicts or branch changes stop the affected stage. A prepared release is reused on retry, and published tags are never moved. If a release is already in progress, another request resumes that delivery rather than cutting a second one.
 
+Automated messages follow the same templates for PR titles and merge commits:
+
+- `chore(release): prepare vX.Y.Z` for the versioning commit.
+- `chore(release): merge vX.Y.Z into main` for delivery.
+- `chore(release): merge vX.Y.Z into develop` for the return.
+
+Hotfix merges use `chore(hotfix)`. Merge commit bodies retain the PR link; GitHub releases and annotated tags use `ShutterOS Playground vX.Y.Z`.
+
 ### Repository setup
 
 Install GitHub CLI (`gh`) and run `gh auth login` once for the local launcher. Under **Settings → Actions → General**, allow Actions to create pull requests. Allow merge commits, keep `verify` required on `main` and `develop`, and permit Actions to create version tags. Required human reviews or environment approvals will still pause delivery; for this solo-maintainer workflow, leave their required count at zero. No admin bypass is used.

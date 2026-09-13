@@ -1,3 +1,4 @@
+import { releaseMessages } from './release-messages.mjs';
 import { execFileSync } from 'node:child_process';
 import { appendFileSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -98,7 +99,7 @@ try {
         '--base',
         'main',
         '--title',
-        `Release v${next}`,
+        releaseMessages(next).main,
         '--body',
         'Requested from develop. Automation verifies this merge, waits for required checks, then merges and publishes the Changesets version. The release branch is subsequently merged back into develop.',
       );
