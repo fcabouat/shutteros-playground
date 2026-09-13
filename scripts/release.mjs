@@ -1,5 +1,7 @@
 import { execFileSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { readFileSync, mkdtempSync, rmSync, symlinkSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
 
 const run = (command, ...args) => execFileSync(command, args, { stdio: 'inherit' });
 const read = (command, ...args) => execFileSync(command, args, { encoding: 'utf8' }).trim();
@@ -21,33 +23,67 @@ if (process.argv[2] === 'prepare') {
   if (read('git', 'rev-parse', 'HEAD') !== read('git', 'rev-parse', 'origin/develop')) {
     fail('Synchronize develop with origin/develop before preparing a release.');
   }
-  const previous = version();
-  run('pnpm', 'exec', 'changeset', 'version');
-  const next = version();
-  if (next === previous) fail('No pending changeset for the application.');
-  if (!/^\d+\.\d+\.\d+$/.test(next)) fail('Only stable releases are supported.');
-  run('git', 'switch', '-c', `release/${next}`);
-  run(
-    'pnpm',
-    'exec',
-    'prettier',
-    '--write',
-    'package.json',
-    'packages/core/package.json',
-    'CHANGELOG.md',
-    'packages/core/CHANGELOG.md',
-  );
-  run(
-    'git',
-    'add',
-    '.changeset',
-    'package.json',
-    'packages/core/package.json',
-    'pnpm-lock.yaml',
-    'CHANGELOG.md',
-    'packages/core/CHANGELOG.md',
-  );
-  run('git', 'commit', '-m', `chore: release v${next}`);
+  // Build the release in a disposable worktree. Failed tools or commit hooks
+  // cannot leave develop with consumed changesets or partially bumped versions.
+  const temporary = mkdtempSync(join(tmpdir(), 'shutteros-prepare-'));
+  const checkout = join(temporary, 'checkout');
+  const changeset = resolve('node_modules/.bin/changeset');
+  const prettier = resolve('node_modules/.bin/prettier');
+  let releaseBranch;
+  let added = false;
+  let committed = false;
+  const start = read('git', 'rev-parse', 'HEAD');
+  try {
+    const report = join(temporary, 'plan.json');
+    run(changeset, 'status', '--output', report);
+    const plan = JSON.parse(readFileSync(report, 'utf8'));
+    const next = plan.releases.find((item) => item.name === 'shutteros-playground')?.newVersion;
+    if (!next || !/^\d+\.\d+\.\d+$/.test(next))
+      fail('No stable application release in pending changesets.');
+    releaseBranch = `release/${next}`;
+    if (
+      read('git', 'branch', '--list', releaseBranch) ||
+      read('git', 'branch', '-r', '--list', `origin/${releaseBranch}`)
+    ) {
+      fail(`${releaseBranch} already exists. Resume that release instead.`);
+    }
+    run('git', 'worktree', 'add', '-b', releaseBranch, checkout, start);
+    added = true;
+    symlinkSync(resolve('node_modules'), join(checkout, 'node_modules'), 'dir');
+    const inCheckout = (command, ...args) =>
+      execFileSync(command, args, { cwd: checkout, stdio: 'inherit' });
+    inCheckout(changeset, 'version');
+    if (JSON.parse(readFileSync(join(checkout, 'package.json'), 'utf8')).version !== next)
+      fail('Changesets plan changed during preparation.');
+    inCheckout(
+      prettier,
+      '--write',
+      'package.json',
+      'packages/core/package.json',
+      'CHANGELOG.md',
+      'packages/core/CHANGELOG.md',
+    );
+    inCheckout(
+      'git',
+      'add',
+      '.changeset',
+      'package.json',
+      'packages/core/package.json',
+      'pnpm-lock.yaml',
+      'CHANGELOG.md',
+      'packages/core/CHANGELOG.md',
+    );
+    inCheckout('git', 'commit', '-m', `chore: release v${next}`);
+    committed = true;
+  } finally {
+    if (added) {
+      run('git', 'worktree', 'remove', '--force', checkout);
+      // Compare-and-delete protects any independently advanced release ref.
+      if (!committed) run('git', 'update-ref', '-d', `refs/heads/${releaseBranch}`, start);
+    }
+    rmSync(temporary, { recursive: true, force: true });
+  }
+  run('git', 'switch', releaseBranch);
   console.log('Ready. Run pnpm release:push to push and open the release PR.');
 } else if (process.argv[2] === 'push') {
   clean();

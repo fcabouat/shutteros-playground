@@ -4,6 +4,11 @@ on:
   push:
   pull_request:
   workflow_dispatch:
+    inputs:
+      resume_release:
+        description: 'Publish or resume the current main version after verification'
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -23,6 +28,7 @@ jobs:
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: '24'
+          package-manager-cache: false
       - name: Validate workflow syntax
         run: |
           mkdir -p "$RUNNER_TEMP/actionlint"
@@ -96,6 +102,8 @@ jobs:
     permissions:
       pages: write
       id-token: write
+    outputs:
+      page_url: ${{ steps.deployment.outputs.page_url }}
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -106,7 +114,7 @@ jobs:
 
   release:
     needs: verify
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || inputs.resume_release == true)
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -120,7 +128,30 @@ jobs:
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: '24'
+          package-manager-cache: false
       - name: Tag the verified commit and propose integration
         run: node scripts/publish-release.mjs
         env:
           GH_TOKEN: ${{ github.token }}
+
+  publication-summary:
+    needs: [verify, deploy, release]
+    if: always() && github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - name: Report each publication stage
+        env:
+          VERIFY: ${{ needs.verify.result }}
+          PAGES: ${{ needs.deploy.result }}
+          PAGE_URL: ${{ needs.deploy.outputs.page_url }}
+          RELEASE: ${{ needs.release.result }}
+        run: |
+          {
+            echo '## Publication outcomes'
+            echo "- Verification: $VERIFY"
+            echo "- Pages: $PAGES $PAGE_URL"
+            echo "- Tag, GitHub release and integration PR: $RELEASE"
+            echo 'A successful verification alone does not mean publication is complete.'
+            echo 'See the release job summary for verified artifact links. Check CodeQL separately under Security.'
+          } >> "$GITHUB_STEP_SUMMARY"
