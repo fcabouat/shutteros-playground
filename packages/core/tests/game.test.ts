@@ -598,7 +598,7 @@ describe('game runtime', () => {
     ['internal', 'confidentialAnonymised', 'risky'],
     ['internal', 'generic', 'safe'],
     ['commercial', 'routine', 'risky'],
-    ['commercial', 'routineAnonymised', 'risky'],
+    ['commercial', 'routineAnonymised', 'safe'],
     ['commercial', 'confidential', 'risky'],
     ['commercial', 'confidentialAnonymised', 'risky'],
     ['commercial', 'generic', 'safe'],

@@ -26,8 +26,8 @@ export const challengeOrder = [
  * catalogue, while the pure core owns which identifiers are valid and their effect.
  */
 const challengeChoices = {
-  // Removing names does not change the exercise policy's permitted scope:
-  // routine work stays internal, restricted notes stay out, templates suit either.
+  // The exercise permits routine work without names in either tool, while named
+  // work stays internal. Security notes remain restricted regardless of names.
   ai: {
     choose: {
       'internal-routine': 'safe',
@@ -36,7 +36,7 @@ const challengeChoices = {
       'internal-confidentialAnonymised': 'risky',
       'internal-generic': 'safe',
       'commercial-routine': 'risky',
-      'commercial-routineAnonymised': 'risky',
+      'commercial-routineAnonymised': 'safe',
       'commercial-confidential': 'risky',
       'commercial-confidentialAnonymised': 'risky',
       'commercial-generic': 'safe',

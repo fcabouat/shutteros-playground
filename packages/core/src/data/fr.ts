@@ -142,7 +142,7 @@ export const fr = {
     policyRules: [
       'L’outil interne autorise la préparation de documents pour les projets courants, en limitant les données personnelles à celles nécessaires au travail.',
       'Les constats et plans d’action relatifs à la sécurité du site sont hors du périmètre autorisé de ces deux outils.',
-      'Avec l’IA commerciale, seule une trame générale, sans données internes ni nominatives, est autorisée.',
+      'L’IA commerciale autorise les trames générales et les notes de projets courants non confidentiels après anonymisation. Les données nominatives restent dans l’outil interne.',
     ],
     choosePrompt: 'Préparer le message',
     routine: 'Rédiger le compte rendu',
@@ -177,9 +177,9 @@ export const fr = {
       'internal-generic':
         'Vous avez demandé une trame générale à l’outil interne. Cet usage est autorisé. Complétez-la avec les informations utiles dans le cadre prévu par votre organisation et relisez le résultat.',
       'commercial-routine':
-        'Le projet de parking est courant, mais ce message contient des noms et des informations de travail. La charte de l’exercice les réserve à l’outil interne ; seule une trame générale est permise dans le service commercial.',
+        'Le projet de parking est courant, mais ce message contient des noms. La charte de l’exercice réserve cette version à l’outil interne. Pour le service commercial, utilisez la version anonymisée du projet ou demandez une trame générale.',
       'commercial-routineAnonymised':
-        'Les noms ont disparu, mais les détails du projet restent des informations internes. La charte de l’exercice ne permet pas leur envoi à ce service, même anonymisés. Demandez une trame générale sans reprendre les notes de la réunion.',
+        'Cette version du projet de parking est autorisée par la charte de l’exercice : elle ne contient pas de noms ni d’informations confidentielles. Pour vos vrais documents, vérifiez l’anonymisation et l’usage autorisé : le contexte peut encore permettre de reconnaître une personne. Relisez aussi le résultat.',
       'commercial-confidential':
         'Ces noms, constats sur les accès et dates de correction auraient été transmis au service commercial. Ces informations sur la sécurité du site sont hors du périmètre autorisé par la charte. Suivez le circuit prévu pour ce document.',
       'commercial-confidentialAnonymised':

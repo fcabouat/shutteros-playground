@@ -10,7 +10,7 @@ Double-click the USB desktop icon to inspect its simulated file explorer. Select
 
 Use the controls inside each application first: inspect a sender, forward a suspicious message to the configured security contact, or isolate an incident using the taskbar network button. Isolation opens the next response choices. Situations without a direct application action show their choices immediately; **What should I do?** remains available for help.
 
-In the AI assistant, choose a tool, consult the exercise policy, then preview one of five fictional messages: routine car park notes or restricted security notes, each with or without names, or a general template. The internal tool accepts both versions of the routine project and the template; the commercial tool accepts only the template. Removing names does not guarantee anonymisation or remove confidentiality. Follow your organisation’s policy and AI usage charter for real work.
+In the AI assistant, choose a tool, consult the exercise policy, then preview one of five fictional messages: routine car park notes or restricted security notes, each with or without names, or a general template. The internal tool accepts both versions of the routine project and the template; the commercial tool accepts the anonymised routine project and the template. Neither accepts the security notes. Removing names does not guarantee anonymisation or remove confidentiality. Follow your organisation’s policy and AI usage charter for real work.
 
 The sender, portal, incident, phone, and AI screens are simulations. They do not send email, contact a service, transmit credentials, or approve a real sign-in. Treat the displayed clues as prompts to practise a real-world habit.
 
