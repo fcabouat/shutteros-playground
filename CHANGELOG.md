@@ -1,5 +1,15 @@
 # shutteros-playground
 
+## 0.3.0
+
+### Minor Changes
+
+- 71ebd39: Add a bilingual product site with a hosted demo, standalone download, translated player guide, generated core API reference and Storybook. Keep the kiosk distribution separate, and carry the selected site language into the demo.
+
+### Patch Changes
+
+- @shutteros/core@0.3.0
+
 ## 0.2.0
 
 ### Minor Changes
