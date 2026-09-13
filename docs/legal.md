@@ -22,6 +22,8 @@ The [ENISA legal notice](https://www.enisa.europa.eu/about-enisa/legal-notice) g
 
 `static/THIRD-PARTY-NOTICES.txt` supplies the same notice text during development and Storybook. A production build compares it with the dependencies actually rendered into the regular and portable deliveries, plus Tailwind's emitted CSS. If that inventory changes, the build stops and keeps the generated manifests; run `pnpm notices:update`, review the updated notice file, then run `pnpm build` again. This explicit refresh prevents a dependency update from shipping stale in-app notices.
 
+The public documentation site also redistributes TypeDoc and Storybook assets. Its root `THIRD-PARTY-NOTICES.txt` adds their license texts and the catalog font attribution; upstream bundled license comments are preserved. The game-only kiosk notices remain separate from these documentation dependencies.
+
 - The MIT license does not license a deploying organisation's private logo, institutional marks, third-party identifiers, or external source material. Keep private branding outside the public repository and review the actual built artifact before sharing it.
 - Educational text is written for the game and points to its primary references in [content notes](content.md). Links to guidance do not imply approval of the game by those sources.
 

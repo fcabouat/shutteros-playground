@@ -40,3 +40,21 @@ test('a custom note stays literal when the browser selects English', async ({ pa
   await page.getByRole('button', { name: en.login.enter, exact: true }).click();
   await expect(page.getByText(en.intro.description, { exact: true })).toBeVisible();
 });
+
+for (const delivery of ['http', 'file'] as const) {
+  test(`${delivery}: an explicit language query overrides the browser locale and survives reset`, async ({
+    page,
+  }) => {
+    await page.goto(
+      `${delivery === 'file' ? pathToFileURL(resolve('dist/portable/shutteros.html')).href : './'}?lang=fr`,
+    );
+    await expect(page.locator('html')).toHaveAttribute('lang', 'fr');
+    await expect(page.getByLabel(fr.login.password, { exact: true })).toBeVisible();
+    await page.getByLabel(fr.login.password, { exact: true }).fill('Bureau2026');
+    await page.getByRole('button', { name: fr.login.enter, exact: true }).click();
+    await page.getByRole('button', { name: fr.intro.start, exact: true }).click();
+    await page.getByRole('button', { name: fr.shell.logout, exact: true }).click();
+    await page.getByRole('button', { name: fr.shell.exitConfirm, exact: true }).click();
+    await expect(page.locator('html')).toHaveAttribute('lang', 'fr');
+  });
+}

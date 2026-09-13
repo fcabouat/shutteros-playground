@@ -1,0 +1,18 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": [
+    "packages/core/src/model",
+    "packages/core/src/runtime",
+    "packages/core/src/projections",
+    "packages/core/src/services",
+    "packages/core/src/data/catalog.ts"
+  ],
+  "entryPointStrategy": "expand",
+  "tsconfig": "packages/core/tsconfig.json",
+  "out": ".site-build/api",
+  "readme": "docs/api.md",
+  "name": "ShutterOS core — API",
+  "includeVersion": true,
+  "excludeInternal": true,
+  "intentionallyNotExported": ["challengeChoices", "Translatable", "fr"]
+}

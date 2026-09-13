@@ -103,9 +103,14 @@
 
   onMount(() => {
     mounted = true;
-    // Choose once at the browser boundary, before login. Player resets keep the
-    // provider alive, so a manual language choice survives the next-player reset.
-    i18n.changeLocale(preferredLocale(navigator.languages ?? [navigator.language]));
+    // An explicit URL choice is useful for links and previews; otherwise follow
+    // the browser preference. The query is intentionally ephemeral and never saved.
+    const requested = new URLSearchParams(window.location.search).get('lang');
+    const locale =
+      requested === 'fr' || requested === 'en'
+        ? requested
+        : preferredLocale(navigator.languages ?? [navigator.language]);
+    i18n.changeLocale(locale);
     kioskInput = createKioskInput(window, document, navigator);
     void start();
     void loadNotices();

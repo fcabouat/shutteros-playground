@@ -1,0 +1,129 @@
+.site-header {
+  background: #fff;
+  color: #173b4c;
+  border-bottom: 1px solid #d7e2e6;
+  font:
+    14px/1.45 system-ui,
+    sans-serif;
+}
+.site-header * {
+  box-sizing: border-box;
+}
+.site-bar {
+  max-width: 1280px;
+  margin: auto;
+  padding: 16px 28px;
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  flex-wrap: wrap;
+}
+.site-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: #173b4c;
+  font-size: 17px;
+  font-weight: 750;
+  flex-shrink: 0;
+}
+.site-brand img {
+  display: block;
+}
+.site-brand small {
+  display: block;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.site-links {
+  display: flex;
+  flex: 1;
+  gap: 19px;
+  flex-wrap: wrap;
+}
+.site-links a {
+  color: #284c5e;
+  text-decoration: none;
+  font-weight: 600;
+}
+.site-links a:hover,
+.site-languages a:hover {
+  text-decoration: underline;
+  text-underline-offset: 5px;
+}
+.site-languages {
+  display: flex;
+  gap: 4px;
+  border: 1px solid #c6d7de;
+  border-radius: 8px;
+  padding: 3px;
+  font-size: 12px;
+}
+.site-languages a,
+.site-languages span {
+  padding: 5px 7px;
+  color: #284c5e;
+  text-decoration: none;
+}
+.site-languages [aria-current] {
+  background: #173b4c;
+  color: #fff;
+  border-radius: 5px;
+}
+.site-languages [aria-disabled] {
+  color: #536971;
+}
+.site-header a:focus-visible {
+  outline: 3px solid #16728a;
+  outline-offset: 5px;
+}
+/* Storybook owns a viewport-sized manager. Reserve real space for the site links
+   instead of placing a floating bar over its controls. */
+body:has(.storybook-site-nav) {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  margin: 0;
+}
+.storybook-site-nav {
+  flex-shrink: 0;
+}
+body:has(.storybook-site-nav) > #root {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  height: auto;
+}
+@media (max-width: 1100px) {
+  .site-bar {
+    gap: 16px;
+  }
+  .site-languages {
+    margin-left: auto;
+  }
+  .site-links {
+    order: 3;
+    flex-basis: 100%;
+    gap: 12px 20px;
+  }
+}
+@media (max-width: 480px) {
+  .site-bar {
+    padding: 14px 18px;
+    gap: 12px;
+  }
+  .site-brand {
+    font-size: 15px;
+    gap: 7px;
+  }
+  .site-languages {
+    font-size: 11px;
+  }
+  .site-languages a,
+  .site-languages span {
+    padding: 5px;
+  }
+}
