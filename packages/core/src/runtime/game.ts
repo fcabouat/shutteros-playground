@@ -1,5 +1,5 @@
 import type { GameConfig } from '../model/configuration';
-import { allComplete, hasResult } from '../projections/game';
+import { allComplete, hasResult, incidentFollowsFeedback } from '../projections/game';
 import { currentKnowledgeId, knowledgeAnswer } from '../services/knowledge';
 import { passwordCategory } from '../services/passwords';
 import {
@@ -171,11 +171,7 @@ function continueScene(
         : { ...state, scene: { kind: 'desktop' } };
     case 'feedback':
       if (state.mode === 'guided') return advanceGuided(state);
-      if (
-        state.scene.result.id === 'usb' &&
-        state.scene.result.outcome === 'risky' &&
-        !hasResult(state, 'incident')
-      ) {
+      if (incidentFollowsFeedback(state, state.scene.result)) {
         return openChallenge({ ...state, scene: { kind: 'desktop' } }, 'incident', config);
       }
       return allComplete(state)
@@ -197,7 +193,7 @@ function openChallenge(
   id: ChallengeId,
   config: GameConfig,
 ): GameState {
-  if (!isChallengeId(id) || hasResult(state, id) || state.mode === 'guided') return state;
+  if (!isChallengeId(id) || state.mode === 'guided') return state;
   const available =
     state.scene.kind === 'desktop'
       ? state
@@ -233,6 +229,7 @@ function finishExperience(state: Extract<GameState, { phase: 'session' }>): Game
   const pendingIncident =
     state.scene.kind === 'challenge' &&
     state.scene.id === 'incident' &&
+    !hasResult(state, 'incident') &&
     state.scene.step === 'notify'
       ? {
           startedAt: state.scene.startedAt,
@@ -298,7 +295,7 @@ function beginDecision(state: Extract<GameState, { phase: 'session' }>): GameSta
 
 function choose(state: Extract<GameState, { phase: 'session' }>, choiceId: string): GameState {
   const scene = state.scene;
-  if (scene.kind !== 'challenge' || hasResult(state, scene.id)) return state;
+  if (scene.kind !== 'challenge') return state;
   if (typeof choiceId !== 'string') return state;
   // Native surfaces can emit choices during exploration (for example opening the
   // USB file). The action drawer is one input path, not a mandatory permission gate.
@@ -314,27 +311,29 @@ function choose(state: Extract<GameState, { phase: 'session' }>, choiceId: strin
 }
 
 /**
- * First outcome wins: re-opening or duplicate clicks cannot
- * replace a learning consequence with a better score. The hasResult guard protects
- * insertion; duplicate-result journeys in packages/core/tests/game.test.ts exercise it.
+ * Practice produces feedback without replacing the first outcome or its side effects.
+ * A replayed USB mistake therefore does not infect the original session or send the
+ * player into an unanswered incident. Duplicate clicks outside a challenge are inert.
  */
 function recordResult(
   state: Extract<GameState, { phase: 'session' }>,
   result: ChallengeResult,
 ): GameState {
-  if (hasResult(state, result.id)) return state;
+  if (hasResult(state, result.id)) {
+    return { ...state, scene: { kind: 'feedback', result, replay: true } };
+  }
   return {
     ...state,
     results: [...state.results, result],
     usbInfected: state.usbInfected || (result.id === 'usb' && result.outcome === 'risky'),
-    scene: { kind: 'feedback', result },
+    scene: { kind: 'feedback', result, replay: false },
   };
 }
 
 function closeScene(state: Extract<GameState, { phase: 'session' }>): GameState {
   if (state.mode === 'free' && state.scene.kind === 'challenge') return leaveFreeChallenge(state);
-  if (state.scene.kind === 'debrief' && !allComplete(state)) {
-    return { ...state, scene: { kind: 'desktop' } };
+  if (state.scene.kind === 'debrief') {
+    return { ...state, mode: 'free', scene: { kind: 'desktop' } };
   }
   return state;
 }
@@ -349,7 +348,7 @@ function leaveFreeChallenge(
 ): Extract<GameState, { phase: 'session' }> {
   if (state.scene.kind !== 'challenge') return state;
   const pendingIncident =
-    state.scene.id === 'incident' && state.scene.step === 'notify'
+    state.scene.id === 'incident' && !hasResult(state, 'incident') && state.scene.step === 'notify'
       ? {
           startedAt: state.scene.startedAt,
           exploreUntil: state.scene.exploreUntil,

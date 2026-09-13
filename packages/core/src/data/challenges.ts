@@ -42,7 +42,7 @@ export const challenges: Challenges = {
         'Le choix de l’outil et celui des données doivent tous deux respecter les règles de votre organisation.',
     },
     lesson:
-      'Utilisez les outils IA et la charte d’usage de votre organisation. N’envoyez que les informations autorisées et nécessaires : retirer les noms ne rend pas forcément un document anonyme ou partageable.',
+      'Préservez la confidentialité, même sans noms. Une anonymisation bien faite peut aider, mais ne rend pas tout document partageable avec un service commercial. Un outil interne peut convenir à des informations peu sensibles, dans le cadre autorisé. Suivez toujours la politique de votre organisation et sa charte IA.',
     shortLesson: 'Outil autorisé, données nécessaires, charte respectée.',
   },
   usb: {

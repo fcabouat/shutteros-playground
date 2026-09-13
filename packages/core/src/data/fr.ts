@@ -134,15 +134,15 @@ export const fr = {
     internal: 'Assistant interne',
     commercial: 'Service d’IA commercial',
     internalNote: 'Espace de votre organisation',
-    commercialNote: 'Compte personnel · service externe',
+    commercialNote: 'Service hébergé par un prestataire',
     connect: 'Ouvrir le chat',
     switch: 'Changer d’outil',
     policy: 'Charte IA de cet exercice',
     policyIntro: 'Pour cette simulation, l’organisation a défini ces règles :',
     policyRules: [
-      'L’assistant interne est autorisé pour rédiger des trames sans données personnelles ni informations confidentielles.',
-      'Ce service commercial utilisé avec un compte personnel n’est pas autorisé pour le travail.',
-      'En cas de doute sur un document ou un usage, demandez conseil avant l’envoi.',
+      'Les deux outils sont autorisés pour demander une trame générale sans données personnelles ni informations confidentielles.',
+      'Les notes de cette réunion contiennent un projet confidentiel : elles ne doivent être transmises à aucun de ces outils, même après retrait des noms.',
+      'Pour les autres usages, suivez la politique de votre organisation et sa charte IA. En cas de doute, demandez conseil avant l’envoi.',
     ],
     choosePrompt: 'Préparer le message',
     full: 'Copier mes notes',
@@ -167,17 +167,17 @@ export const fr = {
       'internal-generic':
         'Vous avez utilisé l’outil autorisé avec une demande générale, sans notes internes ni données personnelles. Complétez la trame dans vos outils de travail et relisez le résultat.',
       'commercial-full':
-        'Ces notes auraient été confiées à un service externe non autorisé ici. Une réponse utile de l’IA n’annule pas l’exposition des informations envoyées.',
+        'Ces notes personnelles et confidentielles auraient été confiées à un service externe. Cet outil peut servir à une demande générale, mais la charte de l’exercice interdit d’y envoyer ces notes.',
       'commercial-masked':
-        'Retirer le nom n’a protégé ni la personne reconnaissable, ni le budget confidentiel. Le message aurait été confié à un service externe non autorisé ici.',
+        'Retirer le nom n’a protégé ni la personne reconnaissable, ni le budget confidentiel. Ces informations auraient été confiées au service externe alors que la charte de l’exercice ne le permet pas.',
       'commercial-generic':
-        'Votre message ne contient pas les notes sensibles : c’est une bonne précaution. Mais ce service personnel n’est pas autorisé pour le travail dans cet exercice. Revenez à l’outil prévu par votre organisation.',
+        'Vous avez demandé une trame générale au service commercial, sans transmettre les notes sensibles. Cet usage est autorisé dans l’exercice. Complétez la trame dans vos outils de travail et relisez le résultat.',
     },
   },
   education: {
     ai: [
       'Des détails croisés (fonction, lieu, date ou situation rare) peuvent permettre de reconnaître une personne malgré la suppression de son nom. Anonymiser demande du savoir-faire : si vous hésitez, ne transmettez pas le document.',
-      'Même sans données personnelles, un budget, un projet ou une procédure peut rester confidentiel. Un outil interne ou un abonnement payant n’est pas une autorisation générale. Un outil commercial peut être autorisé dans un cadre précis : suivez la charte de votre organisation.',
+      'Même anonymisés, un budget, un projet ou une procédure peuvent rester confidentiels. Un outil interne approuvé peut convenir à des informations peu sensibles, si la politique et la charte IA le permettent. Pour un service commercial, vérifiez aussi quelles données peuvent sortir de votre organisation : un abonnement payant ne suffit pas.',
       'Si des informations sont parties par erreur, signalez-le rapidement au canal de sécurité prévu. Supprimer le chat ne garantit pas que les données ont disparu du service. Vérifiez aussi les réponses de l’IA avant de les utiliser.',
     ],
     more: 'Pour aller un peu plus loin',
@@ -252,6 +252,7 @@ export const fr = {
     ai: 'Assistant IA',
     completed: (n: number) => `${n} situation${n > 1 ? 's' : ''} explorée${n > 1 ? 's' : ''}`,
     done: 'Exploré',
+    replay: 'Rejouer pour s’entraîner',
     doubleClick: 'Double-cliquez pour ouvrir · Entrée au clavier',
     usb: 'Clé USB trouvée',
     mail: 'Messagerie',
@@ -279,6 +280,7 @@ export const fr = {
     continue: 'Continuer l’exploration',
     incident: 'Réagir à l’incident',
     finish: 'Découvrir mon bilan',
+    replay: 'Cet entraînement ne change pas votre premier résultat dans le bilan.',
     mfaIgnoredTitle: 'Vous n’avez pas approuvé. Il reste à signaler.',
     mfaIgnored:
       'Ignorer une demande inattendue évite de l’approuver, mais la signaler permet aux équipes de sécurité informatique de traiter la tentative.',

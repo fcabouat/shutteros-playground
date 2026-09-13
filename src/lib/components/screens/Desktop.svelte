@@ -41,11 +41,11 @@
         class="desktop-icon relative flex flex-col items-center justify-center gap-2 rounded-lg text-center"
         class:selected={selected === id}
         class:running={activeId === id}
-        disabled={done || !canExplore(snapshot)}
+        disabled={!canExplore(snapshot)}
         onclick={(event) => activate(id, event)}
         aria-describedby={done ? undefined : helpId}
-        title={done ? copy.desktop.done : copy.desktop.doubleClick}
-        aria-label={`${copy.desktop[id]}${done ? ` · ${copy.desktop.done}` : ''}`}
+        title={done ? copy.desktop.replay : copy.desktop.doubleClick}
+        aria-label={`${copy.desktop[id]}${done ? ` · ${copy.desktop.replay}` : ''}`}
       >
         <span class="app-icon relative" data-app={id}
           ><Icon name={id} size={27} />{#if done}<span class="done-badge"

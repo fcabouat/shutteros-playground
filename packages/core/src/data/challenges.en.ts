@@ -17,7 +17,7 @@ export const englishChallenges: Challenges = {
       risky: 'Both the tool and the data must comply with your organisation’s rules.',
     },
     lesson:
-      'Use your organisation’s approved AI tools and usage policy. Send only permitted, necessary information: removing names does not necessarily make a document anonymous or suitable for sharing.',
+      'Protect confidentiality, even without names. Careful anonymisation can help, but does not make every document suitable for a commercial service. An internal tool can suit information of low sensitivity within its approved scope. Always follow your organisation’s policy and AI usage charter.',
     shortLesson: 'Approved tool, necessary data, policy followed.',
   },
   usb: {

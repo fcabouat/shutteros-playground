@@ -20,7 +20,7 @@ To move a window, drag its title bar. You can focus the title bar and use the ar
 
 Choosing **Leave session** opens a confirmation. Cancel keeps the current session. Confirming clears the session and returns to the fictional login. The facilitator shortcut `Ctrl+Alt+Home` returns there immediately. The same reset occurs when the global session expires.
 
-Completed situations are not replayable during the same session. Start a new session if you want to try a choice again. The recap is a learning aid, not an exportable score. Its assessed count excludes the sender demonstration, which is marked as discovered.
+Completed situations can be replayed from the desktop during the same session. Replay is for practice and does not change the first result shown in the recap. The recap is a learning aid, not an exportable score. Its assessed count excludes the sender demonstration, which is marked as discovered.
 
 ## For facilitators
 

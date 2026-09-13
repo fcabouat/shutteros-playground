@@ -25,7 +25,7 @@ The core is a separate package because its manifest, ES2022-only TypeScript envi
 
 ## Runtime invariants
 
-Player actions and ticks both settle elapsed time before progression. First outcomes and outstanding incident-reporting steps survive navigation. These rules are documented beside the [transition](../packages/core/src/runtime/game.ts) and exercised by its [tests](../packages/core/tests/game.test.ts).
+Player actions and ticks both settle elapsed time before progression. First outcomes and outstanding incident-reporting steps survive navigation. Replaying shows the new consequence while retaining the first result and the original session deadline. These rules are documented beside the [transition](../packages/core/src/runtime/game.ts) and exercised by its [tests](../packages/core/tests/game.test.ts).
 
 Browser configuration and time enter after mount to preserve hydration consistency. The composition root owns load cancellation, runtime disposal and the session reset boundary.
 

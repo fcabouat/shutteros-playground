@@ -53,6 +53,7 @@ describe('knowledge service', () => {
       currentKnowledgeId(
         session({
           kind: 'feedback',
+          replay: false,
           result: { id: 'incident', outcome: 'safe', choiceId: 'notify' },
         }),
       ),
@@ -61,6 +62,7 @@ describe('knowledge service', () => {
       currentKnowledgeId(
         session({
           kind: 'feedback',
+          replay: false,
           result: { id: 'mfa', outcome: 'safe', choiceId: 'deny-report' },
         }),
       ),
