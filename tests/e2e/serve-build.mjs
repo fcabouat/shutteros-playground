@@ -3,7 +3,7 @@ import { createServer } from 'node:http';
 import { readFile, realpath, stat } from 'node:fs/promises';
 import path from 'node:path';
 
-const root = await realpath('dist');
+const root = await realpath(process.env.BUILD_ROOT ?? 'dist');
 const base = process.env.BASE_PATH ?? '';
 const types = {
   '.html': 'text/html; charset=utf-8',

@@ -7,6 +7,7 @@ export default ts.config(
   {
     ignores: [
       'dist/**',
+      '.site-build/**',
       'build/**',
       '.svelte-kit/**',
       'node_modules/**',

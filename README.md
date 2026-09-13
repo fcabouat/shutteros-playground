@@ -1,76 +1,93 @@
-# shutteros-playground
+# ShutterOS Playground
 
-**ShutterOS Playground — an independent cybersecurity awareness game for European Cybersecurity Month**
+[![CI](https://github.com/fcabouat/shutteros-playground/actions/workflows/ci.yml/badge.svg)](https://github.com/fcabouat/shutteros-playground/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-ShutterOS is a French/English cybersecurity-awareness game for a shared kiosk. A fictional desktop presents seven short situations: an unknown USB drive, a suspected incident, an urgent email, sender spoofing, a look-alike web login, an unexpected sign-in confirmation request, and sharing work information with an AI assistant.
+**A familiar desktop. A safe place to make mistakes.**
 
-Sessions last five to fifteen minutes. Players explore freely or choose a guided ending designed for three to five minutes. One configurable session clock resets the game after fifteen minutes by default.
+ShutterOS is a French/English cybersecurity awareness game for the browser or a shared kiosk. In five to fifteen minutes, players explore a
+fictional desktop and practise seven situations involving a found USB drive, an
+incident, urgent mail, sender spoofing, a look-alike login, an unexpected sign-in
+request, and sharing work information with an AI assistant.
 
-It is a local simulation. It has no backend, account system, persistence, telemetry, CDN, or real authentication. The fictional login phrases, messages, addresses, files, and forms are game content. No input is sent to a service or retained after the current session.
+[**Play the live demo**](https://fcabouat.github.io/shutteros-playground/demo/?lang=en) · [Jouer en français](https://fcabouat.github.io/shutteros-playground/demo/?lang=fr)
 
-![The fictional desktop and its taskbar](docs/images/desktop.png)
+Use it in a reception area, a team workshop or a Cybersecurity Month event. Add your organisation’s identity, configure the session length, and let the kiosk reset for the next player. Players can explore freely or choose a guided finish.
+The experience is local and fictional: it has no backend, account system,
+telemetry, persistence, external API, or real authentication. Game phrases,
+messages, addresses, files, and forms stay in the current session and are never
+sent to a service. A hosted deployment still receives ordinary requests for its static files.
 
-The login begins with a single sticky note. The assistant stays collapsed until requested; the desktop offers free exploration, all seven situations, three quiet routines, and the recap.
+![The fictional ShutterOS desktop](docs/images/desktop.png)
 
-The interface uses familiar desktop conventions with an original window-and-curtains identity. Each simulated application keeps its own visual vocabulary; guidance and answers live in a separate, expandable panel. A restrained palette, readable surfaces and progressive explanations support discovery at the player's pace. Organisation branding occupies its own space, independently of the fictional OS.
+## Explore
 
-## Run and build
+- [Project site](https://fcabouat.github.io/shutteros-playground/) — landing
+  page, guides, downloads, API, Storybook, and demo links.
+- [Player and facilitator guide (English)](https://fcabouat.github.io/shutteros-playground/guide/en.html)
+  · [Guide (français)](https://fcabouat.github.io/shutteros-playground/guide/fr.html)
+- [Core API](https://fcabouat.github.io/shutteros-playground/api/) ·
+  [Storybook](https://fcabouat.github.io/shutteros-playground/storybook/)
+- [Standalone demo](https://fcabouat.github.io/shutteros-playground/demo/portable/shutteros.html)
+  — one self-contained HTML file for offline use.
 
-Use Node.js 22.13 or later (Node 24 is used in CI). Dependency installation and CI use pnpm 11.19.0 with the committed lockfile:
+## Run locally
+
+Use Node.js 22.13 or later and pnpm 11.19:
 
 ```sh
 pnpm install --frozen-lockfile
 pnpm dev
 ```
 
-The development server listens on port 5173. To create both distributable variants:
+Build the ordinary kiosk delivery and optional portable file with:
 
 ```sh
 pnpm build
 ```
 
-The build produces the prerendered static site in `dist/` and the optional standalone artifact at `dist/portable/shutteros.html`. For kiosk use, serve `dist/` with Python's local HTTP server; `pnpm preview` is for development verification.
+This writes `dist/` and `dist/portable/shutteros.html`. Serve `dist/` over local HTTP
+for a kiosk; `pnpm preview` is for development verification. Configure the
+organisation name, branding, and local security contact as described in the
+[kiosk guide](docs/kiosk.md) and [branding guide](docs/branding.md).
 
-For everyday development, you can also run the scripts with **Bun** after the locked installation above:
+Bun can run the existing scripts after the locked pnpm installation (`bun run dev`, `bun run build`, and `bun run check`).
+
+## Build the public site
+
+The site build assembles the landing page, demo, bilingual guides, generated API
+reference, and Storybook under `dist/site/`:
 
 ```sh
-bun run dev
-bun run build
-bun run check
+pnpm build:site
+pnpm test:site
 ```
 
-Bun runs the package scripts, which use Node-based tools. Use `bun run test` for Vitest and `bun run check` for TypeScript and Svelte diagnostics. `bun test` selects Bun's own test runner. The full `verify` command orchestrates its steps with pnpm. Dependency changes and clean installations use pnpm so contributors and CI share one lockfile; `bun install` and forcing the Bun runtime with `--bun` are outside the supported workflow.
+The site build includes TypeDoc; `pnpm docs:api` regenerates only its reference in `.site-build/api`. Run `pnpm build` again before distributing the root-path kiosk edition.
 
-## Configuration and kiosk use
+## Architecture
 
-The regular static build loads `kiosk-config.json` at runtime and is the recommended local HTTP path. The portable artifact embeds `static/kiosk-config.json` at build time. The session uses one global fifteen-minute clock by default. `Ctrl+Alt+Home` returns to the simulated login screen.
-
-Read the [player and facilitator guide](docs/user-guide.md) and [kiosk deployment](docs/kiosk.md) before deploying. The host's Cage/Chromium policy, not this page, handles operating-system kiosk lockdown and recovery.
-
-The OS identity and the deploying organisation's name, campaign, and logo are separate. See [organisation branding](docs/branding.md) to personalise a deployment without committing organisation assets.
-
-## Documentation
-
-[Architecture](docs/overview.md) describes the static runtime and boundaries. [Content notes](docs/content.md) covers the educational claims and official references. Contribution and security guidance are in [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md).
-
-Storybook is available for component development with `pnpm storybook`; its static output is `storybook-static` (`pnpm build:storybook`).
+A pure TypeScript core owns the decisions and session progression. Svelte views render state; browser adapters supply effects. Package boundaries, import rules and tests enforce that separation. See the [architecture overview](docs/overview.md).
 
 ## Validation
 
 ```sh
-pnpm exec playwright install chromium --only-shell
 pnpm verify
-pnpm build:storybook
 ```
 
-`verify` runs lint, formatting, types, Knip (unused files, dependencies and exports), unit tests, build, and browser checks. Run `pnpm knip` or `bun run knip` separately for the unused-code check. The [verification guide](docs/verification.md) describes coverage and deployment checks. CI also rebuilds and tests the GitHub Pages path. Publishing is opt-in and requires a successful verification on `main`; follow the [deployment guide](docs/publishing.md).
+The command covers linting, formatting, types, unused-code checks, unit tests, the kiosk build, and browser checks. Install Playwright Chromium with `pnpm exec playwright install chromium --only-shell`. See the
+[verification guide](docs/verification.md), [CONTRIBUTING.md](CONTRIBUTING.md),
+and [publishing guide](docs/publishing.md).
 
-Dependabot checks version updates monthly, grouped into development tools, application dependencies, and GitHub Actions. Version-update PRs are limited to two for npm and one for Actions at a time. Security alerts and security-update PRs follow [GitHub's separate security settings](https://docs.github.com/en/code-security/how-tos/secure-your-supply-chain/secure-your-dependencies/configure-security-updates), not this monthly version schedule.
+## License and attribution
 
-## License
+The source is licensed under the MIT license; see [LICENSE](LICENSE).
+Redistributed dependencies retain their own licenses; see
+[dependency notices](static/THIRD-PARTY-NOTICES.txt) and the in-app About screen.
 
-Created by **F. Cabouat** ([fcabouat](https://github.com/fcabouat)).
-
-The project source is MIT licensed; see [LICENSE](LICENSE). Redistributed dependencies retain their own licenses; see the [full dependency notices](static/THIRD-PARTY-NOTICES.txt). Each successful build includes `dist/LICENSE` and `dist/THIRD-PARTY-NOTICES.txt`; the portable edition includes the same notices. They are also available from **Start → About ShutterOS**.
-
-This is an independent personal project created for awareness activities during European Cybersecurity Month. It is not affiliated with, endorsed by, or an official product of the campaign, ENISA, the European Commission, or Cybermalveillance.gouv.fr. Names, logos and other third-party identifiers remain the property of their respective rights holders; the MIT license grants no rights to them. No campaign or institutional logo is bundled. See [legal and attribution notes](docs/legal.md).
+ShutterOS is an independent personal project for awareness activities during
+European Cybersecurity Month. It is not affiliated with, endorsed by, or an
+official product of the campaign, ENISA, the European Commission, or
+Cybermalveillance.gouv.fr. Third-party names and logos belong to their rights
+holders, and the MIT license grants no rights to them. See the
+[legal and attribution notes](docs/legal.md).
