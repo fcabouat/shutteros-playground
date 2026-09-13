@@ -1,47 +1,30 @@
-# ShutterOS player and facilitator guide
+# Playing and running a ShutterOS session
 
-## For players
+ShutterOS is a cybersecurity awareness game on a fictional desktop. Allow five to fifteen minutes. All accounts, messages and files are simulated: use the game’s login phrase, never a real password or personal information.
 
-ShutterOS is a fictional workplace desktop exercise. Use only game phrases; the note supplies one. Do not enter a real password, account, or personal information.
+## Play
 
-Explore the desktop and open a situation when you are ready. The experience has one session clock: the default global limit is fifteen minutes, configurable by the operator. **Finish the experience** presents the remaining situations without making you search for them again. That guided ending targets three to five minutes; it has no separate timer.
+1. **Explore the desktop.** Double-click an application or open it from Start. Read the messages, inspect the details and try the controls before deciding what to do.
+2. **Ask for a hint when needed.** The assistant in the top-right corner offers guidance. Some situations also have a **What should I do?** button that opens the available responses.
+3. **Choose how to finish.** Keep exploring, or select **Finish the experience** to work through the remaining situations and reach the recap.
 
-Double-click the USB desktop icon to inspect its simulated file explorer. Select an item, then double-click it, press Enter, or choose **Open selected item**. The archive and readme show local previews; the disguised executable triggers the simulated infection. **Eject the drive** avoids running that program and recalls the organisation’s inspection procedure. **What should I do?** opens the alternative responses. Ejecting a real device after connecting it does not prove that the workstation is safe. No real USB device or file is opened.
+The hourglass shows the time left in the session: fifteen minutes by default. It keeps running during the guided finish. At zero, the game returns to the login screen and clears your progress.
 
-Use the controls inside each application first: inspect a sender, forward a suspicious message to the configured security contact, or isolate an incident using the taskbar network button. Isolation opens the next response choices. Situations without a direct application action show their choices immediately; **What should I do?** remains available for help.
+You can replay completed situations to try another approach. The recap keeps your first result; it is for discussion, not a saved assessment.
 
-In the AI assistant, choose a tool, consult the exercise policy, then preview one of five fictional messages: routine car park notes or restricted security notes, each with or without names, or a general template. The internal tool accepts both versions of the routine project and the template; the commercial tool accepts the anonymised routine project and the template. Neither accepts the security notes. Removing names does not guarantee anonymisation or remove confidentiality. Follow your organisation’s policy and AI usage charter for real work.
+## Useful controls
 
-The sender, portal, incident, phone, and AI screens are simulations. They do not send email, contact a service, transmit credentials, or approve a real sign-in. Treat the displayed clues as prompts to practise a real-world habit.
+- **Language:** choose FR or EN on the login screen or taskbar.
+- **Windows:** drag the title bar to move one. Use its controls to minimise it or return to the desktop.
+- **Keyboard:** Tab moves between controls; Enter or Space activates buttons. Sound is not required.
+- **Leave the session:** asks for confirmation before clearing progress. Cancel to keep playing.
 
-Use the hint button when you want a nudge. The guide can point to the next situation during free exploration. A gentle reminder may appear after inactivity; it is safe to dismiss.
+## Run a session
 
-To move a window, drag its title bar. You can focus the title bar and use the arrow keys to move it by small steps; Escape restores its position. The window controls minimize, maximize, or close where available.
+Let the participant explore before offering help. Ask “What made you choose that?” and discuss the consequence together. An incorrect choice is a chance to practise the next action, not a reason to stop.
 
-Choosing **Leave session** opens a confirmation. Cancel keeps the current session. Confirming clears the session and returns to the fictional login. The facilitator shortcut `Ctrl+Alt+Home` returns there immediately. The same reset occurs when the global session expires.
+Use the password, update and screen-locking exercises to discuss your organisation’s procedures. For real work, follow those procedures and the AI usage policy rather than the fictional exercise rules.
 
-Completed situations can be replayed from the desktop during the same session. Replay is for practice and does not change the first result shown in the recap. The recap is a learning aid, not an exportable score. Its assessed count excludes the sender demonstration, which is marked as discovered.
+Before welcoming participants, test a complete session on the actual screen, including the language selector, logout and automatic reset. Check readability and the organisation’s security contact. If needed, `Ctrl+Alt+Home` resets the game immediately, without confirmation.
 
-## For facilitators
-
-Aim for a five-minute conversation and let the participant choose the pace. The fifteen-minute global limit is the maximum safety boundary, not a required duration. Invite the player to name one clue before a decision, then read the consequence and the short takeaway.
-
-Free mode allows the participant to inspect the desktop and choose situations. Guided finish presents only what remains and keeps the same session clock. It does not add a second timer, reset the deadline, or replay completed items.
-
-The three routine reminders cover password handling, approved system/software updates, and locking the screen. Routine notices are optional and unobtrusive. Expand one when useful, open its familiar settings view, or dismiss it.
-
-For password renewal, follow the organisation’s policy. If a password may be compromised, report it immediately and follow the organisation’s procedure; do not wait for a planned renewal date.
-
-Keep the learning tone blameless. If a participant clicks, approves, or reports late, ask what they would do next: isolate and alert the security team for a suspected incident; refuse and report an unexpected MFA request; verify an unusual message through a known channel.
-
-Before an event, configure the organisation’s real security reporting contact and branding. Keep the scenario addresses, login phrases, files, and portal data fictional. Do not use a real account or ask visitors to test credentials.
-
-Password microchecks are available after the account routine, including the guided routine screen.
-
-For accessibility, use keyboard navigation, visible focus, the skip link, and the language selector as appropriate. Sound is not required. Set a comfortable display scale before starting the kiosk, and check the layout at its actual resolution. The ordinary web demo also allows browser zoom.
-
-Rehearse on the real kiosk screen with its mouse or touch input before opening the session to visitors. Build the static site, serve the production output over local HTTP, test one normal run, one logout confirmation, and one expiry/reset, then verify that the local security contact is reachable by the organisation’s known channel.
-
-The browser page does not lock the operating system or recover a crashed browser. Use the organisation’s established kiosk policy for browser lockdown, process recovery, physical access, and password-manager/autofill settings.
-
-No game input is retained after the session, and there is no backend, telemetry, persistence, or scoring export. A facilitator may discuss the recap in person; the application does not produce a participant report.
+For preparation, see [organisation branding](branding.md), [kiosk setup](kiosk.md) and the [Ubuntu installation kit](ubuntu-kiosk.md). The [educational notes](content.md) explain the scenarios and their sources **with spoilers**. These technical and editorial documents are in English.

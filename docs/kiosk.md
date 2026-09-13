@@ -19,7 +19,7 @@ python3 -m http.server 8080 --bind 127.0.0.1 --directory /path/to/dist
 
 At startup, the application requests `kiosk-config.json` from the deployed base path. Keep that JSON beside the generated site and serve it as JSON. If it names an optional `organizationLogo`, keep that PNG, WebP, or SVG file beside the JSON and site entry point as well. The value is a local filename such as `logo-organisation.svg`, never a path or URL.
 
-For the public demo, follow [GitHub Pages publication](publishing.md). The workflow tests both the local build and the repository base path before deploying.
+After building the public product site with `pnpm build:site`, run `pnpm build` again before distributing a root-path kiosk build. For the public demo, follow [GitHub Pages publication](publishing.md). The workflow tests both the local build and the repository base path before deploying.
 
 ## Portable build
 
@@ -39,7 +39,7 @@ Use this artifact where a single local file is preferable. Because the configura
 
 The guided ending targets three to five minutes, to validate with a human facilitator. The visible sticky note uses the first entry of `acceptedPasswords`. The built-in phrase adapts to French (`Bureau2026`) or English (`Office2026`), provided that translation is also in the accepted list. A custom first phrase stays unchanged. Other entries silently accept common weak passwords. Leading/trailing spaces and letter case are tolerated by default. After three unsuccessful attempts, a hint helps the participant continue.
 
-On page load, the first supported French or English browser language is selected, with French as the fallback. The FR/EN selector remains available; its choice survives next-player resets until the page reloads. No language preference is stored.
+On page load, `?lang=fr` or `?lang=en` selects the game language when present. Otherwise, the first supported French or English browser language is selected, with French as the fallback. The FR/EN selector remains available; its choice survives next-player resets until the page reloads. No language preference is stored.
 
 Set `showPasswordHint` to `false` to remove the digital note and use a physical one on the monitor. Write only the chosen fictional password on it. Free exploration, nudges, guided finish, and idle reminders (45 seconds by default) are configurable within the global session.
 
