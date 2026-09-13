@@ -40,9 +40,9 @@ An unexpected authentication request should be denied and reported. Never share 
 
 ### AI assistant and work information
 
-The seventh situation takes about a minute: choose an internal or commercial tool, inspect the exercise policy, preview a prepared message, then send it. There is no real login, free-text entry, upload or AI request. Five variants cover routine car park meeting notes and explicitly confidential security notes, each with or without names, plus a general template request.
+The seventh situation takes about a minute: choose an internal or commercial tool, inspect the exercise policy, preview a prepared message, then send it. There is no real login, free-text entry, upload or AI request. Five variants cover routine car park meeting notes and security notes, each with or without names, plus a general template request. Neutral titles and an interleaved order encourage reading the drafts; the security notes carry only a “[Security]” marker.
 
-The fictional policy permits both versions of the routine project and general templates in the internal tool. The commercial tool permits only the general template. Neither accepts either version of the restricted security notes: removing names does not remove access vulnerabilities or remediation dates. The UI says “names removed”, because this alone does not guarantee anonymisation. These exercise rules do not replace the deploying organisation’s policy or AI usage charter.
+The fictional policy permits both versions of the routine project and general templates in the internal tool. The commercial tool permits only the general template. Neither accepts either version of the restricted security notes: removing names does not remove access vulnerabilities or remediation dates. Feedback explains the distinction after sending. These exercise rules do not replace the deploying organisation’s policy or AI usage charter.
 
 Every outcome shows a common reminder about confidentiality, anonymisation and organisational rules. Removing names does not necessarily anonymise a document or make internal information shareable. Proper anonymisation can help within an approved use; a paid subscription alone grants no permission. Encourage asking before sending, reporting mistakes promptly, and checking generated answers. Guided completion uses the same direct controls.
 

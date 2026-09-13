@@ -9,7 +9,7 @@ export const englishChallenges: Challenges = {
     question: 'What can you share with this tool?',
     hints: [
       'The AI assistant can help with a real work task. Compare the car park and security notes, then check the exercise policy.',
-      'Names needed to assign actions may be permitted internally. Also check confidentiality labels: they matter even without names.',
+      'Names are not the only clue: also consider what the notes reveal about the organisation and what the policy permits.',
     ],
     choices: [],
     feedback: {

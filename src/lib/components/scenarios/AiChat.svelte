@@ -6,12 +6,13 @@
   let { dispatch }: { dispatch: (intent: Intent) => void } = $props();
   const i18n = getI18n();
   const copy = $derived(i18n.text.ai);
+  // Interleave the drafts so position does not group them by outcome or redaction.
   const promptOptions = [
-    'routine',
-    'routineAnonymised',
-    'confidential',
     'confidentialAnonymised',
+    'routine',
     'generic',
+    'confidential',
+    'routineAnonymised',
   ] as const satisfies readonly AiPrompt[];
   // These are fictional draft selections, discarded with the mounted session.
   // The core evaluates the submitted pair; this view never awards an outcome.
@@ -156,9 +157,6 @@
     display: grid;
     gap: 0.625rem;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .ai-prompt:last-child {
-    grid-column: 1 / -1;
   }
   .ai-tool,
   .ai-prompt {
