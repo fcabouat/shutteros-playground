@@ -27,6 +27,7 @@
     "build:storybook": "node scripts/prepare-branding.mjs && storybook build --disable-telemetry",
     "verify": "pnpm lint && pnpm format:check && pnpm check && pnpm knip && pnpm test && pnpm build && pnpm test:e2e",
     "changeset": "changeset",
+    "release": "node scripts/start-release.mjs",
     "release:prepare": "node scripts/release.mjs prepare",
     "release:push": "node scripts/release.mjs push",
     "build:site": "node scripts/build-site.mjs",
