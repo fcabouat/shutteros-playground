@@ -138,24 +138,24 @@ export const en: Catalog = {
     policy: 'AI policy for this exercise',
     policyIntro: 'For this simulation, the organisation has set these rules:',
     policyRules: [
-      'The internal tool permits minutes for routine projects, with or without names needed to assign actions, as well as general templates.',
-      'Documents marked “Security Confidential” are not permitted in either of these tools, even after removing names.',
+      'The internal tool permits drafting documents for routine projects, limiting personal data to what is necessary for the work.',
+      'Findings and action plans concerning site security are outside the approved scope of both tools.',
       'The commercial AI service only permits general templates, without internal information or named individuals.',
     ],
     choosePrompt: 'Prepare the message',
-    routine: 'Car park · with names',
-    routineAnonymised: 'Car park · names removed',
-    confidential: 'Security · with names',
-    confidentialAnonymised: 'Security · names removed',
-    generic: 'Ask for a general template',
+    routine: 'Write the minutes',
+    routineAnonymised: 'Organise the decisions',
+    confidential: 'Summarise the discussion',
+    confidentialAnonymised: 'Produce a summary',
+    generic: 'Prepare a document',
     routinePrompt:
-      'Write minutes for the car park meeting: Alex Example suggests moving the planters to free up three spaces. Sam Demo will consult colleagues on Tuesday and check the ground markings. This routine project is not confidential.',
+      'Write minutes for the car park meeting: Alex Example suggests moving the planters to free up three spaces. Sam Demo will consult colleagues on Tuesday and check the ground markings.',
     routineAnonymisedPrompt:
-      'Write minutes for the car park meeting: one person suggests moving the planters to free up three spaces. Another will consult colleagues on Tuesday and check the ground markings. This routine project is not confidential.',
+      'Organise the decisions from the car park meeting: move the planters to free up three spaces. For Tuesday, plan a consultation with colleagues and a check of the ground markings.',
     confidentialPrompt:
-      '[Security Confidential] For the security meeting, summarise these internal notes: Alex Example reports that former contractors’ access badges are still active in Building C. Sam Demo plans to revoke them on Friday. This information is restricted to authorised staff.',
+      '[Security] Summarise the meeting discussion: Alex Example reports that former contractors’ access badges are still active in Building C. Sam Demo plans to revoke them on Friday.',
     confidentialAnonymisedPrompt:
-      '[Security Confidential] For the security meeting, summarise these internal notes: one person reports that former contractors’ access badges are still active in Building C. Another plans to revoke them on Friday. This information is restricted to authorised staff.',
+      '[Security] Produce a summary of these points: former contractors’ access badges are still active in Building C. Revocation is planned for Friday.',
     genericPrompt:
       'Suggest a meeting minutes template with objectives, decisions and follow-up actions. Use empty sections only, without inventing facts.',
     preview: 'Message ready to send',
@@ -169,7 +169,7 @@ export const en: Catalog = {
       'internal-routineAnonymised':
         'This routine project is permitted in the internal tool, with or without names. Removing them reduces the data shared but does not guarantee full anonymisation: the context may still identify the people involved.',
       'internal-confidential':
-        'The “Security Confidential” label marks restricted information. In this exercise, the internal tool is not approved for that confidentiality level: follow the designated process for this document.',
+        'The active access badges and remediation date are sensitive information about site security. The exercise policy does not permit processing them in this internal tool: follow the designated process for this document.',
       'internal-confidentialAnonymised':
         'You removed the names, but the active access badges and remediation date remain confidential. The internal tool is not approved for this information in the exercise. Anonymisation does not lift that restriction.',
       'internal-generic':
@@ -179,7 +179,7 @@ export const en: Catalog = {
       'commercial-routineAnonymised':
         'The names are gone, but the project details are still internal information. The exercise policy does not permit sharing them with this service, even if anonymised. Ask for a general template without using the meeting notes.',
       'commercial-confidential':
-        'These names, access findings and remediation dates would have been shared with the commercial service. The “Security Confidential” label rules out this use in the exercise. Follow the designated process for this document.',
+        'These names, access findings and remediation dates would have been shared with the commercial service. This site security information is outside the scope approved by the policy. Follow the designated process for this document.',
       'commercial-confidentialAnonymised':
         'Removing names does not protect the badge finding or the remediation schedule. This information remains confidential and must not be shared with this service. Anonymisation does not make a document freely shareable.',
       'commercial-generic':

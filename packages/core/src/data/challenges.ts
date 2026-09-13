@@ -33,7 +33,7 @@ export const challenges: Challenges = {
     question: 'Que pouvez-vous confier à cet outil ?',
     hints: [
       'L’assistant IA peut aider sur un projet concret. Comparez les notes de parking et de sécurité, puis consultez la charte de l’exercice.',
-      'Des noms utiles au suivi peuvent être autorisés en interne. Repérez aussi les mentions de confidentialité : elles comptent même sans noms.',
+      'Les noms ne sont pas le seul indice : regardez aussi ce que les notes révèlent sur l’organisation et ce que la charte permet.',
     ],
     choices: [],
     feedback: {

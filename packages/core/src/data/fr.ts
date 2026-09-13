@@ -140,24 +140,24 @@ export const fr = {
     policy: 'Charte IA de cet exercice',
     policyIntro: 'Pour cette simulation, l’organisation a défini ces règles :',
     policyRules: [
-      'L’outil interne autorise les comptes rendus de projets courants, avec ou sans les noms nécessaires au suivi des actions, ainsi que les trames générales.',
-      'Les documents marqués « Confidentiel Sécurité » ne sont autorisés dans aucun de ces deux outils, même après retrait des noms.',
+      'L’outil interne autorise la préparation de documents pour les projets courants, en limitant les données personnelles à celles nécessaires au travail.',
+      'Les constats et plans d’action relatifs à la sécurité du site sont hors du périmètre autorisé de ces deux outils.',
       'Avec l’IA commerciale, seule une trame générale, sans données internes ni nominatives, est autorisée.',
     ],
     choosePrompt: 'Préparer le message',
-    routine: 'Parking · avec noms',
-    routineAnonymised: 'Parking · noms retirés',
-    confidential: 'Sécurité · avec noms',
-    confidentialAnonymised: 'Sécurité · noms retirés',
-    generic: 'Demander une trame générale',
+    routine: 'Rédiger le compte rendu',
+    routineAnonymised: 'Organiser les décisions',
+    confidential: 'Résumer les échanges',
+    confidentialAnonymised: 'Faire une synthèse',
+    generic: 'Préparer un document',
     routinePrompt:
-      'Rédige le compte rendu de la réunion sur le parking : Camille Exemple propose de déplacer les bacs à fleurs pour libérer trois places. Alex Démo consultera les collègues mardi et vérifiera le marquage au sol. Ce projet courant n’est pas confidentiel.',
+      'Rédige le compte rendu de la réunion sur le parking : Camille Exemple propose de déplacer les bacs à fleurs pour libérer trois places. Alex Démo consultera les collègues mardi et vérifiera le marquage au sol.',
     routineAnonymisedPrompt:
-      'Rédige le compte rendu de la réunion sur le parking : une personne propose de déplacer les bacs à fleurs pour libérer trois places. Une autre consultera les collègues mardi et vérifiera le marquage au sol. Ce projet courant n’est pas confidentiel.',
+      'Organise les décisions de la réunion sur le parking : déplacer les bacs à fleurs pour libérer trois places. Pour mardi, prévoir une consultation des collègues et une vérification du marquage au sol.',
     confidentialPrompt:
-      '[Confidentiel Sécurité] Pour la réunion de sécurité, résume ces notes internes : Camille Exemple signale qu’au bâtiment C, des badges d’anciens prestataires sont encore actifs. Alex Démo prévoit leur révocation vendredi. Ces informations sont réservées aux personnes habilitées.',
+      '[Sécurité] Résume les échanges de la réunion : Camille Exemple signale qu’au bâtiment C, des badges d’anciens prestataires sont encore actifs. Alex Démo prévoit leur révocation vendredi.',
     confidentialAnonymisedPrompt:
-      '[Confidentiel Sécurité] Pour la réunion de sécurité, résume ces notes internes : une personne signale qu’au bâtiment C, des badges d’anciens prestataires sont encore actifs. Une autre prévoit leur révocation vendredi. Ces informations sont réservées aux personnes habilitées.',
+      '[Sécurité] Fais une synthèse de ces points : au bâtiment C, des badges d’anciens prestataires sont encore actifs. Leur révocation est prévue vendredi.',
     genericPrompt:
       'Propose une trame de compte rendu avec objectifs, décisions et actions à suivre. Utilise uniquement des rubriques vides, sans inventer de faits.',
     preview: 'Message prêt à envoyer',
@@ -171,7 +171,7 @@ export const fr = {
       'internal-routineAnonymised':
         'Ce projet courant est autorisé dans l’outil interne, avec ou sans noms. En les retirant, vous limitez les données partagées, sans garantir une anonymisation complète : le contexte peut encore permettre de reconnaître les personnes.',
       'internal-confidential':
-        'La mention « Confidentiel Sécurité » signale des informations réservées. Dans cet exercice, l’outil interne n’est pas autorisé à traiter ce niveau de confidentialité : suivez le circuit prévu pour ce document.',
+        'Les accès encore actifs et la date de correction sont des informations sensibles sur la sécurité du site. La charte de l’exercice ne permet pas leur traitement dans cet outil interne : suivez le circuit prévu pour ce document.',
       'internal-confidentialAnonymised':
         'Vous avez retiré les noms, mais les accès encore actifs et la date de correction restent confidentiels. L’outil interne n’est pas autorisé pour ces informations dans l’exercice. Anonymiser ne lève pas cette restriction.',
       'internal-generic':
@@ -181,7 +181,7 @@ export const fr = {
       'commercial-routineAnonymised':
         'Les noms ont disparu, mais les détails du projet restent des informations internes. La charte de l’exercice ne permet pas leur envoi à ce service, même anonymisés. Demandez une trame générale sans reprendre les notes de la réunion.',
       'commercial-confidential':
-        'Ces noms, constats sur les accès et dates de correction auraient été transmis au service commercial. La mention « Confidentiel Sécurité » interdit cet envoi dans l’exercice. Suivez le circuit prévu pour ce document.',
+        'Ces noms, constats sur les accès et dates de correction auraient été transmis au service commercial. Ces informations sur la sécurité du site sont hors du périmètre autorisé par la charte. Suivez le circuit prévu pour ce document.',
       'commercial-confidentialAnonymised':
         'Retirer les noms ne protège pas le constat sur les badges ni le calendrier de correction. Ces informations restent confidentielles et ne doivent pas sortir vers ce service. Anonymiser ne rend pas un document librement partageable.',
       'commercial-generic':
