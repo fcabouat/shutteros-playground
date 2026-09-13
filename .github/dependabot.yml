@@ -8,8 +8,10 @@ updates:
     groups:
       development-tools:
         dependency-type: development
+        update-types: [minor, patch]
       application-dependencies:
         dependency-type: production
+        update-types: [minor, patch]
   - package-ecosystem: github-actions
     directory: /
     schedule:
