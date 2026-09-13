@@ -63,6 +63,13 @@ async function beginDecision(page: Page, id: string) {
   }
 }
 
+async function sendSafeAiPrompt(page: Page) {
+  await expect(page.locator('[data-challenge="ai"]')).toBeVisible();
+  await page.getByRole('button', { name: fr.ai.connect, exact: true }).click();
+  await page.getByRole('radio', { name: fr.ai.generic, exact: true }).check();
+  await page.getByRole('button', { name: fr.ai.send, exact: true }).click();
+}
+
 async function advance(page: Page) {
   await page.getByRole('button', { name: 'Continuer l’exploration' }).click();
 }
@@ -102,6 +109,8 @@ test('guided completion sweeps remaining situations without local timers', async
   await advanceGuided(page);
   await page.getByRole('button', { name: 'Refuser et signaler', exact: false }).click();
   await advanceGuided(page);
+  await sendSafeAiPrompt(page);
+  await advanceGuided(page);
 
   await expect(page.getByRole('heading', { name: 'Les gestes du quotidien' })).toBeVisible();
   await page
@@ -117,7 +126,7 @@ test('guided completion sweeps remaining situations without local timers', async
   await expectNoAxeViolations(page);
   await page.getByRole('button', { name: 'Reprendre la simulation' }).click();
   await page.getByRole('button', { name: 'Voir mon bilan maintenant' }).click();
-  await expect(page.getByText('5 bons réflexes sur 5 situations explorées')).toBeVisible();
+  await expect(page.getByText('6 bons réflexes sur 6 situations explorées')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Un coup de pouce', exact: true })).toHaveCount(0);
   await expect(page.locator('.guide-dialog')).toHaveCount(0);
   await expectNoAxeViolations(page);
@@ -222,8 +231,11 @@ for (const delivery of ['http', 'file'] as const) {
     await openNext(page, 'mfa');
     await page.getByRole('button', { name: 'Refuser et signaler', exact: false }).click();
     await answerKnowledge(page, 'mfa', 1, 'Exact.');
+    await advance(page);
+    await openNext(page, 'ai', false);
+    await sendSafeAiPrompt(page);
     await page.getByRole('button', { name: 'Découvrir mon bilan' }).click();
-    await expect(page.getByText('5 bons réflexes sur 5 situations explorées')).toBeVisible();
+    await expect(page.getByText('6 bons réflexes sur 6 situations explorées')).toBeVisible();
     await page.getByRole('button', { name: 'Passer au joueur suivant' }).click();
     await page.getByRole('button', { name: 'Quitter et effacer ma progression' }).click();
     await expect(page.getByLabel('Mot de passe', { exact: true })).toHaveValue('');
@@ -310,23 +322,19 @@ test('hard deadline resets an open modal and all transient fields', async ({ pag
   ).toBeVisible();
 });
 
-test('QTE timeout makes no choice and the global deadline still expires', async ({ page }) => {
+test('legacy challenge timing config is ignored and MFA stays actionable', async ({ page }) => {
   await page.clock.install();
   await page.route('**/kiosk-config.json', (route) =>
-    route.fulfill({ json: { ...config, defaultCalmMode: false } }),
+    route.fulfill({ json: { ...config, challengeSeconds: 10, defaultCalmMode: false } }),
   );
   await page.goto('./');
-  await page.getByLabel('Mot de passe', { exact: true }).fill('password');
-  await page.getByRole('button', { name: 'Ouvrir la session' }).click();
-  await page.getByRole('button', { name: 'Explorer le bureau' }).click();
-  await openNext(page, 'usb');
-  const challengeDurationMs = config.challengeSeconds * 1_000;
-  await page.clock.fastForward(challengeDurationMs + 100);
-  await expect(
-    page.getByRole('heading', { name: 'Le temps est passé. On apprend quand même.' }),
-  ).toBeVisible();
-  await page.clock.fastForward(sessionDurationMs - challengeDurationMs - 100 + 1);
-  await expect(page.getByText('Le temps est écoulé.', { exact: false })).toBeVisible();
+  await enter(page);
+  await openNext(page, 'mfa', false);
+  await page.clock.fastForward(11_000);
+  await expect(page.locator('.action-dock [role="timer"]')).toHaveCount(0);
+  await expect(page.locator('.feedback-card')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Refuser et signaler', exact: false }).click();
+  await expect(page.locator('.feedback-card')).toBeVisible();
 });
 
 test('invalid configuration fails visibly without fallback', async ({ page }) => {
@@ -394,21 +402,26 @@ test('dragged spoof composer survives minimizing and restoring its window', asyn
   await expect(page.locator('.start-menu .start-app:has([data-app="mail"])')).toBeEnabled();
 });
 
-test('a minimized timed challenge still reaches its timeout', async ({ page }) => {
+test('a minimized incident stays actionable after the former local duration', async ({ page }) => {
   await page.clock.install();
   await page.route('**/kiosk-config.json', (route) =>
-    route.fulfill({ json: { ...config, defaultCalmMode: false } }),
+    route.fulfill({ json: { ...config, challengeSeconds: 10, defaultCalmMode: false } }),
   );
   await page.goto('./');
   await enter(page);
-  await openNext(page, 'usb');
+  await openNext(page, 'incident', false);
+  await page.getByRole('button', { name: 'Couper le réseau du poste', exact: true }).click();
   await page.getByRole('button', { name: 'Réduire la fenêtre', exact: true }).click();
   await expect(page.locator('#session-main')).toBeVisible();
-  await page.clock.fastForward(config.challengeSeconds * 1_000 + 100);
+  await page.clock.fastForward(11_000);
   await page.locator('.os-taskbar-app.active').click();
-  await expect(
-    page.getByRole('heading', { name: 'Le temps est passé. On apprend quand même.' }),
-  ).toBeVisible();
+  await expect(page.locator('[data-challenge="incident"][data-step="notify"]')).toBeVisible();
+  await expect(page.locator('.action-dock [role="timer"]')).toHaveCount(0);
+  await expect(page.locator('.feedback-card')).toHaveCount(0);
+  await page
+    .getByRole('button', { name: 'Les équipes de sécurité informatique', exact: false })
+    .click();
+  await expect(page.locator('.feedback-card')).toBeVisible();
 });
 
 test('free exploration shows an ambient event and practice lock can be resumed', async ({
@@ -615,7 +628,7 @@ test('application launchers do not advertise unavailable navigation during feedb
   await page.goto('./');
   await signIn(page);
   await page.getByRole('button', { name: 'Démarrer', exact: true }).click();
-  await expect(page.locator('.start-menu .start-app')).toHaveCount(6);
+  await expect(page.locator('.start-menu .start-app')).toHaveCount(7);
   for (const app of await page.locator('.start-menu .start-app').all())
     await expect(app).toBeDisabled();
   await page.keyboard.press('Escape');
@@ -679,6 +692,15 @@ for (const viewport of [
       page.getByRole('button', { name: 'J’ai compris : je vérifie l’identité' }),
     ).toBeVisible();
     await expectNoAxeViolations(page);
+    await openNext(page, 'ai', false);
+    await page.getByRole('button', { name: fr.ai.connect, exact: true }).click();
+    await page.getByRole('radio', { name: fr.ai.masked, exact: true }).check();
+    const send = page.getByRole('button', { name: fr.ai.send, exact: true });
+    await send.focus();
+    await expect(send).toBeInViewport({ ratio: 0.99 });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(viewport.width);
+    await expectNoAxeViolations(page);
+    await page.screenshot({ path: `test-results/previews/ai-${viewport.width}.png` });
   });
 }
 
@@ -731,31 +753,18 @@ test('local portrait SVG keeps its ratio and organisation text stays escaped', a
   expect(await page.locator('img').count()).toBe(1);
 });
 
-test('Start exposes calm mode and removes a running timer without refunding session time', async ({
-  page,
-}) => {
+test('Start no longer offers calm mode and legacy timer keys are ignored', async ({ page }) => {
   await page.clock.install();
   await page.route('**/kiosk-config.json', (route) =>
-    route.fulfill({ json: { ...config, defaultCalmMode: false } }),
+    route.fulfill({ json: { ...config, challengeSeconds: 10, defaultCalmMode: false } }),
   );
   await page.goto('./');
   await signIn(page);
-  await expect(page.locator('[data-window-focus]')).toBeFocused();
   await expect(page.getByText(fr.intro.guessedDescription)).toBeVisible();
   await page.getByRole('button', { name: fr.intro.start }).click();
-  await openNext(page, 'usb');
-  await expect(page.getByRole('timer', { name: fr.challenge.countdown })).toBeVisible();
-  await page.clock.fastForward((config.challengeSeconds - 10) * 1000);
-  await expect(page.getByRole('status').filter({ hasText: fr.challenge.lowTime })).toBeVisible();
-  await page.getByRole('button', { name: 'Démarrer', exact: true }).click();
-  await expectNoAxeViolations(page);
-  await page.getByRole('checkbox', { name: fr.shell.quiet, exact: false }).check();
-  await page.keyboard.press('Escape');
-  await expect(page.locator('.qte-time')).toHaveCount(0);
-  await page.clock.fastForward(30_000);
-  await expect(page.locator('[data-challenge="usb"]')).toBeVisible();
-  await page.clock.fastForward(sessionDurationMs);
-  await expect(page.getByLabel('Mot de passe', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: fr.os.start, exact: true }).click();
+  await expect(page.locator('.start-menu')).toBeVisible();
+  await expect(page.locator('.start-menu input[type="checkbox"]')).toHaveCount(0);
 });
 
 test('both deliveries announce English and render a fictional MFA location', async ({ page }) => {
@@ -869,17 +878,19 @@ test('benign USB items open local previews without recording an infection', asyn
   await expect(page.locator('[data-challenge="incident"]')).toHaveCount(0);
 });
 
-test('free MFA starts its local challenge deadline', async ({ page }) => {
+test('global deadline resets a minimized incident even after the former local duration', async ({
+  page,
+}) => {
   await page.clock.install();
   await page.route('**/kiosk-config.json', (route) =>
-    route.fulfill({ json: { ...config, defaultCalmMode: false } }),
+    route.fulfill({ json: { ...config, challengeSeconds: 10, defaultCalmMode: false } }),
   );
   await page.goto('./');
   await enter(page);
-  await openNext(page, 'mfa', false);
-
-  await expect(page.locator('[data-challenge="mfa"][data-step="choose"]')).toBeVisible();
-  await expect(page.getByRole('timer', { name: fr.challenge.countdown })).toBeVisible();
-  await page.clock.fastForward(config.challengeSeconds * 1000);
-  await expect(page.locator('.feedback-card')).toContainText(fr.feedback.timeout);
+  await openNext(page, 'incident', false);
+  await page.getByRole('button', { name: 'Couper le réseau du poste', exact: true }).click();
+  await page.getByRole('button', { name: 'Réduire la fenêtre', exact: true }).click();
+  await page.clock.fastForward(sessionDurationMs + 100);
+  await expect(page.getByLabel('Mot de passe', { exact: true })).toBeVisible();
+  await expect(page.getByText('Le temps est écoulé.', { exact: false })).toBeVisible();
 });

@@ -27,6 +27,10 @@ const cases = [
   { ...baseline, sessionMinutes: 0 },
   { ...baseline, sessionMinutes: 30.1 },
   { ...baseline, challengeSeconds: 10, explorationSeconds: 0 },
+  { ...baseline, challengeSeconds: 10, defaultCalmMode: true },
+  { ...baseline, challengeSeconds: 9 },
+  { ...baseline, challengeSeconds: 121 },
+  { ...baseline, challengeSeconds: null },
   { ...baseline, organizationName: ' \t ' },
   { ...baseline, organizationName: '\ufeff' },
   { ...baseline, organizationName: '\u0085' },
@@ -42,6 +46,7 @@ const cases = [
   { ...baseline, organizationLogo: 'logo.svg\n' },
   { ...baseline, mailLegitimateAddress: 'user@organisation.example\n' },
   { ...baseline, defaultCalmMode: 'false' },
+  { ...baseline, defaultCalmMode: null },
   { ...baseline, sessionMinuts: 10 },
 ];
 const scratch = mkdtempSync(join(tmpdir(), 'shutteros-config-parity-'));

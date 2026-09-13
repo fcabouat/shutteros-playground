@@ -8,7 +8,6 @@ const session = (scene: Extract<GameState, { phase: 'session' }>['scene']): Game
   now: 0,
   startedAt: 0,
   deadline: 60_000,
-  calm: false,
   loginCategory: 'displayed',
   mode: 'free',
   scene,
@@ -36,7 +35,6 @@ describe('knowledge service', () => {
           id: 'mail',
           startedAt: 0,
           exploreUntil: 25_000,
-          deadline: null,
           step: 'explore',
         }),
         routines: {

@@ -109,8 +109,6 @@ export const fr = {
     nextPlayer: 'Passer au joueur suivant',
     guide: 'Un coup de pouce',
     close: 'Fermer',
-    quiet: 'Prendre mon temps',
-    quietHint: 'Désactiver les chronos des défis. Le sablier de session reste actif.',
     finish: 'Terminer l’expérience',
     resume: 'Retour au bureau',
     connected: 'Réseau connecté',
@@ -128,7 +126,60 @@ export const fr = {
       'Un mot de passe long et unique par compte : jamais le même au travail et à la maison. Gardez-le dans un gestionnaire approuvé.',
     start: 'Explorer le bureau',
   },
+  ai: {
+    app: 'Assistant IA',
+    intro: 'Un compte rendu à préparer',
+    task: 'Vous voulez gagner du temps sur le compte rendu d’une réunion. Choisissez un outil, puis ce que vous allez lui confier.',
+    tools: 'Choisir un espace de travail',
+    internal: 'Assistant interne',
+    commercial: 'Service d’IA commercial',
+    internalNote: 'Espace de votre organisation',
+    commercialNote: 'Compte personnel · service externe',
+    connect: 'Ouvrir le chat',
+    switch: 'Changer d’outil',
+    policy: 'Charte IA de cet exercice',
+    policyIntro: 'Pour cette simulation, l’organisation a défini ces règles :',
+    policyRules: [
+      'L’assistant interne est autorisé pour rédiger des trames sans données personnelles ni informations confidentielles.',
+      'Ce service commercial utilisé avec un compte personnel n’est pas autorisé pour le travail.',
+      'En cas de doute sur un document ou un usage, demandez conseil avant l’envoi.',
+    ],
+    choosePrompt: 'Préparer le message',
+    full: 'Copier mes notes',
+    masked: 'Retirer les noms',
+    generic: 'Demander une trame générale',
+    fullPrompt:
+      'Rédige le compte rendu : Camille Exemple, seule responsable des achats du site des Ormes, prépare le projet confidentiel Rivage. Budget non publié : 480 000 €. Annonce prévue le 18 octobre.',
+    maskedPrompt:
+      'Rédige le compte rendu : [NOM RETIRÉ], seule responsable des achats du site des Ormes, prépare le projet confidentiel Rivage. Budget non publié : 480 000 €. Annonce prévue le 18 octobre.',
+    genericPrompt:
+      'Propose une trame de compte rendu avec objectifs, décisions et actions à suivre. Utilise uniquement des rubriques vides, sans inventer de faits.',
+    preview: 'Message prêt à envoyer',
+    empty: 'Choisissez une version du message pour la relire avant l’envoi.',
+    send: 'Envoyer le message',
+    fiction: 'Chat simulé · exemples entièrement fictifs',
+    welcome: 'Bonjour. Quel document préparons-nous aujourd’hui ?',
+    feedback: {
+      'internal-full':
+        'Vous avez transmis des informations personnelles et un projet confidentiel à l’outil interne. Sa présence dans l’organisation ne signifie pas que toutes les données y sont autorisées.',
+      'internal-masked':
+        'Vous avez retiré le nom, mais la fonction et le site permettent encore de reconnaître la personne. Le projet et son budget restent confidentiels : ce message ne respecte pas la charte de l’exercice.',
+      'internal-generic':
+        'Vous avez utilisé l’outil autorisé avec une demande générale, sans notes internes ni données personnelles. Complétez la trame dans vos outils de travail et relisez le résultat.',
+      'commercial-full':
+        'Ces notes auraient été confiées à un service externe non autorisé ici. Une réponse utile de l’IA n’annule pas l’exposition des informations envoyées.',
+      'commercial-masked':
+        'Retirer le nom n’a protégé ni la personne reconnaissable, ni le budget confidentiel. Le message aurait été confié à un service externe non autorisé ici.',
+      'commercial-generic':
+        'Votre message ne contient pas les notes sensibles : c’est une bonne précaution. Mais ce service personnel n’est pas autorisé pour le travail dans cet exercice. Revenez à l’outil prévu par votre organisation.',
+    },
+  },
   education: {
+    ai: [
+      'Des détails croisés (fonction, lieu, date ou situation rare) peuvent permettre de reconnaître une personne malgré la suppression de son nom. Anonymiser demande du savoir-faire : si vous hésitez, ne transmettez pas le document.',
+      'Même sans données personnelles, un budget, un projet ou une procédure peut rester confidentiel. Un outil interne ou un abonnement payant n’est pas une autorisation générale. Un outil commercial peut être autorisé dans un cadre précis : suivez la charte de votre organisation.',
+      'Si des informations sont parties par erreur, signalez-le rapidement au canal de sécurité prévu. Supprimer le chat ne garantit pas que les données ont disparu du service. Vérifiez aussi les réponses de l’IA avant de les utiliser.',
+    ],
     more: 'Pour aller un peu plus loin',
     password: [
       'Un mot de passe divulgué ou soupçonné de l’être doit être signalé immédiatement. Suivez la procédure de votre organisation, qui indique les actions à mener ; n’attendez pas une échéance prévue.',
@@ -198,6 +249,7 @@ export const fr = {
     },
   },
   desktop: {
+    ai: 'Assistant IA',
     completed: (n: number) => `${n} situation${n > 1 ? 's' : ''} explorée${n > 1 ? 's' : ''}`,
     done: 'Exploré',
     doubleClick: 'Double-cliquez pour ouvrir · Entrée au clavier',
@@ -218,21 +270,15 @@ export const fr = {
   challenge: {
     actions: 'Que faire ?',
     collapseActions: 'Replier les actions du jeu',
-    countdown: 'Temps pour cette situation',
-    seconds: (n: number) => `${n} s`,
     hint: 'Besoin d’un indice ?',
     hideHint: 'Masquer l’indice',
-    lowTime: 'Il reste moins de quinze secondes pour cette situation.',
   },
   feedback: {
     safe: 'Le bon réflexe.',
     risky: 'Un piège, et un déclic.',
-    timeout: 'Le temps est passé. On apprend quand même.',
     continue: 'Continuer l’exploration',
     incident: 'Réagir à l’incident',
     finish: 'Découvrir mon bilan',
-    timeoutDetail:
-      'Aucune action n’a été effectuée à votre place. Vous pouvez prendre votre temps pour lire le conseil.',
     mfaIgnoredTitle: 'Vous n’avez pas approuvé. Il reste à signaler.',
     mfaIgnored:
       'Ignorer une demande inattendue évite de l’approuver, mais la signaler permet aux équipes de sécurité informatique de traiter la tentative.',
@@ -371,7 +417,6 @@ export const fr = {
     discovered: 'Découvert',
     safe: 'Bon réflexe',
     risky: 'À retenir',
-    timeout: 'À relire',
     notSeen: 'À explorer',
     three: 'TROIS HABITUDES À EMPORTER',
     habits: [

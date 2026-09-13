@@ -38,3 +38,6 @@
 <Story name="Session locked" args={{ initial: locked }} />
 <Story name="Session ending soon" args={{ initial: lowTime }} />
 <Story name="English MFA" args={{ initial: challenge('mfa'), locale: 'en' }} />
+
+<Story name="AI assistant" args={{ initial: challenge('ai') }} />
+<Story name="English AI assistant" args={{ initial: challenge('ai'), locale: 'en' }} />

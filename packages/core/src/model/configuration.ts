@@ -5,7 +5,6 @@
  */
 export type GameConfig = {
   sessionDurationMs: number;
-  challengeDurationMs: number;
   explorationDurationMs: number;
   idleReminderMs: number;
   eventIntervalMs: number;
@@ -22,5 +21,4 @@ export type GameConfig = {
   stationLabel: string;
   mailLegitimateAddress: string;
   mailImpersonatorAddress: string;
-  defaultCalmMode: boolean;
 };

@@ -29,7 +29,6 @@ export function configure(value: unknown): ConfigurationResult {
     ok: true,
     config: {
       sessionDurationMs: dto.sessionMinutes * 60_000,
-      challengeDurationMs: dto.challengeSeconds * 1_000,
       explorationDurationMs: (dto.explorationSeconds ?? 25) * 1_000,
       idleReminderMs: (dto.idleReminderSeconds ?? 45) * 1_000,
       eventIntervalMs: (dto.eventIntervalSeconds ?? 90) * 1_000,
@@ -44,7 +43,6 @@ export function configure(value: unknown): ConfigurationResult {
       supportLabel: dto.supportLabel,
       supportContact: dto.supportContact,
       stationLabel: dto.stationLabel,
-      defaultCalmMode: dto.defaultCalmMode,
       mailLegitimateAddress: dto.mailLegitimateAddress,
       mailImpersonatorAddress: dto.mailImpersonatorAddress,
     },

@@ -1,7 +1,6 @@
 {
   "version": 1,
   "sessionMinutes": 15,
-  "challengeSeconds": 90,
   "acceptedPasswords": [
     "Bureau2026",
     "Office2026",
@@ -21,7 +20,6 @@
   "stationLabel": "Station blanche de l’accueil",
   "mailLegitimateAddress": "camille.martin@organisation.example",
   "mailImpersonatorAddress": "usurpateur@externe.example",
-  "defaultCalmMode": true,
   "explorationSeconds": 25,
   "idleReminderSeconds": 45,
   "eventIntervalSeconds": 90

@@ -38,9 +38,15 @@ The safe action is to return through a known address or bookmark. HTTPS protects
 
 An unexpected authentication request should be denied and reported. Never share an OTP or approve a prompt just to stop repeated notifications. A participant who accidentally approves a real request should use their organisation's established security reporting process immediately. The phone explains that it confirms access after a password. No authentication vocabulary is needed to notice that the participant did not request this sign-in.
 
+### AI assistant and work information
+
+The seventh situation takes about a minute: choose an internal or external workspace, inspect the exercise policy, preview a prepared message, then send it. There is no real login, free-text entry, upload or AI request. The policy is deliberately fictional: only general templates in the internal assistant are approved in this exercise. It is not a substitute for the deploying organisation’s charter.
+
+The three prompts contain full fictional notes, the same notes with the name removed, or a general request without those notes. The second still contains identifying details and a confidential project budget. Removing identifiers is not a guarantee of anonymisation, and business confidentiality also matters without personal data. The feedback distinguishes each tool/prompt combination; a harmless prompt sent via an unapproved tool is not described as a data leak. Internal and commercial tools can both have approved uses and limits; a paid subscription alone is not permission. Encourage asking before sending, reporting mistakes promptly, and checking generated answers. Guided completion uses the same direct controls.
+
 ### Quiet routines
 
-Three optional desktop routines reinforce password handling, company-approved system and software updates, and screen locking. Their reminders open a relevant account, update or lock view for practice. They have no additional timed challenges. Follow the organisation's update and password policies while avoiding arbitrary password rotation as a game rule.
+Three optional desktop routines reinforce password handling, company-approved system and software updates, and screen locking. Their reminders open a relevant account, update or lock view for practice. Follow the organisation's update and password policies while avoiding arbitrary password rotation as a game rule.
 
 ### Teaching and facilitation
 
@@ -64,3 +70,6 @@ Keep claims specific and proportionate. Do not imply that a media sanitisation s
 - [CERT-FR: CERTFR-2016-ACT-007](https://cert.ssi.gouv.fr/actualite/CERTFR-2016-ACT-007)
 - [NIST SP 800-63B](https://pages.nist.gov/800-63-4/sp800-63b.html) and [NIST FAQ on password expiration](https://pages.nist.gov/800-63-FAQ/)
 - [ENISA: behavioural aspects of cybersecurity](https://www.enisa.europa.eu/news/enisa-news/behavioural-aspects-of-cybersecurity)
+- [CNIL: using generative AI, including internal usage policies](https://www.cnil.fr/fr/les-questions-reponses-de-la-cnil-sur-lutilisation-dun-systeme-dia-generative)
+- [CNIL: anonymisation of personal data](https://www.cnil.fr/fr/technologies/lanonymisation-de-donnees-personnelles)
+- [Cybermalveillance.gouv.fr: using AI at home and at work](https://www.cybermalveillance.gouv.fr/tous-nos-contenus/bonnes-pratiques/utiliser-ia-conseils-pour-les-particuliers-et-les-professionnels)

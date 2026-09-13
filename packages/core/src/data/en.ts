@@ -108,8 +108,6 @@ export const en: Catalog = {
     nextPlayer: 'Next player',
     guide: 'A hint',
     close: 'Close',
-    quiet: 'Take my time',
-    quietHint: 'Turn off challenge timers. The session hourglass stays active.',
     finish: 'Finish the experience',
     resume: 'Back to the desk',
     connected: 'Network connected',
@@ -126,7 +124,60 @@ export const en: Catalog = {
       'A long, unique password for every account: never the same at work and at home. Keep it in an approved password manager.',
     start: 'Explore the desk',
   },
+  ai: {
+    app: 'AI assistant',
+    intro: 'Meeting notes to prepare',
+    task: 'You want to save time writing meeting minutes. Choose a tool, then decide what to share with it.',
+    tools: 'Choose a workspace',
+    internal: 'Internal assistant',
+    commercial: 'Commercial AI service',
+    internalNote: 'Your organisation’s workspace',
+    commercialNote: 'Personal account · external service',
+    connect: 'Open chat',
+    switch: 'Switch tool',
+    policy: 'AI policy for this exercise',
+    policyIntro: 'For this simulation, the organisation has set these rules:',
+    policyRules: [
+      'The internal assistant is approved for drafting templates without personal data or confidential information.',
+      'This commercial service used with a personal account is not approved for work.',
+      'If unsure about a document or use, ask for guidance before sending it.',
+    ],
+    choosePrompt: 'Prepare the message',
+    full: 'Copy my notes',
+    masked: 'Remove the names',
+    generic: 'Ask for a general template',
+    fullPrompt:
+      'Write meeting minutes: Alex Example, the sole purchasing manager at Elm site, is preparing the confidential Shore project. Unpublished budget: €480,000. Announcement planned for 18 October.',
+    maskedPrompt:
+      'Write meeting minutes: [NAME REMOVED], the sole purchasing manager at Elm site, is preparing the confidential Shore project. Unpublished budget: €480,000. Announcement planned for 18 October.',
+    genericPrompt:
+      'Suggest a meeting minutes template with objectives, decisions and follow-up actions. Use empty sections only, without inventing facts.',
+    preview: 'Message ready to send',
+    empty: 'Choose a message version to review before sending.',
+    send: 'Send message',
+    fiction: 'Simulated chat · all examples are fictional',
+    welcome: 'Hello. What document are we preparing today?',
+    feedback: {
+      'internal-full':
+        'You sent personal information and a confidential project to the internal tool. Being provided by your organisation does not mean all data is permitted.',
+      'internal-masked':
+        'You removed the name, but the role and site can still identify the person. The project and budget remain confidential: this message does not follow the exercise policy.',
+      'internal-generic':
+        'You used the approved tool with a general request, without internal notes or personal data. Fill in the template in your work tools and review the result.',
+      'commercial-full':
+        'These notes would have been shared with an external service that is not approved here. A useful AI answer does not undo the exposure of the information you sent.',
+      'commercial-masked':
+        'Removing the name protected neither the identifiable person nor the confidential budget. The message would have been shared with an external service that is not approved here.',
+      'commercial-generic':
+        'Your message leaves out the sensitive notes: that is a useful precaution. But this personal service is not approved for work in this exercise. Use your organisation’s approved tool.',
+    },
+  },
   education: {
+    ai: [
+      'Combined details (role, location, date or an unusual situation) can identify someone even after their name is removed. Anonymisation requires care and expertise: if unsure, do not send the document.',
+      'Even without personal data, a budget, project or procedure may remain confidential. An internal tool or paid subscription is not blanket permission. A commercial tool may be approved for a defined purpose: follow your organisation’s policy.',
+      'If information was shared by mistake, report it promptly through the established security channel. Deleting the chat does not guarantee removal from the service. Also check AI responses before using them.',
+    ],
     more: 'A little more context',
     password: [
       'Report a disclosed or suspected compromised password immediately. Follow your organisation’s procedure for the actions to take; do not wait for a scheduled date.',
@@ -196,6 +247,7 @@ export const en: Catalog = {
     },
   },
   desktop: {
+    ai: 'AI assistant',
     completed: (n: number) => `${n} situation${n === 1 ? '' : 's'} explored`,
     done: 'Explored',
     doubleClick: 'Double-click to open · Enter on the keyboard',
@@ -216,20 +268,15 @@ export const en: Catalog = {
   challenge: {
     actions: 'What should I do?',
     collapseActions: 'Collapse game actions',
-    countdown: 'Time for this situation',
-    seconds: (n: number) => `${n} s`,
     hint: 'Need a hint?',
     hideHint: 'Hide hint',
-    lowTime: 'Less than fifteen seconds remain for this situation.',
   },
   feedback: {
     safe: 'Good habit.',
     risky: 'A trap, and a lesson.',
-    timeout: 'Time passed. We can still learn.',
     continue: 'Continue exploring',
     incident: 'Respond to the incident',
     finish: 'Discover my recap',
-    timeoutDetail: 'No action was taken for you. Take your time to read the advice.',
     mfaIgnoredTitle: 'You did not approve. Reporting is still needed.',
     mfaIgnored:
       'Ignoring an unexpected request avoids approving it, but reporting it lets the security team handle the attempt.',
@@ -366,7 +413,6 @@ export const en: Catalog = {
     discovered: 'Discovered',
     safe: 'Good habit',
     risky: 'Remember',
-    timeout: 'Read again',
     notSeen: 'To explore',
     three: 'THREE HABITS TO TAKE WITH YOU',
     habits: [

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { tick } from 'svelte';
   import type { GameState, Intent, Scene } from '@shutteros/core/model/game';
-  import { remainingSeconds, explorationReady } from '@shutteros/core/projections/game';
+  import { explorationReady } from '@shutteros/core/projections/game';
   import { getI18n } from '../i18n/context';
   import Icon from './Icon.svelte';
 
@@ -20,9 +20,6 @@
   const content = $derived(i18n.challenges[scene.id]);
   const decision = $derived(
     scene.id === 'incident' && scene.step === 'notify' ? i18n.incidentNotify : content,
-  );
-  const seconds = $derived(
-    scene.deadline === null ? null : remainingSeconds(scene.deadline, snapshot.now),
   );
   const panelId = $props.id();
   let panel = $state<HTMLElement>();
@@ -71,21 +68,6 @@
         </button>
       </div>
 
-      {#if seconds !== null}
-        <p
-          class="qte-time"
-          class:urgent={seconds <= 15}
-          role="timer"
-          aria-live="off"
-          aria-label={copy.challenge.countdown}
-        >
-          {copy.challenge.seconds(seconds)}
-        </p>
-      {/if}
-
-      {#if seconds !== null && seconds <= 15}<p class="text-sm" role="status">
-          {copy.challenge.lowTime}
-        </p>{/if}
       <h2 class="action-dock-question">{decision.question}</h2>
       <div class="action-dock-choices">
         {#each decision.choices as choice, index (choice.id)}
@@ -168,13 +150,6 @@
     gap: 0.75rem;
   }
 
-  .qte-time {
-    margin-top: 0.75rem;
-    color: var(--accent);
-    font-size: 0.75rem;
-    font-weight: 700;
-  }
-
   .action-dock-question {
     margin: 0.75rem 0 1rem;
     font-size: 1.125rem;
@@ -215,10 +190,6 @@
   .choice-button:hover {
     border-color: var(--accent);
     background: #dfedf3;
-  }
-
-  .qte-time.urgent {
-    color: var(--warning);
   }
 
   .action-dock-hint {

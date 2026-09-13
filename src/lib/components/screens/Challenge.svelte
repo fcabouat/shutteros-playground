@@ -7,6 +7,7 @@
   import Spoof from '../scenarios/Spoof.svelte';
   import Web from '../scenarios/Web.svelte';
   import Mfa from '../scenarios/Mfa.svelte';
+  import AiChat from '../scenarios/AiChat.svelte';
 
   let {
     snapshot,
@@ -31,5 +32,6 @@
   {:else if scene.id === 'mail'}<Mail {snapshot} {config} {dispatch} />
   {:else if scene.id === 'spoof'}<Spoof {config} {dispatch} />
   {:else if scene.id === 'web'}<Web {dispatch} />
+  {:else if scene.id === 'ai'}<AiChat {dispatch} />
   {:else if scene.id === 'mfa'}<Mfa />{/if}
 </div>

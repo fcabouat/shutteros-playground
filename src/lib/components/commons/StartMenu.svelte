@@ -90,23 +90,6 @@
             ></button
           >
         </div>
-        <div class="border-t border-[var(--line)] px-6 py-3">
-          <label class="flex items-start gap-3 text-sm">
-            <input
-              type="checkbox"
-              class="mt-1"
-              checked={snapshot.calm}
-              disabled={snapshot.mode === 'guided' ||
-                (snapshot.scene.kind === 'challenge' && snapshot.calm)}
-              onchange={(event) => dispatch({ type: 'calm', enabled: event.currentTarget.checked })}
-            />
-            <span
-              >{copy.shell.quiet}<span class="text-muted mt-1 block text-xs"
-                >{copy.shell.quietHint}</span
-              ></span
-            >
-          </label>
-        </div>
         <div
           class="start-profile flex items-center justify-between gap-4 rounded-b-xl border-t border-[var(--line)] px-6 py-3"
         >

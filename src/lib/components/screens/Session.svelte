@@ -246,6 +246,7 @@
       class:with-actions={actionOpen &&
         activeId !== null &&
         activeId !== 'spoof' &&
+        activeId !== 'ai' &&
         !minimized &&
         !settings}
     >
@@ -380,7 +381,7 @@
       {/if}
     </aside>
   {/if}
-  {#if snapshot.scene.kind === 'challenge' && snapshot.scene.id !== 'spoof' && !minimized && !settings && !snapshot.locked}
+  {#if snapshot.scene.kind === 'challenge' && snapshot.scene.id !== 'spoof' && snapshot.scene.id !== 'ai' && !minimized && !settings && !snapshot.locked}
     {#key snapshot.scene.id}<ActionDock
         {snapshot}
         scene={snapshot.scene}
