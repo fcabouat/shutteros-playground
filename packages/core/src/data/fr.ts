@@ -383,6 +383,7 @@ export const fr = {
     receivedNote:
       'Le destinataire voit d’abord le nom. Dépliez l’adresse pour voir ce qui se cache derrière.',
     inspect: 'Déplier l’expéditeur',
+    inspectNext: 'Vérifier l’adresse de l’expéditeur',
     again: 'Modifier et réessayer',
     understood: 'J’ai compris : je vérifie l’identité',
     notice:

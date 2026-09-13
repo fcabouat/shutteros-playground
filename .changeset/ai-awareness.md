@@ -7,3 +7,5 @@ Add a bilingual AI assistant scenario: choose a workspace, review the exercise u
 Keep only the global session timer. Remove local decision deadlines and the calm-mode switch so players can explore and respond without time penalties. Older kiosk configuration files remain compatible.
 
 Allow completed situations to be replayed from the desktop, Start menu and taskbar. Practice shows a fresh consequence while preserving the first result in the recap and the original session deadline.
+
+Make the sender demonstration's next action reveal the address before acknowledgement, so guided completion never presents an inactive primary button. Permit Vite's reconnection worker only in development; the published content security policy remains unchanged.
