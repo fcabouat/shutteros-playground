@@ -42,9 +42,15 @@ pnpm release:prepare
 pnpm release:push
 ```
 
-Preparation consumes pending changesets, updates both versions and changelogs, and commits on `release/X.Y.Z`. The push command opens a release PR into `main`; retry it safely if PR creation fails. Accept that PR after `verify` passes. The main push runs verification, publishes Pages when enabled, creates the immutable `vX.Y.Z` tag and GitHub release, and opens a `main` → `develop` synchronization PR. Accept that PR too; do not delete `main`.
+Preparation plans the next version with Changesets and builds `release/X.Y.Z` in a temporary worktree. Failed versioning, formatting or commits leave `develop` and its changesets unchanged; fix the cause and rerun the same command. An existing release branch is never replaced. Successful preparation switches to the committed release branch. The push command opens a release PR into `main`; retry it safely if PR creation fails. Accept that PR with **Create a merge commit** after `verify` and CodeQL pass. The main push runs verification, publishes Pages when enabled, creates the immutable `vX.Y.Z` tag and GitHub release, and opens a `main` → `develop` synchronization PR. Accept that PR with **Create a merge commit** too; do not delete `main`. Rebase is fine for feature PRs into `develop`, but avoid squash/rebase for these two release merges.
 
-The synchronization PR is created using `GITHUB_TOKEN`, so the workflow explicitly dispatches verification on its head commit. No personal token is stored in Actions. Tag creation and release publication are retryable by rerunning the failed release job, but an existing tag pointing elsewhere is never overwritten. Resolve synchronization conflicts normally before starting the next release.
+The synchronization PR is created using `GITHUB_TOKEN`; approve its workflows if GitHub requests it. The workflow also explicitly dispatches verification on `main`. No personal token is stored in Actions. The publication summary reports verification, Pages and release separately. A green `verify` is not proof of publication: follow the tag/release links in the release job summary and check the Pages deployment and CodeQL result. Pages and release publication are independent because the portable/kiosk distribution remains useful without Pages. Resolve synchronization conflicts normally before starting the next release.
+
+### Recover an incomplete publication
+
+For a transient failure, rerun the failed release job. To run corrected workflow code, start a **new** run of **Verify and publish** on current `main` and enable **resume_release** (CLI: `gh workflow run ci.yml --ref main -f resume_release=true`). This reruns verification before publication; ordinary manual verification leaves release publication disabled.
+
+The publisher accepts the current main version if no tag exists, or resumes an existing tag only when it resolves to that exact commit. It never moves a published tag. If a code fix is needed after tagging, prepare a new patch release. Merge any workflow fix through a reviewed PR first: rerunning an old job uses its old workflow. Existing tags/releases/PRs are reused, and permissions/API failures remain failures rather than being treated as absence. A draft release must be reviewed and published before retrying.
 
 ## Maintenance and release review
 
