@@ -592,11 +592,15 @@ describe('game runtime', () => {
   });
 
   it.each([
-    ['internal', 'full', 'risky'],
-    ['internal', 'masked', 'risky'],
+    ['internal', 'routine', 'safe'],
+    ['internal', 'routineAnonymised', 'safe'],
+    ['internal', 'confidential', 'risky'],
+    ['internal', 'confidentialAnonymised', 'risky'],
     ['internal', 'generic', 'safe'],
-    ['commercial', 'full', 'risky'],
-    ['commercial', 'masked', 'risky'],
+    ['commercial', 'routine', 'risky'],
+    ['commercial', 'routineAnonymised', 'risky'],
+    ['commercial', 'confidential', 'risky'],
+    ['commercial', 'confidentialAnonymised', 'risky'],
     ['commercial', 'generic', 'safe'],
   ] as const)('evaluates AI submission %s/%s in the core', (tool, prompt, outcome) => {
     const opened = apply(desktop(), { type: 'open', id: 'ai' }, 1);
@@ -682,7 +686,7 @@ describe('game runtime', () => {
     ['spoof', 'understood', 'safe', 'understood', 'safe'],
     ['web', 'submit', 'risky', 'known-address', 'safe'],
     ['mfa', 'approve', 'risky', 'deny-report', 'safe'],
-    ['ai', 'commercial-full', 'risky', 'commercial-generic', 'safe'],
+    ['ai', 'commercial-routine', 'risky', 'commercial-generic', 'safe'],
   ] as const)(
     'replays %s without replacing its first result',
     (id, firstChoice, firstOutcome, choiceId, outcome) => {

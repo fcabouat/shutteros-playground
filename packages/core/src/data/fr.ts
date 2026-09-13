@@ -128,8 +128,8 @@ export const fr = {
   },
   ai: {
     app: 'Assistant IA',
-    intro: 'Un compte rendu à préparer',
-    task: 'Vous voulez gagner du temps sur le compte rendu d’une réunion. Choisissez un outil, puis ce que vous allez lui confier.',
+    intro: 'Des comptes rendus à préparer',
+    task: 'Vous avez plusieurs notes de réunion et voulez gagner du temps. Choisissez un outil, puis le message à lui confier.',
     tools: 'Choisir un espace de travail',
     internal: 'Assistant interne',
     commercial: 'Service d’IA commercial',
@@ -140,18 +140,24 @@ export const fr = {
     policy: 'Charte IA de cet exercice',
     policyIntro: 'Pour cette simulation, l’organisation a défini ces règles :',
     policyRules: [
-      'Les deux outils sont autorisés pour demander une trame générale sans données personnelles ni informations confidentielles.',
-      'Les notes de cette réunion contiennent un projet confidentiel : elles ne doivent être transmises à aucun de ces outils, même après retrait des noms.',
-      'Pour les autres usages, suivez la politique de votre organisation et sa charte IA. En cas de doute, demandez conseil avant l’envoi.',
+      'L’outil interne autorise les comptes rendus de projets courants, avec ou sans les noms nécessaires au suivi des actions, ainsi que les trames générales.',
+      'Les documents marqués « Confidentiel Sécurité » ne sont autorisés dans aucun de ces deux outils, même après retrait des noms.',
+      'Avec l’IA commerciale, seule une trame générale, sans données internes ni nominatives, est autorisée.',
     ],
     choosePrompt: 'Préparer le message',
-    full: 'Copier mes notes',
-    masked: 'Retirer les noms',
+    routine: 'Parking · avec noms',
+    routineAnonymised: 'Parking · noms retirés',
+    confidential: 'Sécurité · avec noms',
+    confidentialAnonymised: 'Sécurité · noms retirés',
     generic: 'Demander une trame générale',
-    fullPrompt:
-      'Rédige le compte rendu : Camille Exemple, seule responsable des achats du site des Ormes, prépare le projet confidentiel Rivage. Budget non publié : 480 000 €. Annonce prévue le 18 octobre.',
-    maskedPrompt:
-      'Rédige le compte rendu : [NOM RETIRÉ], seule responsable des achats du site des Ormes, prépare le projet confidentiel Rivage. Budget non publié : 480 000 €. Annonce prévue le 18 octobre.',
+    routinePrompt:
+      'Rédige le compte rendu de la réunion sur le parking : Camille Exemple propose de déplacer les bacs à fleurs pour libérer trois places. Alex Démo consultera les collègues mardi et vérifiera le marquage au sol. Ce projet courant n’est pas confidentiel.',
+    routineAnonymisedPrompt:
+      'Rédige le compte rendu de la réunion sur le parking : une personne propose de déplacer les bacs à fleurs pour libérer trois places. Une autre consultera les collègues mardi et vérifiera le marquage au sol. Ce projet courant n’est pas confidentiel.',
+    confidentialPrompt:
+      '[Confidentiel Sécurité] Pour la réunion de sécurité, résume ces notes internes : Camille Exemple signale qu’au bâtiment C, des badges d’anciens prestataires sont encore actifs. Alex Démo prévoit leur révocation vendredi. Ces informations sont réservées aux personnes habilitées.',
+    confidentialAnonymisedPrompt:
+      '[Confidentiel Sécurité] Pour la réunion de sécurité, résume ces notes internes : une personne signale qu’au bâtiment C, des badges d’anciens prestataires sont encore actifs. Une autre prévoit leur révocation vendredi. Ces informations sont réservées aux personnes habilitées.',
     genericPrompt:
       'Propose une trame de compte rendu avec objectifs, décisions et actions à suivre. Utilise uniquement des rubriques vides, sans inventer de faits.',
     preview: 'Message prêt à envoyer',
@@ -160,22 +166,31 @@ export const fr = {
     fiction: 'Chat simulé · exemples entièrement fictifs',
     welcome: 'Bonjour. Quel document préparons-nous aujourd’hui ?',
     feedback: {
-      'internal-full':
-        'Vous avez transmis des informations personnelles et un projet confidentiel à l’outil interne. Sa présence dans l’organisation ne signifie pas que toutes les données y sont autorisées.',
-      'internal-masked':
-        'Vous avez retiré le nom, mais la fonction et le site permettent encore de reconnaître la personne. Le projet et son budget restent confidentiels : ce message ne respecte pas la charte de l’exercice.',
+      'internal-routine':
+        'Vous avez confié un projet courant à l’outil interne. Les noms servent à attribuer les actions : la charte de l’exercice autorise cet usage. Vérifiez le compte rendu avant de le diffuser.',
+      'internal-routineAnonymised':
+        'Ce projet courant est autorisé dans l’outil interne, avec ou sans noms. En les retirant, vous limitez les données partagées, sans garantir une anonymisation complète : le contexte peut encore permettre de reconnaître les personnes.',
+      'internal-confidential':
+        'La mention « Confidentiel Sécurité » signale des informations réservées. Dans cet exercice, l’outil interne n’est pas autorisé à traiter ce niveau de confidentialité : suivez le circuit prévu pour ce document.',
+      'internal-confidentialAnonymised':
+        'Vous avez retiré les noms, mais les accès encore actifs et la date de correction restent confidentiels. L’outil interne n’est pas autorisé pour ces informations dans l’exercice. Anonymiser ne lève pas cette restriction.',
       'internal-generic':
-        'Vous avez utilisé l’outil autorisé avec une demande générale, sans notes internes ni données personnelles. Complétez la trame dans vos outils de travail et relisez le résultat.',
-      'commercial-full':
-        'Ces notes personnelles et confidentielles auraient été confiées à un service externe. Cet outil peut servir à une demande générale, mais la charte de l’exercice interdit d’y envoyer ces notes.',
-      'commercial-masked':
-        'Retirer le nom n’a protégé ni la personne reconnaissable, ni le budget confidentiel. Ces informations auraient été confiées au service externe alors que la charte de l’exercice ne le permet pas.',
+        'Vous avez demandé une trame générale à l’outil interne. Cet usage est autorisé. Complétez-la avec les informations utiles dans le cadre prévu par votre organisation et relisez le résultat.',
+      'commercial-routine':
+        'Le projet de parking est courant, mais ce message contient des noms et des informations de travail. La charte de l’exercice les réserve à l’outil interne ; seule une trame générale est permise dans le service commercial.',
+      'commercial-routineAnonymised':
+        'Les noms ont disparu, mais les détails du projet restent des informations internes. La charte de l’exercice ne permet pas leur envoi à ce service, même anonymisés. Demandez une trame générale sans reprendre les notes de la réunion.',
+      'commercial-confidential':
+        'Ces noms, constats sur les accès et dates de correction auraient été transmis au service commercial. La mention « Confidentiel Sécurité » interdit cet envoi dans l’exercice. Suivez le circuit prévu pour ce document.',
+      'commercial-confidentialAnonymised':
+        'Retirer les noms ne protège pas le constat sur les badges ni le calendrier de correction. Ces informations restent confidentielles et ne doivent pas sortir vers ce service. Anonymiser ne rend pas un document librement partageable.',
       'commercial-generic':
-        'Vous avez demandé une trame générale au service commercial, sans transmettre les notes sensibles. Cet usage est autorisé dans l’exercice. Complétez la trame dans vos outils de travail et relisez le résultat.',
+        'Vous avez demandé une trame générale au service commercial, sans transmettre de noms ni de notes internes. Cet usage est autorisé dans l’exercice. Complétez-la dans vos outils de travail et vérifiez le résultat.',
     },
   },
   education: {
     ai: [
+      'Des noms peuvent être nécessaires pour attribuer des actions dans un compte rendu. Leur présence ne rend pas automatiquement l’usage interdit : vérifiez le but, les données utiles et ce que la charte autorise pour l’outil choisi.',
       'Des détails croisés (fonction, lieu, date ou situation rare) peuvent permettre de reconnaître une personne malgré la suppression de son nom. Anonymiser demande du savoir-faire : si vous hésitez, ne transmettez pas le document.',
       'Même anonymisés, un budget, un projet ou une procédure peuvent rester confidentiels. Un outil interne approuvé peut convenir à des informations peu sensibles, si la politique et la charte IA le permettent. Pour un service commercial, vérifiez aussi quelles données peuvent sortir de votre organisation : un abonnement payant ne suffit pas.',
       'Si des informations sont parties par erreur, signalez-le rapidement au canal de sécurité prévu. Supprimer le chat ne garantit pas que les données ont disparu du service. Vérifiez aussi les réponses de l’IA avant de les utiliser.',

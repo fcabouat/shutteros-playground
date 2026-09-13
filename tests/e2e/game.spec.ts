@@ -706,7 +706,7 @@ for (const viewport of [
     await expectNoAxeViolations(page);
     await openNext(page, 'ai', false);
     await page.getByRole('button', { name: fr.ai.connect, exact: true }).click();
-    await page.getByRole('radio', { name: fr.ai.masked, exact: true }).check();
+    await page.getByRole('radio', { name: fr.ai.confidential, exact: true }).check();
     const send = page.getByRole('button', { name: fr.ai.send, exact: true });
     await send.focus();
     await expect(send).toBeInViewport({ ratio: 0.99 });

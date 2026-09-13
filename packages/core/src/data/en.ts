@@ -126,8 +126,8 @@ export const en: Catalog = {
   },
   ai: {
     app: 'AI assistant',
-    intro: 'Meeting notes to prepare',
-    task: 'You want to save time writing meeting minutes. Choose a tool, then decide what to share with it.',
+    intro: 'Meeting minutes to prepare',
+    task: 'You have notes from several meetings and want to save time. Choose a tool, then the message to share with it.',
     tools: 'Choose a workspace',
     internal: 'Internal assistant',
     commercial: 'Commercial AI service',
@@ -138,18 +138,24 @@ export const en: Catalog = {
     policy: 'AI policy for this exercise',
     policyIntro: 'For this simulation, the organisation has set these rules:',
     policyRules: [
-      'Both tools are approved for requesting a general template without personal data or confidential information.',
-      'These meeting notes contain a confidential project: they must not be sent to either tool, even after names are removed.',
-      'For other uses, follow your organisation’s policy and AI usage charter. If unsure, ask for guidance before sending.',
+      'The internal tool permits minutes for routine projects, with or without names needed to assign actions, as well as general templates.',
+      'Documents marked “Security Confidential” are not permitted in either of these tools, even after removing names.',
+      'The commercial AI service only permits general templates, without internal information or named individuals.',
     ],
     choosePrompt: 'Prepare the message',
-    full: 'Copy my notes',
-    masked: 'Remove the names',
+    routine: 'Car park · with names',
+    routineAnonymised: 'Car park · names removed',
+    confidential: 'Security · with names',
+    confidentialAnonymised: 'Security · names removed',
     generic: 'Ask for a general template',
-    fullPrompt:
-      'Write meeting minutes: Alex Example, the sole purchasing manager at Elm site, is preparing the confidential Shore project. Unpublished budget: €480,000. Announcement planned for 18 October.',
-    maskedPrompt:
-      'Write meeting minutes: [NAME REMOVED], the sole purchasing manager at Elm site, is preparing the confidential Shore project. Unpublished budget: €480,000. Announcement planned for 18 October.',
+    routinePrompt:
+      'Write minutes for the car park meeting: Alex Example suggests moving the planters to free up three spaces. Sam Demo will consult colleagues on Tuesday and check the ground markings. This routine project is not confidential.',
+    routineAnonymisedPrompt:
+      'Write minutes for the car park meeting: one person suggests moving the planters to free up three spaces. Another will consult colleagues on Tuesday and check the ground markings. This routine project is not confidential.',
+    confidentialPrompt:
+      '[Security Confidential] For the security meeting, summarise these internal notes: Alex Example reports that former contractors’ access badges are still active in Building C. Sam Demo plans to revoke them on Friday. This information is restricted to authorised staff.',
+    confidentialAnonymisedPrompt:
+      '[Security Confidential] For the security meeting, summarise these internal notes: one person reports that former contractors’ access badges are still active in Building C. Another plans to revoke them on Friday. This information is restricted to authorised staff.',
     genericPrompt:
       'Suggest a meeting minutes template with objectives, decisions and follow-up actions. Use empty sections only, without inventing facts.',
     preview: 'Message ready to send',
@@ -158,22 +164,31 @@ export const en: Catalog = {
     fiction: 'Simulated chat · all examples are fictional',
     welcome: 'Hello. What document are we preparing today?',
     feedback: {
-      'internal-full':
-        'You sent personal information and a confidential project to the internal tool. Being provided by your organisation does not mean all data is permitted.',
-      'internal-masked':
-        'You removed the name, but the role and site can still identify the person. The project and budget remain confidential: this message does not follow the exercise policy.',
+      'internal-routine':
+        'You shared a routine project with the internal tool. The names assign responsibility for actions: the exercise policy permits this use. Check the minutes before sharing them.',
+      'internal-routineAnonymised':
+        'This routine project is permitted in the internal tool, with or without names. Removing them reduces the data shared but does not guarantee full anonymisation: the context may still identify the people involved.',
+      'internal-confidential':
+        'The “Security Confidential” label marks restricted information. In this exercise, the internal tool is not approved for that confidentiality level: follow the designated process for this document.',
+      'internal-confidentialAnonymised':
+        'You removed the names, but the active access badges and remediation date remain confidential. The internal tool is not approved for this information in the exercise. Anonymisation does not lift that restriction.',
       'internal-generic':
-        'You used the approved tool with a general request, without internal notes or personal data. Fill in the template in your work tools and review the result.',
-      'commercial-full':
-        'These personal and confidential notes would have been shared with an external service. This tool can handle a general request, but the exercise policy does not allow sending these notes.',
-      'commercial-masked':
-        'Removing the name protected neither the identifiable person nor the confidential budget. These details would have been shared with the external service despite the exercise policy.',
+        'You requested a general template from the internal tool. This use is permitted. Fill it in with useful information within your organisation’s approved scope and review the result.',
+      'commercial-routine':
+        'The car park project is routine, but this message contains names and work information. The exercise policy reserves those for the internal tool; only a general template is permitted in the commercial service.',
+      'commercial-routineAnonymised':
+        'The names are gone, but the project details are still internal information. The exercise policy does not permit sharing them with this service, even if anonymised. Ask for a general template without using the meeting notes.',
+      'commercial-confidential':
+        'These names, access findings and remediation dates would have been shared with the commercial service. The “Security Confidential” label rules out this use in the exercise. Follow the designated process for this document.',
+      'commercial-confidentialAnonymised':
+        'Removing names does not protect the badge finding or the remediation schedule. This information remains confidential and must not be shared with this service. Anonymisation does not make a document freely shareable.',
       'commercial-generic':
-        'You requested a general template from the commercial service without sharing the sensitive notes. This use is permitted in the exercise. Fill in the template in your work tools and review the result.',
+        'You requested a general template from the commercial service without sharing names or internal notes. This use is permitted in the exercise. Fill it in using your work tools and check the result.',
     },
   },
   education: {
     ai: [
+      'Names may be necessary to assign actions in meeting minutes. Their presence does not automatically prohibit the use: check the purpose, which data is needed and what the policy permits for the chosen tool.',
       'Combined details (role, location, date or an unusual situation) can identify someone even after their name is removed. Anonymisation requires care and expertise: if unsure, do not send the document.',
       'Even after anonymisation, a budget, project or procedure may remain confidential. An approved internal tool can suit information of low sensitivity if the policy and AI usage charter allow it. For a commercial service, also check which data may leave your organisation: paying for a subscription is not enough.',
       'If information was shared by mistake, report it promptly through the established security channel. Deleting the chat does not guarantee removal from the service. Also check AI responses before using them.',

@@ -29,20 +29,20 @@ export const challenges: Challenges = {
   ai: {
     title: 'Un bon prompt. Les bonnes données ?',
     app: 'Assistant IA',
-    tagline: 'Un compte rendu à préparer, deux outils possibles.',
+    tagline: 'Projet courant ou document confidentiel : choisissez le bon cadre.',
     question: 'Que pouvez-vous confier à cet outil ?',
     hints: [
-      'L’assistant IA peut vous aider à rédiger. Regardez quel outil est autorisé et relisez le message avant de l’envoyer.',
-      'La charte de l’exercice se trouve dans le chat. Retirer un nom ne retire ni les détails reconnaissables, ni les informations confidentielles.',
+      'L’assistant IA peut aider sur un projet concret. Comparez les notes de parking et de sécurité, puis consultez la charte de l’exercice.',
+      'Des noms utiles au suivi peuvent être autorisés en interne. Repérez aussi les mentions de confidentialité : elles comptent même sans noms.',
     ],
     choices: [],
     feedback: {
-      safe: 'Vous avez utilisé l’outil autorisé avec une demande générale, sans notes internes ni données personnelles. Complétez la trame dans vos outils de travail et relisez le résultat.',
+      safe: 'Vous avez choisi un usage autorisé pour cet outil. Vérifiez le compte rendu avant de le diffuser.',
       risky:
         'Le choix de l’outil et celui des données doivent tous deux respecter les règles de votre organisation.',
     },
     lesson:
-      'Préservez la confidentialité, même sans noms. Une anonymisation bien faite peut aider, mais ne rend pas tout document partageable avec un service commercial. Un outil interne peut convenir à des informations peu sensibles, dans le cadre autorisé. Suivez toujours la politique de votre organisation et sa charte IA.',
+      'Des noms peuvent être utiles et autorisés dans l’outil interne pour un projet courant. Un document confidentiel demande un autre cadre : retirer les noms ne suffit pas, notamment avant un envoi à une IA commerciale. Vérifiez toujours la sensibilité des informations, la politique de votre organisation et sa charte IA.',
     shortLesson: 'Outil autorisé, données nécessaires, charte respectée.',
   },
   usb: {
