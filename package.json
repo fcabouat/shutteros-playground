@@ -1,6 +1,6 @@
 {
   "name": "shutteros-playground",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "ShutterOS Playground — an independent cybersecurity awareness game for European Cybersecurity Month",
   "type": "module",
@@ -25,7 +25,10 @@
     "test:e2e": "playwright test",
     "storybook": "node scripts/prepare-branding.mjs && storybook dev -p 6006 --no-open --disable-telemetry",
     "build:storybook": "node scripts/prepare-branding.mjs && storybook build --disable-telemetry",
-    "verify": "pnpm lint && pnpm format:check && pnpm check && pnpm knip && pnpm test && pnpm build && pnpm test:e2e"
+    "verify": "pnpm lint && pnpm format:check && pnpm check && pnpm knip && pnpm test && pnpm build && pnpm test:e2e",
+    "changeset": "changeset",
+    "release:prepare": "node scripts/release.mjs prepare",
+    "release:push": "node scripts/release.mjs push"
   },
   "dependencies": {
     "@internationalized/date": "^3.8.1",
@@ -35,6 +38,7 @@
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.10.2",
+    "@changesets/cli": "^3.0.2",
     "@eslint/js": "^9.39.0",
     "@playwright/test": "1.63.0",
     "@storybook/addon-svelte-csf": "^5.0.0",
