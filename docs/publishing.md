@@ -11,7 +11,7 @@ The source is a personal MIT project. The public demo uses the generic ShutterOS
 5. In **Settings → Environments → github-pages**, restrict deployment branches to `main`.
 6. Inspect the Actions run and open the URL reported by the `github-pages` deployment. Verify login, one situation, language switching, logout, and the browser console on that URL.
 
-The workflow uses pinned action revisions, a frozen lockfile, Node 24, dependency advisory checking, lint, formatting, type checks, Knip, unit tests, static and portable builds, Chromium end-to-end tests, and a Storybook build. Every push and pull request runs verification. Only the deployment job receives Pages write and OIDC permissions. It deploys the same Pages artifact that passed the browser tests; it does not rebuild after verification.
+The workflow uses pinned action revisions, a frozen lockfile, Node 24, dependency advisory checking, lint, formatting, type checks, Knip, unit tests, static and portable builds, Chromium end-to-end tests, and a Storybook build. Pull requests run verification; pushes run it only on `main` and `develop`, avoiding duplicate runs on working branches. Only the deployment job receives Pages write and OIDC permissions. It deploys the same Pages artifact that passed the browser tests; it does not rebuild after verification.
 
 ## Paths and artifacts
 
