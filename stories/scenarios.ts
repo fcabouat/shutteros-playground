@@ -5,7 +5,6 @@ import type { GameState, Intent, ChallengeId, Scene } from '@shutteros/core/mode
 // Fixed clocks make these view scenarios stable and let their buttons remain playable.
 export const config: GameConfig = {
   sessionDurationMs: 900_000,
-  challengeDurationMs: 90_000,
   explorationDurationMs: 25_000,
   idleReminderMs: 45_000,
   eventIntervalMs: 90_000,
@@ -16,7 +15,6 @@ export const config: GameConfig = {
   supportLabel: 'Équipes de sécurité informatique (SSI)',
   supportContact: 'Annuaire interne · contact SSI',
   stationLabel: 'Station blanche',
-  defaultCalmMode: true,
   mailLegitimateAddress: 'camille@organisation.example',
   mailImpersonatorAddress: 'usurpateur@externe.example',
 };

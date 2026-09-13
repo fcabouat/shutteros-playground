@@ -2,6 +2,24 @@ import type { ChallengeChoiceId } from '../model/game';
 import type { Challenges } from './challenges';
 
 export const englishChallenges: Challenges = {
+  ai: {
+    title: 'A good prompt. The right data?',
+    app: 'AI assistant',
+    tagline: 'Routine project or confidential document: choose the right scope.',
+    question: 'What can you share with this tool?',
+    hints: [
+      'The AI assistant can help with a real work task. Compare the car park and security notes, then check the exercise policy.',
+      'Names are not the only clue: also consider what the notes reveal about the organisation and what the policy permits.',
+    ],
+    choices: [],
+    feedback: {
+      safe: 'You chose an approved use for this tool. Check the minutes before sharing them.',
+      risky: 'Both the tool and the data must comply with your organisation’s rules.',
+    },
+    lesson:
+      'Names can be useful and permitted in the internal tool for routine work. Confidential documents need a different approved scope: removing names is not enough, especially before sending to a commercial AI service. Always check how sensitive the information is, your organisation’s policy and its AI usage charter.',
+    shortLesson: 'Approved tool, necessary data, policy followed.',
+  },
   usb: {
     title: 'One drive. Lots of curiosity.',
     app: 'File explorer',
@@ -37,8 +55,6 @@ export const englishChallenges: Challenges = {
       safe: 'You chose your organisation’s inspection process before running the program.',
       risky:
         'Curiosity triggered the simulated infection. The media should have gone through the required check first.',
-      timeout:
-        'An unknown drive can wait. Asking support is safer than plugging it in out of curiosity.',
     },
     lesson:
       'Do not plug unknown media into your workstation. Give it to support or the designated media sanitisation station: a dedicated, isolated computer. Analysis reduces risk without guaranteeing safety.',
@@ -74,8 +90,6 @@ export const englishChallenges: Challenges = {
       safe: 'Workstation isolated, security team alerted: you limited the spread and enabled incident response.',
       risky:
         'Waiting, restarting, or erasing traces can complicate response. First isolate the network, then alert the security team.',
-      timeout:
-        'The point is not to improvise a repair. Remember the two steps: isolate the workstation, then alert the security team.',
     },
     lesson:
       'Isolate the workstation from the network, then promptly contact the security team through a known channel. Do not restart, shut down, or delete files without their instructions.',
@@ -112,8 +126,6 @@ export const englishChallenges: Challenges = {
       safe: 'You left the potentially trapped channel. Your usual contact can confirm the request independently.',
       risky:
         'The link and reply stay in the channel chosen by the sender. An impostor can confirm their own story.',
-      timeout:
-        'Urgency is part of the trap. You do not have to obey a deadline imposed by a doubtful message.',
     },
     lesson:
       'Check the full address and whether the request makes sense. When in doubt, contact the person through a number or channel you already know. The absence of a digital signature alone does not prove fraud.',
@@ -133,8 +145,6 @@ export const englishChallenges: Challenges = {
       safe: 'A few characters were enough to change the displayed identity. What you see in the header alone does not prove identity.',
       risky:
         'A familiar name and a signature at the bottom can be copied. Return to a known contact to check.',
-      timeout:
-        'The “From” field does not tell the whole story. Delegation can be legitimate; a displayed name can also imitate someone.',
     },
     lesson:
       'A delegated sending address may be legitimate. The displayed name is easy to change. Even if the mail system verifies the sender, check an unusual request with your known contact.',
@@ -166,7 +176,6 @@ export const englishChallenges: Challenges = {
       safe: 'You took a known route to the service. The trap received no credentials.',
       risky:
         'The portal could have captured your credentials. Its appearance and encrypted connection do not prove its identity.',
-      timeout: 'You can leave this form alone and find the service through your usual route.',
     },
     lesson:
       'The padlock means exchanges with this site are protected, even if the site is fraudulent. Compare its address and use your usual bookmark. Here, the fields were fictional: no real data was sent.',
@@ -190,8 +199,6 @@ export const englishChallenges: Challenges = {
       safe: 'You denied the sign-in and raised the alert. The repeated requests did not get your approval.',
       risky:
         'Approving could give a third party access to your account. Ignoring without reporting leaves an attempt unhandled.',
-      timeout:
-        'No approval happened. Also remember to report an unexpected request: someone may be trying to use your account.',
     },
     lesson:
       'Deny and report a sign-in confirmation you did not request. If you accepted by mistake, contact the security team immediately. The displayed location may be approximate; the key signal is that you did not request the sign-in.',

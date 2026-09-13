@@ -1,5 +1,5 @@
 import type { GameConfig } from '../model/configuration';
-import { allComplete, hasResult } from '../projections/game';
+import { allComplete, hasResult, incidentFollowsFeedback } from '../projections/game';
 import { currentKnowledgeId, knowledgeAnswer } from '../services/knowledge';
 import { passwordCategory } from '../services/passwords';
 import {
@@ -28,8 +28,8 @@ export function initialState(now = 0): GameState {
  * Expiration is checked when a command arrives, not only on ticks: a delayed browser
  * callback must not let a late click earn a result or extend the session.
  *
- * Order matters: global expiry, explicit logout, lock handling, then local deadlines
- * before scene commands. See the deadline-boundary and background-incident cases in
+ * Order matters: global expiry, explicit logout, lock handling, then scene commands.
+ * See the deadline-boundary and background-incident cases in
  * packages/core/tests/game.test.ts. Unknown Intent variants are compile-time errors
  * through assertNever; this function is not a decoder for arbitrary external objects.
  */
@@ -56,27 +56,6 @@ export function transition(
   if (timed.locked) {
     return transitionLocked(timed, intent);
   }
-  if (
-    timed.scene.kind === 'challenge' &&
-    timed.scene.deadline !== null &&
-    currentNow >= timed.scene.deadline
-  ) {
-    return recordResult(timed, {
-      id: timed.scene.id,
-      outcome: 'timeout',
-      choiceId: 'timeout',
-    });
-  }
-  // A hidden reporting step still owns its deadline. Settle it before commands such
-  // as finish-experience can switch to guided mode and remove local challenge timing.
-  const pendingDeadline = timed.pendingIncident?.deadline;
-  if (pendingDeadline !== undefined && pendingDeadline !== null && currentNow >= pendingDeadline) {
-    return recordResult(
-      { ...timed, pendingIncident: null },
-      { id: 'incident', outcome: 'timeout', choiceId: 'timeout' },
-    );
-  }
-
   switch (intent.type) {
     case 'login':
     case 'tick':
@@ -88,13 +67,18 @@ export function transition(
     case 'finish-experience':
       return finishExperience(timed);
     case 'begin-decision':
-      return beginDecision(timed, config);
+      return beginDecision(timed);
+    case 'send-ai':
+      return timed.scene.kind === 'challenge' &&
+        timed.scene.id === 'ai' &&
+        typeof intent.tool === 'string' &&
+        typeof intent.prompt === 'string'
+        ? choose(timed, `${intent.tool}-${intent.prompt}`)
+        : timed;
     case 'choose':
-      return choose(timed, intent.choiceId, config);
+      return choose(timed, intent.choiceId);
     case 'close':
       return closeScene(timed);
-    case 'calm':
-      return setCalm(timed, intent.enabled);
     case 'debrief':
       return timed.scene.kind === 'desktop' && timed.results.length > 0
         ? { ...timed, scene: { kind: 'debrief' } }
@@ -136,7 +120,6 @@ function transitionLogin(
         now,
         startedAt: now,
         deadline: now + config.sessionDurationMs,
-        calm: config.defaultCalmMode,
         loginCategory,
         mode: 'free',
         scene: { kind: 'intro' },
@@ -162,8 +145,8 @@ function transitionLogin(
     case 'finish-experience':
     case 'begin-decision':
     case 'choose':
+    case 'send-ai':
     case 'close':
-    case 'calm':
     case 'debrief':
     case 'answer-check':
     case 'activity':
@@ -188,11 +171,7 @@ function continueScene(
         : { ...state, scene: { kind: 'desktop' } };
     case 'feedback':
       if (state.mode === 'guided') return advanceGuided(state);
-      if (
-        state.scene.result.id === 'usb' &&
-        state.scene.result.outcome === 'risky' &&
-        !hasResult(state, 'incident')
-      ) {
+      if (incidentFollowsFeedback(state, state.scene.result)) {
         return openChallenge({ ...state, scene: { kind: 'desktop' } }, 'incident', config);
       }
       return allComplete(state)
@@ -214,7 +193,7 @@ function openChallenge(
   id: ChallengeId,
   config: GameConfig,
 ): GameState {
-  if (!isChallengeId(id) || hasResult(state, id) || state.mode === 'guided') return state;
+  if (!isChallengeId(id) || state.mode === 'guided') return state;
   const available =
     state.scene.kind === 'desktop'
       ? state
@@ -234,9 +213,7 @@ function openChallenge(
     id,
     startedAt: available.now,
     exploreUntil: available.now + config.explorationDurationMs,
-    // MFA has no native exploratory action before its choices, so opening its
-    // automatically expanded decision panel starts the free-mode deadline here.
-    deadline: id === 'mfa' ? challengeDeadline(available, id, config) : null,
+    // MFA has no native exploratory action before its choices.
     step: id === 'mfa' ? 'choose' : 'explore',
   };
   return { ...available, scene };
@@ -245,30 +222,25 @@ function openChallenge(
 /**
  * Continue the active situation before filling gaps in the fixed guided order.
  * Preserve an incident's isolation progress so the player is asked to report it,
- * rather than repeating isolation. Guided play deliberately clears local timing;
- * transition settles an already-expired attempt before this function is reached.
+ * rather than repeating isolation. Switching mode never extends the session.
  */
 function finishExperience(state: Extract<GameState, { phase: 'session' }>): GameState {
   if (state.mode === 'guided') return state;
   const pendingIncident =
     state.scene.kind === 'challenge' &&
     state.scene.id === 'incident' &&
+    !hasResult(state, 'incident') &&
     state.scene.step === 'notify'
       ? {
           startedAt: state.scene.startedAt,
           exploreUntil: state.scene.exploreUntil,
-          deadline: null,
         }
-      : state.pendingIncident === null
-        ? null
-        : { ...state.pendingIncident, deadline: null };
+      : state.pendingIncident;
   const preferred =
     state.scene.kind === 'challenge' && !hasResult(state, state.scene.id)
       ? state.scene.id
       : nextUnanswered(state);
   const guided = { ...state, mode: 'guided' as const, pendingIncident };
-  // Local deadlines are removed before guided progress resumes; the session deadline
-  // comes from the unchanged state spread above.
   return preferred === null ? completeGuided(guided) : openGuidedChallenge(guided, preferred);
 }
 
@@ -285,7 +257,6 @@ function openGuidedChallenge(
         id,
         startedAt: state.pendingIncident.startedAt,
         exploreUntil: state.pendingIncident.exploreUntil,
-        deadline: null,
         step: 'notify',
       },
     };
@@ -295,9 +266,8 @@ function openGuidedChallenge(
     id,
     startedAt: state.now,
     exploreUntil: state.now,
-    deadline: null,
-    // The sender demonstration needs its compose/preview interaction before acknowledgement.
-    step: id === 'spoof' ? 'explore' : 'choose',
+    // Composing a message is the decision surface for sender and AI scenarios.
+    step: id === 'spoof' || id === 'ai' ? 'explore' : 'choose',
   };
   return { ...state, scene };
 }
@@ -311,10 +281,7 @@ function completeGuided(state: Extract<GameState, { phase: 'session' }>): GameSt
   return { ...state, scene: routinesComplete(state) ? { kind: 'debrief' } : { kind: 'routines' } };
 }
 
-function beginDecision(
-  state: Extract<GameState, { phase: 'session' }>,
-  config: GameConfig,
-): GameState {
+function beginDecision(state: Extract<GameState, { phase: 'session' }>): GameState {
   const scene = state.scene;
   if (scene.kind !== 'challenge' || scene.step !== 'explore') return state;
   return {
@@ -322,67 +289,58 @@ function beginDecision(
     scene: {
       ...scene,
       step: 'choose',
-      deadline: challengeDeadline(state, scene.id, config),
     },
   };
 }
 
-function choose(
-  state: Extract<GameState, { phase: 'session' }>,
-  choiceId: string,
-  config: GameConfig,
-): GameState {
+function choose(state: Extract<GameState, { phase: 'session' }>, choiceId: string): GameState {
   const scene = state.scene;
-  if (scene.kind !== 'challenge' || hasResult(state, scene.id)) return state;
+  if (scene.kind !== 'challenge') return state;
   if (typeof choiceId !== 'string') return state;
   // Native surfaces can emit choices during exploration (for example opening the
   // USB file). The action drawer is one input path, not a mandatory permission gate.
   const outcome = choiceOutcome(scene.id, scene.step === 'notify' ? 'notify' : 'choose', choiceId);
   if (outcome === null) return state;
 
-  // Isolation is only the first half of the response. Reporting must complete the
-  // situation, and moving to that step does not grant a fresh decision-time budget.
-  if (scene.id === 'incident' && scene.step === 'choose' && choiceId === 'isolate') {
+  // Isolation is only the first half of the response. Reporting completes it,
+  // whether isolation came from the network control or the action drawer.
+  if (scene.id === 'incident' && scene.step !== 'notify' && choiceId === 'isolate') {
     return { ...state, scene: { ...scene, step: 'notify' } };
-  }
-  if (scene.id === 'incident' && scene.step === 'explore' && choiceId === 'isolate') {
-    return {
-      ...state,
-      scene: { ...scene, step: 'notify', deadline: challengeDeadline(state, scene.id, config) },
-    };
   }
   return recordResult(state, { id: scene.id, outcome, choiceId });
 }
 
 /**
- * First outcome wins, including timeout: re-opening or duplicate clicks cannot
- * replace a learning consequence with a better score. The hasResult guard protects
- * insertion; duplicate-result journeys in packages/core/tests/game.test.ts exercise it.
+ * Practice produces feedback without replacing the first outcome or its side effects.
+ * A replayed USB mistake therefore does not infect the original session or send the
+ * player into an unanswered incident. Duplicate clicks outside a challenge are inert.
  */
 function recordResult(
   state: Extract<GameState, { phase: 'session' }>,
   result: ChallengeResult,
 ): GameState {
-  if (hasResult(state, result.id)) return state;
+  if (hasResult(state, result.id)) {
+    return { ...state, scene: { kind: 'feedback', result, replay: true } };
+  }
   return {
     ...state,
     results: [...state.results, result],
     usbInfected: state.usbInfected || (result.id === 'usb' && result.outcome === 'risky'),
-    scene: { kind: 'feedback', result },
+    scene: { kind: 'feedback', result, replay: false },
   };
 }
 
 function closeScene(state: Extract<GameState, { phase: 'session' }>): GameState {
   if (state.mode === 'free' && state.scene.kind === 'challenge') return leaveFreeChallenge(state);
-  if (state.scene.kind === 'debrief' && !allComplete(state)) {
-    return { ...state, scene: { kind: 'desktop' } };
+  if (state.scene.kind === 'debrief') {
+    return { ...state, mode: 'free', scene: { kind: 'desktop' } };
   }
   return state;
 }
 
 /**
  * Ordinary exploration attempts can be abandoned. An isolated incident instead
- * leaves a reporting obligation, with its timing, in pendingIncident. Minimizing
+ * leaves a reporting obligation in pendingIncident. Minimizing
  * is different: Session.svelte hides the view without sending a close command.
  */
 function leaveFreeChallenge(
@@ -390,39 +348,13 @@ function leaveFreeChallenge(
 ): Extract<GameState, { phase: 'session' }> {
   if (state.scene.kind !== 'challenge') return state;
   const pendingIncident =
-    state.scene.id === 'incident' && state.scene.step === 'notify'
+    state.scene.id === 'incident' && !hasResult(state, 'incident') && state.scene.step === 'notify'
       ? {
           startedAt: state.scene.startedAt,
           exploreUntil: state.scene.exploreUntil,
-          deadline: state.scene.deadline,
         }
       : state.pendingIncident;
   return { ...state, pendingIncident, scene: { kind: 'desktop' } };
-}
-
-function setCalm(state: Extract<GameState, { phase: 'session' }>, enabled: boolean): GameState {
-  if (typeof enabled !== 'boolean') return state;
-  if (state.scene.kind === 'challenge') {
-    // Relaxing the active timer is allowed; arming one mid-situation would surprise
-    // a player who began reading without a deadline.
-    if (!enabled) return state;
-    return {
-      ...state,
-      calm: true,
-      pendingIncident:
-        state.pendingIncident === null ? null : { ...state.pendingIncident, deadline: null },
-      scene: { ...state.scene, deadline: null },
-    };
-  }
-  if (enabled) {
-    return {
-      ...state,
-      calm: true,
-      pendingIncident:
-        state.pendingIncident === null ? null : { ...state.pendingIncident, deadline: null },
-    };
-  }
-  return { ...state, calm: enabled };
 }
 
 function transitionLocked(
@@ -443,9 +375,9 @@ function transitionLocked(
     case 'open':
     case 'finish-experience':
     case 'begin-decision':
+    case 'send-ai':
     case 'choose':
     case 'close':
-    case 'calm':
     case 'debrief':
     case 'answer-check':
     case 'routine':
@@ -455,16 +387,6 @@ function transitionLocked(
     default:
       return assertNever(intent);
   }
-}
-
-function challengeDeadline(
-  state: Extract<GameState, { phase: 'session' }>,
-  id: ChallengeId,
-  config: GameConfig,
-): number | null {
-  return state.mode === 'guided' || state.calm || id === 'spoof'
-    ? null
-    : state.now + config.challengeDurationMs;
 }
 
 function recordActivity(state: Extract<GameState, { phase: 'session' }>): GameState {

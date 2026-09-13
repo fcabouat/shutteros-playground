@@ -11,6 +11,9 @@ export default {
       directives: {
         'default-src': ['self'],
         'script-src': ['self'],
+        // Vite's dev client uses a blob SharedWorker to reconnect after a restart.
+        // Published builds do not ship that client and keep the script-src fallback.
+        ...(process.env.NODE_ENV === 'development' ? { 'worker-src': ['self', 'blob:'] } : {}),
         'style-src': ['self', 'unsafe-inline'],
         'img-src': ['self', 'data:'],
         'font-src': ['self'],

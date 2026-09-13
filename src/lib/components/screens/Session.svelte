@@ -88,9 +88,9 @@
   );
   const windowTitle = $derived(
     activeId
-      ? i18n.challenges[activeId].app
+      ? `${i18n.challenges[activeId].app}${hasResult(snapshot, activeId) ? ` · ${copy.desktop.replay}` : ''}`
       : snapshot.scene.kind === 'feedback'
-        ? i18n.challenges[snapshot.scene.result.id].app
+        ? `${i18n.challenges[snapshot.scene.result.id].app}${snapshot.scene.replay ? ` · ${copy.desktop.replay}` : ''}`
         : snapshot.scene.kind === 'debrief'
           ? copy.debrief.eyebrow
           : snapshot.scene.kind === 'routines'
@@ -158,7 +158,7 @@
     }
     settings = null;
     minimized = false;
-    // Restore a minimized app without starting a new core attempt or resetting its timer.
+    // Restore a minimized app without starting a new core attempt or clearing its draft.
     if (intent.type === 'open' && intent.id === activeId) return;
     dispatch(intent);
   }
@@ -246,6 +246,7 @@
       class:with-actions={actionOpen &&
         activeId !== null &&
         activeId !== 'spoof' &&
+        activeId !== 'ai' &&
         !minimized &&
         !settings}
     >
@@ -268,6 +269,7 @@
               {:else if snapshot.scene.kind === 'feedback'}<Feedback
                   {snapshot}
                   result={snapshot.scene.result}
+                  replay={snapshot.scene.replay}
                   dispatch={execute}
                 />
               {:else if snapshot.scene.kind === 'routines'}<Routines
@@ -380,7 +382,7 @@
       {/if}
     </aside>
   {/if}
-  {#if snapshot.scene.kind === 'challenge' && snapshot.scene.id !== 'spoof' && !minimized && !settings && !snapshot.locked}
+  {#if snapshot.scene.kind === 'challenge' && snapshot.scene.id !== 'spoof' && snapshot.scene.id !== 'ai' && !minimized && !settings && !snapshot.locked}
     {#key snapshot.scene.id}<ActionDock
         {snapshot}
         scene={snapshot.scene}
@@ -417,8 +419,7 @@
         <button
           class="os-taskbar-app taskbar-shortcut"
           class:active={activeId === id}
-          disabled={hasResult(snapshot, id) ||
-            (snapshot.mode === 'guided' && activeId !== id) ||
+          disabled={(snapshot.mode === 'guided' && activeId !== id) ||
             ['intro', 'feedback', 'debrief', 'routines'].includes(snapshot.scene.kind)}
           onclick={() => execute({ type: 'open', id })}
           aria-label={`${copy.os.openApp} ${copy.desktop[id]}`}

@@ -2,7 +2,7 @@
 
 **ShutterOS Playground — an independent cybersecurity awareness game for European Cybersecurity Month**
 
-ShutterOS is a French/English cybersecurity-awareness game for a shared kiosk. A fictional desktop presents six short situations: an unknown USB drive, a suspected incident, an urgent email, sender spoofing, a look-alike web login, and an unexpected sign-in confirmation request.
+ShutterOS is a French/English cybersecurity-awareness game for a shared kiosk. A fictional desktop presents seven short situations: an unknown USB drive, a suspected incident, an urgent email, sender spoofing, a look-alike web login, an unexpected sign-in confirmation request, and sharing work information with an AI assistant.
 
 Sessions last five to fifteen minutes. Players explore freely or choose a guided ending designed for three to five minutes. One configurable session clock resets the game after fifteen minutes by default.
 
@@ -10,7 +10,7 @@ It is a local simulation. It has no backend, account system, persistence, teleme
 
 ![The fictional desktop and its taskbar](docs/images/desktop.png)
 
-The login begins with a single sticky note. The assistant stays collapsed until requested; the desktop offers free exploration, calm mode by default, all six situations, three quiet routines, and the recap.
+The login begins with a single sticky note. The assistant stays collapsed until requested; the desktop offers free exploration, all seven situations, three quiet routines, and the recap.
 
 The interface uses familiar desktop conventions with an original window-and-curtains identity. Each simulated application keeps its own visual vocabulary; guidance and answers live in a separate, expandable panel. A restrained palette, readable surfaces and progressive explanations support discovery at the player's pace. Organisation branding occupies its own space, independently of the fictional OS.
 
@@ -43,7 +43,7 @@ Bun runs the package scripts, which use Node-based tools. Use `bun run test` for
 
 ## Configuration and kiosk use
 
-The regular static build loads `kiosk-config.json` at runtime and is the recommended local HTTP path. The portable artifact embeds `static/kiosk-config.json` at build time. Calm mode is optional and removes only challenge deadlines when enabled. `Ctrl+Alt+Home` returns to the simulated login screen.
+The regular static build loads `kiosk-config.json` at runtime and is the recommended local HTTP path. The portable artifact embeds `static/kiosk-config.json` at build time. The session uses one global fifteen-minute clock by default. `Ctrl+Alt+Home` returns to the simulated login screen.
 
 Read the [player and facilitator guide](docs/user-guide.md) and [kiosk deployment](docs/kiosk.md) before deploying. The host's Cage/Chromium policy, not this page, handles operating-system kiosk lockdown and recovery.
 

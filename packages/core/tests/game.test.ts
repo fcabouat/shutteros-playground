@@ -19,7 +19,6 @@ import { passwordHint } from '../src/services/passwords';
 
 const config: GameConfig = {
   sessionDurationMs: 60_000,
-  challengeDurationMs: 10_000,
   explorationDurationMs: 2_000,
   idleReminderMs: 5_000,
   eventIntervalMs: 10_000,
@@ -33,7 +32,6 @@ const config: GameConfig = {
   stationLabel: 'Borne',
   mailLegitimateAddress: 'equipe@organisation.example',
   mailImpersonatorAddress: 'usurpateur@externe.example',
-  defaultCalmMode: false,
 };
 
 function apply(state: GameState, intent: Intent, now: number): GameState {
@@ -120,7 +118,7 @@ describe('game runtime', () => {
     });
   });
 
-  it('prioritizes an explicit logout over a challenge timeout', () => {
+  it('allows an explicit logout during a challenge', () => {
     const opened = apply(desktop(), { type: 'open', id: 'usb' }, 5);
     expect(apply(opened, { type: 'logout' }, 10_005)).toEqual({
       phase: 'login',
@@ -131,7 +129,7 @@ describe('game runtime', () => {
     });
   });
 
-  it('opens in exploration and starts an optional QTE only after a decision begins', () => {
+  it('opens discovery surfaces first and reveals choices when requested', () => {
     const exploring = apply(desktop(), { type: 'open', id: 'web' }, 10);
     expect(exploring).toMatchObject({
       phase: 'session',
@@ -141,7 +139,6 @@ describe('game runtime', () => {
         step: 'explore',
         startedAt: 10,
         exploreUntil: 2_010,
-        deadline: null,
       },
     });
     expect(explorationReady(exploring)).toBe(false);
@@ -153,21 +150,21 @@ describe('game runtime', () => {
     const deciding = apply(exploring, { type: 'begin-decision' }, 11);
     expect(deciding).toMatchObject({
       phase: 'session',
-      scene: { kind: 'challenge', step: 'choose', deadline: 10_011 },
+      scene: { kind: 'challenge', step: 'choose' },
     });
     const spoof = apply(desktop(), { type: 'open', id: 'spoof' }, 20);
     expect(apply(spoof, { type: 'begin-decision' }, 21)).toMatchObject({
       phase: 'session',
-      scene: { kind: 'challenge', id: 'spoof', step: 'choose', deadline: null },
+      scene: { kind: 'challenge', id: 'spoof', step: 'choose' },
     });
     const mfa = apply(desktop(), { type: 'open', id: 'mfa' }, 30);
     if (mfa.phase === 'session' && mfa.scene.kind === 'challenge') {
       expect(actionDockStartsOpen(mfa.scene)).toBe(true);
-      expect(mfa.scene).toMatchObject({ step: 'choose', deadline: 10_030 });
+      expect(mfa.scene).toMatchObject({ step: 'choose' });
     }
   });
 
-  it('keeps direct exploration choices valid and starts incident notify timing from isolation', () => {
+  it('accepts native exploration choices and opens reporting after isolation', () => {
     const web = apply(desktop(), { type: 'open', id: 'web' }, 1);
     expect(apply(web, { type: 'choose', choiceId: 'known-address' }, 2)).toMatchObject({
       phase: 'session',
@@ -176,7 +173,7 @@ describe('game runtime', () => {
     const incident = apply(desktop(), { type: 'open', id: 'incident' }, 10);
     expect(apply(incident, { type: 'choose', choiceId: 'isolate' }, 20)).toMatchObject({
       phase: 'session',
-      scene: { kind: 'challenge', step: 'notify', deadline: 10_020 },
+      scene: { kind: 'challenge', step: 'notify' },
     });
   });
 
@@ -192,12 +189,11 @@ describe('game runtime', () => {
     expect(apply(state, { type: 'tick' }, Number.POSITIVE_INFINITY).now).toBe(160);
   });
 
-  it('lets free exploration close and reopen a challenge without retaining a local clock', () => {
+  it('starts a new hint delay when reopening free exploration', () => {
     const exploring = apply(desktop(), { type: 'open', id: 'mail' }, 10);
     const opened = apply(exploring, { type: 'begin-decision' }, 10);
     expect(opened.phase === 'session' && opened.scene).toMatchObject({
       kind: 'challenge',
-      deadline: 10_010,
     });
     const close = apply(opened, { type: 'close' }, 20);
     expect(close).toMatchObject({
@@ -207,7 +203,7 @@ describe('game runtime', () => {
     const reopen = apply(close, { type: 'open', id: 'mail' }, 30);
     expect(reopen).toMatchObject({
       phase: 'session',
-      scene: { kind: 'challenge', step: 'explore', deadline: null },
+      scene: { kind: 'challenge', step: 'explore', exploreUntil: 2_030 },
     });
   });
 
@@ -320,14 +316,14 @@ describe('game runtime', () => {
     });
   });
 
-  it('requires the two incident steps and retains the original deadline', () => {
+  it('requires both incident steps before recording an outcome', () => {
     const exploring = apply(desktop(), { type: 'open', id: 'incident' }, 100);
     const incident = apply(exploring, { type: 'begin-decision' }, 100);
     const notify = apply(incident, { type: 'choose', choiceId: 'isolate' }, 101);
     expect(notify).toMatchObject({
       phase: 'session',
       results: [],
-      scene: { kind: 'challenge', step: 'notify', deadline: 10_100 },
+      scene: { kind: 'challenge', step: 'notify' },
     });
     if (notify.phase === 'session' && notify.scene.kind === 'challenge') {
       expect(actionDockStartsOpen(notify.scene)).toBe(true);
@@ -339,59 +335,28 @@ describe('game runtime', () => {
     });
   });
 
-  it('produces a timeout result before handling a choice at the challenge deadline', () => {
+  it('keeps choices available after a long reading pause', () => {
     const exploring = apply(desktop(), { type: 'open', id: 'web' }, 1);
     const opened = apply(exploring, { type: 'begin-decision' }, 1);
-    const timeout = apply(opened, { type: 'choose', choiceId: 'known-address' }, 10_001);
-    expect(timeout).toMatchObject({
+    const waiting = apply(opened, { type: 'tick' }, 30_001);
+    expect(waiting).toMatchObject({ results: [], scene: { kind: 'challenge', step: 'choose' } });
+    expect(apply(waiting, { type: 'choose', choiceId: 'known-address' }, 30_002)).toMatchObject({
       phase: 'session',
-      scene: { kind: 'feedback', result: { id: 'web', outcome: 'timeout', choiceId: 'timeout' } },
+      scene: { kind: 'feedback', result: { id: 'web', outcome: 'safe' } },
     });
   });
 
-  it('times out the incident notification step at its original deadline', () => {
-    const exploring = apply(desktop(), { type: 'open', id: 'incident' }, 100);
-    const incident = apply(exploring, { type: 'begin-decision' }, 100);
+  it('lets the player read the reporting step without losing the incident', () => {
+    const incident = apply(desktop(), { type: 'open', id: 'incident' }, 100);
     const notify = apply(incident, { type: 'choose', choiceId: 'isolate' }, 101);
-    const timeout = apply(notify, { type: 'tick' }, 10_100);
-    expect(timeout).toMatchObject({
+    const waiting = apply(notify, { type: 'tick' }, 30_100);
+    expect(waiting).toMatchObject({
       phase: 'session',
-      scene: {
-        kind: 'feedback',
-        result: { id: 'incident', outcome: 'timeout', choiceId: 'timeout' },
-      },
-    });
-  });
-
-  it('can enable calm mode during a challenge but cannot disable it there', () => {
-    const opened = apply(desktop(), { type: 'open', id: 'mfa' }, 1);
-    const calm = apply(opened, { type: 'calm', enabled: true }, 2);
-    expect(calm).toMatchObject({
-      phase: 'session',
-      calm: true,
-      scene: { kind: 'challenge', deadline: null },
-    });
-    expect(apply(calm, { type: 'calm', enabled: false }, 3)).toEqual({ ...calm, now: 3 });
-  });
-
-  it('clears a paused incident deadline when calm mode is enabled', () => {
-    const incident = apply(desktop(), { type: 'open', id: 'incident' }, 10);
-    const notifying = apply(
-      apply(incident, { type: 'begin-decision' }, 11),
-      { type: 'choose', choiceId: 'isolate' },
-      12,
-    );
-    const mail = apply(notifying, { type: 'open', id: 'mail' }, 13);
-    const calm = apply(mail, { type: 'calm', enabled: true }, 14);
-    expect(calm).toMatchObject({
-      phase: 'session',
-      calm: true,
-      pendingIncident: { deadline: null },
-    });
-    expect(apply(calm, { type: 'tick' }, 10_011)).toMatchObject({
-      phase: 'session',
-      scene: { kind: 'challenge', id: 'mail' },
       results: [],
+      scene: { kind: 'challenge', id: 'incident', step: 'notify' },
+    });
+    expect(apply(waiting, { type: 'choose', choiceId: 'notify' }, 30_101)).toMatchObject({
+      scene: { kind: 'feedback', result: { id: 'incident', outcome: 'safe' } },
     });
   });
 
@@ -417,7 +382,8 @@ describe('game runtime', () => {
     });
     expect(apply(resumed, { type: 'tick' }, 10_002)).toMatchObject({
       phase: 'session',
-      scene: { kind: 'feedback', result: { id: 'web', outcome: 'timeout' } },
+      results: [],
+      scene: { kind: 'challenge', id: 'web', step: 'choose' },
     });
     expect(apply(locked, { type: 'tick' }, 60_000)).toEqual({
       phase: 'login',
@@ -475,61 +441,53 @@ describe('game runtime', () => {
     expect(elsewhere).toMatchObject({
       phase: 'session',
       scene: { kind: 'challenge', id: 'mail', step: 'explore' },
-      pendingIncident: { deadline: 10_011 },
+      pendingIncident: { startedAt: 10 },
     });
     expect(incidentIsolated(elsewhere)).toBe(true);
-    const reopened = apply(elsewhere, { type: 'open', id: 'incident' }, 14);
+    const reopened = apply(elsewhere, { type: 'open', id: 'incident' }, 30_000);
     expect(reopened).toMatchObject({
       phase: 'session',
       pendingIncident: null,
-      scene: { kind: 'challenge', id: 'incident', step: 'notify', deadline: 10_011 },
+      scene: { kind: 'challenge', id: 'incident', step: 'notify' },
     });
   });
 
-  it('records an expired background incident before switching it to guided play', () => {
+  it('preserves an outstanding report when guided play starts after a long pause', () => {
     const incident = apply(desktop(), { type: 'open', id: 'incident' }, 10);
-    const notifying = apply(
-      apply(incident, { type: 'begin-decision' }, 11),
-      { type: 'choose', choiceId: 'isolate' },
-      12,
-    );
+    const notifying = apply(incident, { type: 'choose', choiceId: 'isolate' }, 12);
     const mail = apply(notifying, { type: 'open', id: 'mail' }, 13);
-    const expired = apply(mail, { type: 'finish-experience' }, 10_011);
-    expect(expired).toMatchObject({
-      phase: 'session',
-      mode: 'free',
-      pendingIncident: null,
-      scene: {
-        kind: 'feedback',
-        result: { id: 'incident', outcome: 'timeout', choiceId: 'timeout' },
-      },
-    });
-  });
-
-  it('clears an unexpired background incident deadline when guided play begins', () => {
-    const incident = apply(desktop(), { type: 'open', id: 'incident' }, 10);
-    const notifying = apply(
-      apply(incident, { type: 'begin-decision' }, 11),
-      { type: 'choose', choiceId: 'isolate' },
-      12,
-    );
-    const mail = apply(notifying, { type: 'open', id: 'mail' }, 13);
-    const guided = apply(mail, { type: 'finish-experience' }, 14);
+    const guided = apply(mail, { type: 'finish-experience' }, 30_011);
     expect(guided).toMatchObject({
       phase: 'session',
       mode: 'guided',
-      scene: { kind: 'challenge', id: 'mail', deadline: null },
-      pendingIncident: { deadline: null },
-    });
-    expect(apply(guided, { type: 'tick' }, 10_011)).toMatchObject({
-      phase: 'session',
-      mode: 'guided',
-      scene: { kind: 'challenge', id: 'mail', deadline: null },
+      deadline: 60_000,
       results: [],
+      pendingIncident: { startedAt: 10 },
+      scene: { kind: 'challenge', id: 'mail', step: 'choose' },
     });
   });
 
-  it('guides missing challenges in stable order without local deadlines', () => {
+  it('keeps an outstanding report in the background until the global reset', () => {
+    const incident = apply(desktop(), { type: 'open', id: 'incident' }, 10);
+    const notifying = apply(incident, { type: 'choose', choiceId: 'isolate' }, 12);
+    const mail = apply(notifying, { type: 'open', id: 'mail' }, 13);
+    const waiting = apply(mail, { type: 'tick' }, 30_000);
+    expect(waiting).toMatchObject({
+      phase: 'session',
+      scene: { kind: 'challenge', id: 'mail' },
+      pendingIncident: { startedAt: 10 },
+      results: [],
+    });
+    expect(apply(waiting, { type: 'tick' }, 60_000)).toEqual({
+      phase: 'login',
+      generation: 1,
+      now: 60_000,
+      reason: 'expired',
+      failedAttempts: 0,
+    });
+  });
+
+  it('guides missing challenges in stable order', () => {
     let state: GameState = apply(desktop(), { type: 'finish-experience' }, 1);
     const choose = (choiceId: string, now: number) => {
       state = apply(state, { type: 'choose', choiceId }, now);
@@ -541,19 +499,19 @@ describe('game runtime', () => {
     expect(state).toMatchObject({
       phase: 'session',
       mode: 'guided',
-      scene: { kind: 'challenge', id: 'usb', step: 'choose', deadline: null },
+      scene: { kind: 'challenge', id: 'usb', step: 'choose' },
     });
     choose('station', 2);
     advance(3);
     expect(state).toMatchObject({ scene: { kind: 'challenge', id: 'incident', step: 'choose' } });
     choose('isolate', 4);
-    expect(state).toMatchObject({ scene: { kind: 'challenge', step: 'notify', deadline: null } });
+    expect(state).toMatchObject({ scene: { kind: 'challenge', step: 'notify' } });
     choose('notify', 5);
     advance(6);
     choose('verify', 7);
     advance(8);
     expect(state).toMatchObject({
-      scene: { kind: 'challenge', id: 'spoof', step: 'explore', deadline: null },
+      scene: { kind: 'challenge', id: 'spoof', step: 'explore' },
     });
     choose('understood', 9);
     advance(10);
@@ -561,10 +519,15 @@ describe('game runtime', () => {
     advance(12);
     choose('deny-report', 13);
     advance(14);
+    expect(state).toMatchObject({
+      scene: { kind: 'challenge', id: 'ai', step: 'explore' },
+    });
+    choose('internal-generic', 15);
+    advance(16);
     expect(state).toMatchObject({ phase: 'session', scene: { kind: 'routines' } });
-    state = apply(state, { type: 'continue' }, 15);
+    state = apply(state, { type: 'continue' }, 17);
     expect(state).toMatchObject({ phase: 'session', mode: 'guided', scene: { kind: 'debrief' } });
-    if (state.phase === 'session') expect(state.results).toHaveLength(6);
+    if (state.phase === 'session') expect(state.results).toHaveLength(7);
   });
 
   it('prioritizes the open free challenge and skips routines already completed', () => {
@@ -572,7 +535,7 @@ describe('game runtime', () => {
     expect(apply(current, { type: 'finish-experience' }, 2)).toMatchObject({
       phase: 'session',
       mode: 'guided',
-      scene: { kind: 'challenge', id: 'web', step: 'choose', deadline: null },
+      scene: { kind: 'challenge', id: 'web', step: 'choose' },
     });
 
     const incident = apply(desktop(), { type: 'open', id: 'incident' }, 3);
@@ -580,7 +543,7 @@ describe('game runtime', () => {
     expect(apply(notifying, { type: 'finish-experience' }, 5)).toMatchObject({
       phase: 'session',
       mode: 'guided',
-      scene: { kind: 'challenge', id: 'incident', step: 'notify', deadline: null },
+      scene: { kind: 'challenge', id: 'incident', step: 'notify' },
     });
 
     const complete = {
@@ -592,6 +555,7 @@ describe('game runtime', () => {
         { id: 'spoof', outcome: 'safe', choiceId: 'understood' },
         { id: 'web', outcome: 'safe', choiceId: 'known-address' },
         { id: 'mfa', outcome: 'safe', choiceId: 'deny-report' },
+        { id: 'ai', outcome: 'safe', choiceId: 'internal-generic' },
       ] as const,
       routines: {
         password: 'done' as const,
@@ -625,6 +589,45 @@ describe('game runtime', () => {
     const guided = apply(updateEvent, { type: 'finish-experience' }, 20_001);
     expect(nextAmbientEvent(guided, config)).toBeNull();
     expect(idleReminderVisible(apply(guided, { type: 'tick' }, 30_000), config)).toBe(false);
+  });
+
+  it.each([
+    ['internal', 'routine', 'safe'],
+    ['internal', 'routineAnonymised', 'safe'],
+    ['internal', 'confidential', 'risky'],
+    ['internal', 'confidentialAnonymised', 'risky'],
+    ['internal', 'generic', 'safe'],
+    ['commercial', 'routine', 'risky'],
+    ['commercial', 'routineAnonymised', 'safe'],
+    ['commercial', 'confidential', 'risky'],
+    ['commercial', 'confidentialAnonymised', 'risky'],
+    ['commercial', 'generic', 'safe'],
+  ] as const)('evaluates AI submission %s/%s in the core', (tool, prompt, outcome) => {
+    const opened = apply(desktop(), { type: 'open', id: 'ai' }, 1);
+    expect(opened).toMatchObject({ scene: { kind: 'challenge', step: 'explore' } });
+    const submitted = apply(opened, { type: 'send-ai', tool, prompt }, 2);
+    expect(submitted).toMatchObject({
+      scene: { kind: 'feedback', result: { id: 'ai', choiceId: `${tool}-${prompt}`, outcome } },
+    });
+    expect(
+      apply(submitted, { type: 'send-ai', tool: 'internal', prompt: 'generic' }, 3),
+    ).toMatchObject({ results: [{ id: 'ai', outcome }] });
+  });
+
+  it('rejects AI sends in other windows, while locked, with invalid choices, and after expiry', () => {
+    const send = { type: 'send-ai', tool: 'internal', prompt: 'generic' } as const;
+    const mail = apply(desktop(), { type: 'open', id: 'mail' }, 1);
+    expect(apply(mail, send, 2)).toEqual({ ...mail, now: 2 });
+    const opened = apply(desktop(), { type: 'open', id: 'ai' }, 1);
+    expect(apply(opened, { ...send, prompt: 'unknown' as never }, 2)).toEqual({
+      ...opened,
+      now: 2,
+    });
+    expect(apply(apply(opened, { type: 'practice-lock' }, 2), send, 3)).toMatchObject({
+      locked: true,
+      results: [],
+    });
+    expect(apply(opened, send, 60_000)).toMatchObject({ phase: 'login', reason: 'expired' });
   });
 
   it('only accepts acknowledgement in the local spoof demonstration', () => {
@@ -676,10 +679,68 @@ describe('game runtime', () => {
     });
   });
 
-  it('completes all six challenges once and reaches the debrief without duplicate score', () => {
+  it.each([
+    ['usb', 'station', 'safe', 'open', 'risky'],
+    ['incident', 'restart', 'risky', 'notify', 'safe'],
+    ['mail', 'report', 'safe', 'reply', 'risky'],
+    ['spoof', 'understood', 'safe', 'understood', 'safe'],
+    ['web', 'submit', 'risky', 'known-address', 'safe'],
+    ['mfa', 'approve', 'risky', 'deny-report', 'safe'],
+    ['ai', 'commercial-routine', 'risky', 'commercial-generic', 'safe'],
+  ] as const)(
+    'replays %s without replacing its first result',
+    (id, firstChoice, firstOutcome, choiceId, outcome) => {
+      const original = {
+        ...desktop(),
+        results: [{ id, choiceId: firstChoice, outcome: firstOutcome }],
+      };
+      let replay = apply(original, { type: 'open', id }, 10);
+      expect(replay).toMatchObject({ phase: 'session', scene: { kind: 'challenge', id } });
+      if (id === 'incident') replay = apply(replay, { type: 'choose', choiceId: 'isolate' }, 11);
+      replay = apply(replay, { type: 'choose', choiceId }, 12);
+      expect(replay).toMatchObject({
+        phase: 'session',
+        deadline: original.deadline,
+        scene: { kind: 'feedback', replay: true, result: { id, choiceId, outcome } },
+      });
+      if (replay.phase !== 'session' || replay.scene.kind !== 'feedback')
+        throw new Error('Expected replay feedback');
+      expect(replay.results).toBe(original.results);
+      expect(replay.knowledge).toBe(original.knowledge);
+      expect(replay.usbInfected).toBe(original.usbInfected);
+      expect(safeCount(replay)).toBe(safeCount(original));
+      expect(assessedCount(replay)).toBe(assessedCount(original));
+      expect(incidentFollowsFeedback(replay, replay.scene.result)).toBe(false);
+      expect(apply(replay, { type: 'continue' }, 13)).toMatchObject({ scene: { kind: 'desktop' } });
+    },
+  );
+
+  it('does not carry a replayed incident into the outstanding guided work', () => {
+    const original = {
+      ...desktop(),
+      results: [{ id: 'incident', choiceId: 'restart', outcome: 'risky' }],
+    } as const;
+    const replay = apply(original, { type: 'open', id: 'incident' }, 1);
+    const isolated = apply(replay, { type: 'choose', choiceId: 'isolate' }, 2);
+    const elsewhere = apply(isolated, { type: 'open', id: 'mail' }, 3);
+    expect(elsewhere).toMatchObject({ pendingIncident: null, results: original.results });
+    const guided = apply(isolated, { type: 'finish-experience' }, 4);
+    expect(guided).toMatchObject({
+      mode: 'guided',
+      pendingIncident: null,
+      results: original.results,
+      scene: { kind: 'challenge', id: 'usb' },
+    });
+    expect(apply(isolated, { type: 'tick' }, original.deadline)).toMatchObject({
+      phase: 'login',
+      reason: 'expired',
+    });
+  });
+
+  it('completes all seven challenges once and reaches the debrief without duplicate score', () => {
     let state: GameState = desktop();
     const complete = (
-      id: 'usb' | 'incident' | 'mail' | 'spoof' | 'web' | 'mfa',
+      id: 'usb' | 'incident' | 'mail' | 'spoof' | 'web' | 'mfa' | 'ai',
       choiceId: string,
       now: number,
     ) => {
@@ -694,15 +755,27 @@ describe('game runtime', () => {
     complete('spoof', 'understood', 30);
     complete('web', 'known-address', 40);
     complete('mfa', 'deny-report', 50);
+    complete('ai', 'internal-generic', 54);
     expect(state).toMatchObject({ phase: 'session', scene: { kind: 'debrief' } });
     if (state.phase === 'session') {
-      expect(state.results).toHaveLength(6);
-      expect(new Set(state.results.map((result) => result.id)).size).toBe(6);
+      expect(state.results).toHaveLength(7);
+      expect(new Set(state.results.map((result) => result.id)).size).toBe(7);
       expect(hasResult(state, 'spoof')).toBe(true);
       expect(allComplete(state)).toBe(true);
-      expect(assessedCount(state)).toBe(5);
-      expect(safeCount(state)).toBe(5);
+      expect(assessedCount(state)).toBe(6);
+      expect(safeCount(state)).toBe(6);
       expect(apply(state, { type: 'continue' }, 60)).toEqual({ ...state, now: 60 });
+      const resumed = apply({ ...state, mode: 'guided' }, { type: 'close' }, 61);
+      expect(resumed).toMatchObject({
+        mode: 'free',
+        scene: { kind: 'desktop' },
+        deadline: state.deadline,
+      });
+      const replay = apply(resumed, { type: 'open', id: 'usb' }, 62);
+      const feedback = apply(replay, { type: 'choose', choiceId: 'open' }, 63);
+      const recap = apply(feedback, { type: 'continue' }, 64);
+      expect(recap).toMatchObject({ scene: { kind: 'debrief' }, results: state.results });
+      expect(safeCount(recap)).toBe(6);
     }
   });
 });

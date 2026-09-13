@@ -46,13 +46,13 @@
             {@const done = hasResult(snapshot, id)}
             <button
               class="start-app flex flex-col items-center gap-2 rounded-lg p-2 text-center"
-              disabled={done || !canExplore(snapshot)}
+              disabled={!canExplore(snapshot)}
               onclick={() => run({ type: 'open', id })}
-              aria-label={`${copy.os.openApp} ${copy.desktop[id]}`}
+              aria-label={`${copy.os.openApp} ${copy.desktop[id]}${done ? ` · ${copy.desktop.replay}` : ''}`}
             >
               <span class="app-icon small" data-app={id}><Icon name={id} size={22} /></span><span
                 class="text-xs leading-snug">{copy.desktop[id]}</span
-              >{#if done}<span class="text-muted text-[0.65rem]">{copy.desktop.done}</span>{/if}
+              >{#if done}<span class="text-muted text-[0.65rem]">{copy.desktop.replay}</span>{/if}
             </button>
           {/each}
         </div>
@@ -89,23 +89,6 @@
             ><Icon name="secure" size={19} /><span class="text-sm">{copy.shell.finish}</span
             ></button
           >
-        </div>
-        <div class="border-t border-[var(--line)] px-6 py-3">
-          <label class="flex items-start gap-3 text-sm">
-            <input
-              type="checkbox"
-              class="mt-1"
-              checked={snapshot.calm}
-              disabled={snapshot.mode === 'guided' ||
-                (snapshot.scene.kind === 'challenge' && snapshot.calm)}
-              onchange={(event) => dispatch({ type: 'calm', enabled: event.currentTarget.checked })}
-            />
-            <span
-              >{copy.shell.quiet}<span class="text-muted mt-1 block text-xs"
-                >{copy.shell.quietHint}</span
-              ></span
-            >
-          </label>
         </div>
         <div
           class="start-profile flex items-center justify-between gap-4 rounded-b-xl border-t border-[var(--line)] px-6 py-3"

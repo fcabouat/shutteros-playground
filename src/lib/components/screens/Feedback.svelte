@@ -10,10 +10,12 @@
   let {
     snapshot,
     result,
+    replay,
     dispatch,
   }: {
     snapshot: Extract<GameState, { phase: 'session' }>;
     result: ChallengeResult;
+    replay: boolean;
     dispatch: (intent: Intent) => void;
   } = $props();
   const content = $derived(challenges[result.id]);
@@ -39,14 +41,7 @@
         {dispatch}
       >
         <div class="feedback-icon mb-4 flex h-11 w-11 items-center justify-center rounded-2xl">
-          <Icon
-            name={result.outcome === 'safe'
-              ? 'secure'
-              : result.outcome === 'timeout'
-                ? 'hourglass'
-                : 'light'}
-            size={28}
-          />
+          <Icon name={result.outcome === 'safe' ? 'secure' : 'light'} size={28} />
         </div>
         <h1 class="text-[clamp(1.5rem,3vw,2rem)] leading-tight font-semibold tracking-tight">
           {result.id === 'mfa' && result.choiceId === 'ignore'
@@ -54,16 +49,18 @@
             : copy.feedback[result.outcome]}
         </h1>
         <p class="text-muted mt-3 text-sm leading-relaxed">
-          {result.id === 'mfa' && result.choiceId === 'ignore'
-            ? copy.feedback.mfaIgnored
-            : result.id === 'mail' && result.choiceId === 'report'
-              ? copy.mail.reported
-              : result.id === 'usb' && result.choiceId === 'eject'
-                ? copy.usb.ejected
-                : content.feedback[result.outcome]}
+          {result.id === 'ai' && Object.hasOwn(copy.ai.feedback, result.choiceId)
+            ? copy.ai.feedback[result.choiceId as keyof typeof copy.ai.feedback]
+            : result.id === 'mfa' && result.choiceId === 'ignore'
+              ? copy.feedback.mfaIgnored
+              : result.id === 'mail' && result.choiceId === 'report'
+                ? copy.mail.reported
+                : result.id === 'usb' && result.choiceId === 'eject'
+                  ? copy.usb.ejected
+                  : content.feedback[result.outcome]}
         </p>
-        {#if result.outcome === 'timeout'}<p class="text-muted mt-3 text-sm leading-relaxed">
-            {copy.feedback.timeoutDetail}
+        {#if replay}<p class="text-muted mt-3 text-xs leading-relaxed">
+            {copy.feedback.replay}
           </p>{/if}
       </LearningPanel>
     </div>

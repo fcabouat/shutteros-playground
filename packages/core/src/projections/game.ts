@@ -32,9 +32,14 @@ export function allComplete(state: GameState): boolean {
   return state.phase === 'session' && challengeOrder.every((id) => hasResult(state, id));
 }
 
-/** A risky USB outcome opens the incident situation unless it was already settled. */
+/** Only a first-attempt USB mistake can lead into an unanswered incident. */
 export function incidentFollowsFeedback(state: GameState, result: ChallengeResult): boolean {
-  return result.id === 'usb' && result.outcome === 'risky' && !hasResult(state, 'incident');
+  return (
+    result.id === 'usb' &&
+    result.outcome === 'risky' &&
+    !hasResult(state, 'incident') &&
+    !(state.phase === 'session' && state.scene.kind === 'feedback' && state.scene.replay)
+  );
 }
 
 /** Isolation remains meaningful whether its reporting step is open, paused, or completed. */

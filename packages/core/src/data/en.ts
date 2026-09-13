@@ -108,8 +108,6 @@ export const en: Catalog = {
     nextPlayer: 'Next player',
     guide: 'A hint',
     close: 'Close',
-    quiet: 'Take my time',
-    quietHint: 'Turn off challenge timers. The session hourglass stays active.',
     finish: 'Finish the experience',
     resume: 'Back to the desk',
     connected: 'Network connected',
@@ -126,7 +124,75 @@ export const en: Catalog = {
       'A long, unique password for every account: never the same at work and at home. Keep it in an approved password manager.',
     start: 'Explore the desk',
   },
+  ai: {
+    app: 'AI assistant',
+    intro: 'Meeting minutes to prepare',
+    task: 'You have notes from several meetings and want to save time. Choose a tool, then the message to share with it.',
+    tools: 'Choose a workspace',
+    internal: 'Internal assistant',
+    commercial: 'Commercial AI service',
+    internalNote: 'Your organisation’s workspace',
+    commercialNote: 'Service hosted by an external provider',
+    connect: 'Open chat',
+    switch: 'Switch tool',
+    policy: 'AI policy for this exercise',
+    policyIntro: 'For this simulation, the organisation has set these rules:',
+    policyRules: [
+      'The internal tool permits drafting documents for routine projects, limiting personal data to what is necessary for the work.',
+      'Findings and action plans concerning site security are outside the approved scope of both tools.',
+      'The commercial AI service permits general templates and anonymised notes for routine, non-confidential projects. Named data stays in the internal tool.',
+    ],
+    choosePrompt: 'Prepare the message',
+    routine: 'Write the minutes',
+    routineAnonymised: 'Organise the decisions',
+    confidential: 'Summarise the discussion',
+    confidentialAnonymised: 'Produce a summary',
+    generic: 'Prepare a document',
+    routinePrompt:
+      'Write minutes for the car park meeting: Alex Example suggests moving the planters to free up three spaces. Sam Demo will consult colleagues on Tuesday and check the ground markings.',
+    routineAnonymisedPrompt:
+      'Organise the decisions from the car park meeting: move the planters to free up three spaces. For Tuesday, plan a consultation with colleagues and a check of the ground markings.',
+    confidentialPrompt:
+      '[Security] Summarise the meeting discussion: Alex Example reports that former contractors’ access badges are still active in Building C. Sam Demo plans to revoke them on Friday.',
+    confidentialAnonymisedPrompt:
+      '[Security] Produce a summary of these points: former contractors’ access badges are still active in Building C. Revocation is planned for Friday.',
+    genericPrompt:
+      'Suggest a meeting minutes template with objectives, decisions and follow-up actions. Use empty sections only, without inventing facts.',
+    preview: 'Message ready to send',
+    empty: 'Choose a message version to review before sending.',
+    send: 'Send message',
+    fiction: 'Simulated chat · all examples are fictional',
+    welcome: 'Hello. What document are we preparing today?',
+    feedback: {
+      'internal-routine':
+        'You shared a routine project with the internal tool. The names assign responsibility for actions: the exercise policy permits this use. Check the minutes before sharing them.',
+      'internal-routineAnonymised':
+        'This routine project is permitted in the internal tool, with or without names. Removing them reduces the data shared but does not guarantee full anonymisation: the context may still identify the people involved.',
+      'internal-confidential':
+        'The active access badges and remediation date are sensitive information about site security. The exercise policy does not permit processing them in this internal tool: follow the designated process for this document.',
+      'internal-confidentialAnonymised':
+        'You removed the names, but the active access badges and remediation date remain confidential. The internal tool is not approved for this information in the exercise. Anonymisation does not lift that restriction.',
+      'internal-generic':
+        'You requested a general template from the internal tool. This use is permitted. Fill it in with useful information within your organisation’s approved scope and review the result.',
+      'commercial-routine':
+        'The car park project is routine, but this message contains names. The exercise policy reserves this version for the internal tool. For the commercial service, use the anonymised project version or request a general template.',
+      'commercial-routineAnonymised':
+        'This version of the car park project is permitted by the exercise policy: it contains no names or confidential information. For real documents, check anonymisation and the approved use: context may still identify someone. Review the result too.',
+      'commercial-confidential':
+        'These names, access findings and remediation dates would have been shared with the commercial service. This site security information is outside the scope approved by the policy. Follow the designated process for this document.',
+      'commercial-confidentialAnonymised':
+        'Removing names does not protect the badge finding or the remediation schedule. This information remains confidential and must not be shared with this service. Anonymisation does not make a document freely shareable.',
+      'commercial-generic':
+        'You requested a general template from the commercial service without sharing names or internal notes. This use is permitted in the exercise. Fill it in using your work tools and check the result.',
+    },
+  },
   education: {
+    ai: [
+      'Names may be necessary to assign actions in meeting minutes. Their presence does not automatically prohibit the use: check the purpose, which data is needed and what the policy permits for the chosen tool.',
+      'Combined details (role, location, date or an unusual situation) can identify someone even after their name is removed. Anonymisation requires care and expertise: if unsure, do not send the document.',
+      'Even after anonymisation, a budget, project or procedure may remain confidential. An approved internal tool can suit information of low sensitivity if the policy and AI usage charter allow it. For a commercial service, also check which data may leave your organisation: paying for a subscription is not enough.',
+      'If information was shared by mistake, report it promptly through the established security channel. Deleting the chat does not guarantee removal from the service. Also check AI responses before using them.',
+    ],
     more: 'A little more context',
     password: [
       'Report a disclosed or suspected compromised password immediately. Follow your organisation’s procedure for the actions to take; do not wait for a scheduled date.',
@@ -196,8 +262,10 @@ export const en: Catalog = {
     },
   },
   desktop: {
+    ai: 'AI assistant',
     completed: (n: number) => `${n} situation${n === 1 ? '' : 's'} explored`,
     done: 'Explored',
+    replay: 'Replay for practice',
     doubleClick: 'Double-click to open · Enter on the keyboard',
     usb: 'Found USB drive',
     mail: 'Mail',
@@ -216,20 +284,16 @@ export const en: Catalog = {
   challenge: {
     actions: 'What should I do?',
     collapseActions: 'Collapse game actions',
-    countdown: 'Time for this situation',
-    seconds: (n: number) => `${n} s`,
     hint: 'Need a hint?',
     hideHint: 'Hide hint',
-    lowTime: 'Less than fifteen seconds remain for this situation.',
   },
   feedback: {
     safe: 'Good habit.',
     risky: 'A trap, and a lesson.',
-    timeout: 'Time passed. We can still learn.',
     continue: 'Continue exploring',
     incident: 'Respond to the incident',
     finish: 'Discover my recap',
-    timeoutDetail: 'No action was taken for you. Take your time to read the advice.',
+    replay: 'This practice replay does not change your first result in the recap.',
     mfaIgnoredTitle: 'You did not approve. Reporting is still needed.',
     mfaIgnored:
       'Ignoring an unexpected request avoids approving it, but reporting it lets the security team handle the attempt.',
@@ -315,6 +379,7 @@ export const en: Catalog = {
     received: 'Here is the received message',
     receivedNote: 'The recipient sees the name first. Expand the address to see what is behind it.',
     inspect: 'Expand sender',
+    inspectNext: 'Check the sender’s address',
     again: 'Change and try again',
     understood: 'I understand: I verify identity',
     notice:
@@ -366,7 +431,6 @@ export const en: Catalog = {
     discovered: 'Discovered',
     safe: 'Good habit',
     risky: 'Remember',
-    timeout: 'Read again',
     notSeen: 'To explore',
     three: 'THREE HABITS TO TAKE WITH YOU',
     habits: [

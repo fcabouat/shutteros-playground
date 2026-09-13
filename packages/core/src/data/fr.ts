@@ -109,8 +109,6 @@ export const fr = {
     nextPlayer: 'Passer au joueur suivant',
     guide: 'Un coup de pouce',
     close: 'Fermer',
-    quiet: 'Prendre mon temps',
-    quietHint: 'Désactiver les chronos des défis. Le sablier de session reste actif.',
     finish: 'Terminer l’expérience',
     resume: 'Retour au bureau',
     connected: 'Réseau connecté',
@@ -128,7 +126,75 @@ export const fr = {
       'Un mot de passe long et unique par compte : jamais le même au travail et à la maison. Gardez-le dans un gestionnaire approuvé.',
     start: 'Explorer le bureau',
   },
+  ai: {
+    app: 'Assistant IA',
+    intro: 'Des comptes rendus à préparer',
+    task: 'Vous avez plusieurs notes de réunion et voulez gagner du temps. Choisissez un outil, puis le message à lui confier.',
+    tools: 'Choisir un espace de travail',
+    internal: 'Assistant interne',
+    commercial: 'Service d’IA commercial',
+    internalNote: 'Espace de votre organisation',
+    commercialNote: 'Service hébergé par un prestataire',
+    connect: 'Ouvrir le chat',
+    switch: 'Changer d’outil',
+    policy: 'Charte IA de cet exercice',
+    policyIntro: 'Pour cette simulation, l’organisation a défini ces règles :',
+    policyRules: [
+      'L’outil interne autorise la préparation de documents pour les projets courants, en limitant les données personnelles à celles nécessaires au travail.',
+      'Les constats et plans d’action relatifs à la sécurité du site sont hors du périmètre autorisé de ces deux outils.',
+      'L’IA commerciale autorise les trames générales et les notes de projets courants non confidentiels après anonymisation. Les données nominatives restent dans l’outil interne.',
+    ],
+    choosePrompt: 'Préparer le message',
+    routine: 'Rédiger le compte rendu',
+    routineAnonymised: 'Organiser les décisions',
+    confidential: 'Résumer les échanges',
+    confidentialAnonymised: 'Faire une synthèse',
+    generic: 'Préparer un document',
+    routinePrompt:
+      'Rédige le compte rendu de la réunion sur le parking : Camille Exemple propose de déplacer les bacs à fleurs pour libérer trois places. Alex Démo consultera les collègues mardi et vérifiera le marquage au sol.',
+    routineAnonymisedPrompt:
+      'Organise les décisions de la réunion sur le parking : déplacer les bacs à fleurs pour libérer trois places. Pour mardi, prévoir une consultation des collègues et une vérification du marquage au sol.',
+    confidentialPrompt:
+      '[Sécurité] Résume les échanges de la réunion : Camille Exemple signale qu’au bâtiment C, des badges d’anciens prestataires sont encore actifs. Alex Démo prévoit leur révocation vendredi.',
+    confidentialAnonymisedPrompt:
+      '[Sécurité] Fais une synthèse de ces points : au bâtiment C, des badges d’anciens prestataires sont encore actifs. Leur révocation est prévue vendredi.',
+    genericPrompt:
+      'Propose une trame de compte rendu avec objectifs, décisions et actions à suivre. Utilise uniquement des rubriques vides, sans inventer de faits.',
+    preview: 'Message prêt à envoyer',
+    empty: 'Choisissez une version du message pour la relire avant l’envoi.',
+    send: 'Envoyer le message',
+    fiction: 'Chat simulé · exemples entièrement fictifs',
+    welcome: 'Bonjour. Quel document préparons-nous aujourd’hui ?',
+    feedback: {
+      'internal-routine':
+        'Vous avez confié un projet courant à l’outil interne. Les noms servent à attribuer les actions : la charte de l’exercice autorise cet usage. Vérifiez le compte rendu avant de le diffuser.',
+      'internal-routineAnonymised':
+        'Ce projet courant est autorisé dans l’outil interne, avec ou sans noms. En les retirant, vous limitez les données partagées, sans garantir une anonymisation complète : le contexte peut encore permettre de reconnaître les personnes.',
+      'internal-confidential':
+        'Les accès encore actifs et la date de correction sont des informations sensibles sur la sécurité du site. La charte de l’exercice ne permet pas leur traitement dans cet outil interne : suivez le circuit prévu pour ce document.',
+      'internal-confidentialAnonymised':
+        'Vous avez retiré les noms, mais les accès encore actifs et la date de correction restent confidentiels. L’outil interne n’est pas autorisé pour ces informations dans l’exercice. Anonymiser ne lève pas cette restriction.',
+      'internal-generic':
+        'Vous avez demandé une trame générale à l’outil interne. Cet usage est autorisé. Complétez-la avec les informations utiles dans le cadre prévu par votre organisation et relisez le résultat.',
+      'commercial-routine':
+        'Le projet de parking est courant, mais ce message contient des noms. La charte de l’exercice réserve cette version à l’outil interne. Pour le service commercial, utilisez la version anonymisée du projet ou demandez une trame générale.',
+      'commercial-routineAnonymised':
+        'Cette version du projet de parking est autorisée par la charte de l’exercice : elle ne contient pas de noms ni d’informations confidentielles. Pour vos vrais documents, vérifiez l’anonymisation et l’usage autorisé : le contexte peut encore permettre de reconnaître une personne. Relisez aussi le résultat.',
+      'commercial-confidential':
+        'Ces noms, constats sur les accès et dates de correction auraient été transmis au service commercial. Ces informations sur la sécurité du site sont hors du périmètre autorisé par la charte. Suivez le circuit prévu pour ce document.',
+      'commercial-confidentialAnonymised':
+        'Retirer les noms ne protège pas le constat sur les badges ni le calendrier de correction. Ces informations restent confidentielles et ne doivent pas sortir vers ce service. Anonymiser ne rend pas un document librement partageable.',
+      'commercial-generic':
+        'Vous avez demandé une trame générale au service commercial, sans transmettre de noms ni de notes internes. Cet usage est autorisé dans l’exercice. Complétez-la dans vos outils de travail et vérifiez le résultat.',
+    },
+  },
   education: {
+    ai: [
+      'Des noms peuvent être nécessaires pour attribuer des actions dans un compte rendu. Leur présence ne rend pas automatiquement l’usage interdit : vérifiez le but, les données utiles et ce que la charte autorise pour l’outil choisi.',
+      'Des détails croisés (fonction, lieu, date ou situation rare) peuvent permettre de reconnaître une personne malgré la suppression de son nom. Anonymiser demande du savoir-faire : si vous hésitez, ne transmettez pas le document.',
+      'Même anonymisés, un budget, un projet ou une procédure peuvent rester confidentiels. Un outil interne approuvé peut convenir à des informations peu sensibles, si la politique et la charte IA le permettent. Pour un service commercial, vérifiez aussi quelles données peuvent sortir de votre organisation : un abonnement payant ne suffit pas.',
+      'Si des informations sont parties par erreur, signalez-le rapidement au canal de sécurité prévu. Supprimer le chat ne garantit pas que les données ont disparu du service. Vérifiez aussi les réponses de l’IA avant de les utiliser.',
+    ],
     more: 'Pour aller un peu plus loin',
     password: [
       'Un mot de passe divulgué ou soupçonné de l’être doit être signalé immédiatement. Suivez la procédure de votre organisation, qui indique les actions à mener ; n’attendez pas une échéance prévue.',
@@ -198,8 +264,10 @@ export const fr = {
     },
   },
   desktop: {
+    ai: 'Assistant IA',
     completed: (n: number) => `${n} situation${n > 1 ? 's' : ''} explorée${n > 1 ? 's' : ''}`,
     done: 'Exploré',
+    replay: 'Rejouer pour s’entraîner',
     doubleClick: 'Double-cliquez pour ouvrir · Entrée au clavier',
     usb: 'Clé USB trouvée',
     mail: 'Messagerie',
@@ -218,21 +286,16 @@ export const fr = {
   challenge: {
     actions: 'Que faire ?',
     collapseActions: 'Replier les actions du jeu',
-    countdown: 'Temps pour cette situation',
-    seconds: (n: number) => `${n} s`,
     hint: 'Besoin d’un indice ?',
     hideHint: 'Masquer l’indice',
-    lowTime: 'Il reste moins de quinze secondes pour cette situation.',
   },
   feedback: {
     safe: 'Le bon réflexe.',
     risky: 'Un piège, et un déclic.',
-    timeout: 'Le temps est passé. On apprend quand même.',
     continue: 'Continuer l’exploration',
     incident: 'Réagir à l’incident',
     finish: 'Découvrir mon bilan',
-    timeoutDetail:
-      'Aucune action n’a été effectuée à votre place. Vous pouvez prendre votre temps pour lire le conseil.',
+    replay: 'Cet entraînement ne change pas votre premier résultat dans le bilan.',
     mfaIgnoredTitle: 'Vous n’avez pas approuvé. Il reste à signaler.',
     mfaIgnored:
       'Ignorer une demande inattendue évite de l’approuver, mais la signaler permet aux équipes de sécurité informatique de traiter la tentative.',
@@ -320,6 +383,7 @@ export const fr = {
     receivedNote:
       'Le destinataire voit d’abord le nom. Dépliez l’adresse pour voir ce qui se cache derrière.',
     inspect: 'Déplier l’expéditeur',
+    inspectNext: 'Vérifier l’adresse de l’expéditeur',
     again: 'Modifier et réessayer',
     understood: 'J’ai compris : je vérifie l’identité',
     notice:
@@ -371,7 +435,6 @@ export const fr = {
     discovered: 'Découvert',
     safe: 'Bon réflexe',
     risky: 'À retenir',
-    timeout: 'À relire',
     notSeen: 'À explorer',
     three: 'TROIS HABITUDES À EMPORTER',
     habits: [
