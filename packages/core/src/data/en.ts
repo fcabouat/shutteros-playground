@@ -140,7 +140,7 @@ export const en: Catalog = {
     policyRules: [
       'The internal tool permits drafting documents for routine projects, limiting personal data to what is necessary for the work.',
       'Findings and action plans concerning site security are outside the approved scope of both tools.',
-      'The commercial AI service only permits general templates, without internal information or named individuals.',
+      'The commercial AI service permits general templates and anonymised notes for routine, non-confidential projects. Named data stays in the internal tool.',
     ],
     choosePrompt: 'Prepare the message',
     routine: 'Write the minutes',
@@ -175,9 +175,9 @@ export const en: Catalog = {
       'internal-generic':
         'You requested a general template from the internal tool. This use is permitted. Fill it in with useful information within your organisation’s approved scope and review the result.',
       'commercial-routine':
-        'The car park project is routine, but this message contains names and work information. The exercise policy reserves those for the internal tool; only a general template is permitted in the commercial service.',
+        'The car park project is routine, but this message contains names. The exercise policy reserves this version for the internal tool. For the commercial service, use the anonymised project version or request a general template.',
       'commercial-routineAnonymised':
-        'The names are gone, but the project details are still internal information. The exercise policy does not permit sharing them with this service, even if anonymised. Ask for a general template without using the meeting notes.',
+        'This version of the car park project is permitted by the exercise policy: it contains no names or confidential information. For real documents, check anonymisation and the approved use: context may still identify someone. Review the result too.',
       'commercial-confidential':
         'These names, access findings and remediation dates would have been shared with the commercial service. This site security information is outside the scope approved by the policy. Follow the designated process for this document.',
       'commercial-confidentialAnonymised':

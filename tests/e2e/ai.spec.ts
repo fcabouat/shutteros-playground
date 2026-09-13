@@ -102,7 +102,7 @@ for (const locale of ['fr', 'en'] as const) {
           tool: copy.ai.commercial,
           prompt: copy.ai.routineAnonymised,
           feedback: 'commercial-routineAnonymised',
-          outcome: 'risky',
+          outcome: 'safe',
         },
         {
           tool: copy.ai.internal,
