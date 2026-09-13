@@ -17,7 +17,7 @@ Useful commands are `pnpm dev`, `pnpm test`, `pnpm check`, `pnpm lint`, and `pnp
 
 After that installation, Bun can run individual scripts, for example `bun run dev`, `bun run build`, `bun run check`, `bun run test`, and `bun run knip`. Keep Node installed. `bun test` runs a different test runner; use `bun run test` for Vitest. Use pnpm for dependency changes and the full `verify` workflow, retaining the single committed pnpm lockfile.
 
-Knip runs in `verify` and detects unused files, dependencies and exports across the application and core workspace. Framework entry points come from its plugins; `knip.jsonc` adds only the static test-server entry and checks core entry exports. Remove unused code or document a real entry point instead of adding broad ignore rules.
+Knip runs in `verify` and detects unused files, dependencies and exports across the application and core workspace. Framework entry points come from its plugins; `knip.jsonc` declares the test-server and static-site assets loaded outside imports, and checks core entry exports. Remove unused code or document a real entry point instead of adding broad ignore rules.
 
 ## Scope and design
 
@@ -33,7 +33,7 @@ Comments describe current behavior, without design history or superseded alterna
 
 ## Content changes
 
-Write game-facing content in both French and English and repository documentation in English. Keep lessons short and supported by the official sources in `docs/content.md`. Preserve important nuance: a dedicated media-inspection station reduces exposure but is not a safety guarantee; a legitimate delegation can change a sender address; a signature does not make content harmless; and HTTPS alone does not prove that a destination is the intended service.
+Write game-facing content, the product site and the player guide in both French and English; keep technical documentation in English. Keep lessons short and supported by the official sources in `docs/content.md`. Preserve important nuance: a dedicated media-inspection station reduces exposure but is not a safety guarantee; a legitimate delegation can change a sender address; a signature does not make content harmless; and HTTPS alone does not prove that a destination is the intended service.
 
 Use fictional data only. Configuration passwords are public game phrases, never production credentials. A new or modified configuration field needs strict contract validation, a mapping to runtime configuration, and relevant unit tests.
 
@@ -42,6 +42,8 @@ Use fictional data only. Configuration passwords are public game phrases, never 
 Describe the user-visible change, the invariant or content source that supports it, and the validation run. Keep changes focused. Do not mix generated build output, unrelated formatting, or kiosk-host policy with application logic.
 
 The workspace overrides `cookie@<0.7.0` to `0.7.2` for [GHSA-pxg6-pf52-xh8x](https://github.com/advisories/GHSA-pxg6-pf52-xh8x). It is a SvelteKit server dependency, absent from the delivered browser bundle; remove this override when upstream no longer selects the affected range.
+
+Dependabot checks version updates monthly, grouped into application dependencies, development tools and GitHub Actions. Its limits are two npm PRs and one Actions PR at a time. Security alerts and security-update PRs have separate GitHub settings; see [publishing](docs/publishing.md#public-repository-security).
 
 ## Git workflow
 

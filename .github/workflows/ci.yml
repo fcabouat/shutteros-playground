@@ -59,9 +59,6 @@ jobs:
       - run: pnpm audit --audit-level high
       - run: pnpm exec playwright install --with-deps chromium --only-shell
       - run: pnpm verify
-      - run: pnpm build:storybook
-        env:
-          STORYBOOK_DISABLE_TELEMETRY: '1'
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: shutteros-static-and-portable
@@ -80,11 +77,12 @@ jobs:
           fi
       - name: Build and exercise the Pages artifact
         run: |
-          pnpm build
-          pnpm test:e2e
+          pnpm build:site
+          BUILD_ROOT=dist/site/demo BASE_PATH="$BASE_PATH/demo" pnpm test:e2e
+          pnpm test:site
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
-          path: dist/
+          path: dist/site/
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: failure()
         with:

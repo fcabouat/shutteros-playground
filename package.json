@@ -1,8 +1,8 @@
 {
   "name": "shutteros-playground",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
-  "description": "ShutterOS Playground — an independent cybersecurity awareness game for European Cybersecurity Month",
+  "description": "ShutterOS Playground \u2014 an independent cybersecurity awareness game for European Cybersecurity Month",
   "type": "module",
   "license": "MIT",
   "engines": {
@@ -28,7 +28,10 @@
     "verify": "pnpm lint && pnpm format:check && pnpm check && pnpm knip && pnpm test && pnpm build && pnpm test:e2e",
     "changeset": "changeset",
     "release:prepare": "node scripts/release.mjs prepare",
-    "release:push": "node scripts/release.mjs push"
+    "release:push": "node scripts/release.mjs push",
+    "build:site": "node scripts/build-site.mjs",
+    "docs:api": "typedoc",
+    "test:site": "playwright test --config playwright.site.config.ts"
   },
   "dependencies": {
     "@internationalized/date": "^3.8.1",
@@ -52,6 +55,7 @@
     "eslint-plugin-svelte": "^3.13.0",
     "globals": "^17.12.0",
     "knip": "6.35.1",
+    "marked": "^18.0.13",
     "parse5": "^8.0.1",
     "prettier": "^3.6.0",
     "prettier-plugin-svelte": "^3.4.0",
@@ -59,6 +63,7 @@
     "svelte": "5.57.0",
     "svelte-check": "^4.4.0",
     "tailwindcss": "4.3.3",
+    "typedoc": "^0.28.20",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.46.0",
     "vite": "8.3.0",

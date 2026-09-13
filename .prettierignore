@@ -9,3 +9,5 @@ pnpm-lock.yaml
 private
 src/lib/branding.generated.ts
 dist/
+
+.site-build/
