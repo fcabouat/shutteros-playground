@@ -2,6 +2,8 @@ import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { fr } from '@shutteros/core/data/fr';
 import { en } from '@shutteros/core/data/en';
+import { challenges } from '@shutteros/core/data/challenges';
+import { englishChallenges } from '@shutteros/core/data/challenges.en';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
@@ -42,6 +44,11 @@ for (const locale of ['fr', 'en'] as const) {
       await expect(
         page.getByText(copy.ai.feedback['commercial-masked'], { exact: true }),
       ).toBeVisible();
+      await expect(
+        page.getByText((locale === 'fr' ? challenges : englishChallenges).ai.lesson, {
+          exact: true,
+        }),
+      ).toBeVisible();
       expect(outgoing).toEqual([]);
       await page.getByRole('button', { name: copy.shell.logout, exact: true }).click();
       await page.getByRole('button', { name: copy.shell.exitConfirm, exact: true }).click();
@@ -60,6 +67,33 @@ for (const locale of ['fr', 'en'] as const) {
       await expect(page.locator('.feedback-card[data-outcome="safe"]')).toContainText(
         copy.ai.feedback['internal-generic'],
       );
+      await expect(
+        page.getByText((locale === 'fr' ? challenges : englishChallenges).ai.lesson, {
+          exact: true,
+        }),
+      ).toBeVisible();
+
+      await page.getByRole('button', { name: copy.shell.logout, exact: true }).click();
+      await page.getByRole('button', { name: copy.shell.exitConfirm, exact: true }).click();
+      await page.getByLabel(copy.login.password, { exact: true }).fill('password');
+      await page.getByRole('button', { name: copy.login.enter, exact: true }).click();
+      await page.getByRole('button', { name: copy.intro.start, exact: true }).click();
+      await page
+        .locator('.desktop-icons')
+        .getByRole('button', { name: copy.desktop.ai, exact: true })
+        .dblclick();
+      await page.getByRole('radio', { name: copy.ai.commercial, exact: false }).check();
+      await page.getByRole('button', { name: copy.ai.connect, exact: true }).click();
+      await page.getByRole('radio', { name: copy.ai.generic, exact: true }).check();
+      await page.getByRole('button', { name: copy.ai.send, exact: true }).click();
+      await expect(page.locator('.feedback-card[data-outcome="safe"]')).toContainText(
+        copy.ai.feedback['commercial-generic'],
+      );
+      await expect(
+        page.getByText((locale === 'fr' ? challenges : englishChallenges).ai.lesson, {
+          exact: true,
+        }),
+      ).toBeVisible();
     });
   }
 }

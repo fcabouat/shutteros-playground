@@ -25,8 +25,8 @@ export const challengeOrder = [
  * catalogue, while the pure core owns which identifiers are valid and their effect.
  */
 const challengeChoices = {
-  // The fictional policy approves only general templates in the internal tool.
-  // Removing names leaves identifying details and confidential business data.
+  // Both tools permit general templates in the exercise. The meeting notes
+  // remain confidential and identifying even after their names are removed.
   ai: {
     choose: {
       'internal-full': 'risky',
@@ -34,7 +34,7 @@ const challengeChoices = {
       'internal-generic': 'safe',
       'commercial-full': 'risky',
       'commercial-masked': 'risky',
-      'commercial-generic': 'risky',
+      'commercial-generic': 'safe',
     },
     notify: {},
   },
@@ -106,7 +106,8 @@ export type Scene =
       exploreUntil: number;
       step: 'explore' | DecisionStep;
     }
-  | { kind: 'feedback'; result: ChallengeResult }
+  // Replay feedback describes the latest attempt; results still owns the first one.
+  | { kind: 'feedback'; result: ChallengeResult; replay: boolean }
   | { kind: 'routines' }
   | { kind: 'debrief' };
 

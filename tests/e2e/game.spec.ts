@@ -130,6 +130,8 @@ test('guided completion sweeps remaining situations without local timers', async
   await expect(page.getByRole('button', { name: 'Un coup de pouce', exact: true })).toHaveCount(0);
   await expect(page.locator('.guide-dialog')).toHaveCount(0);
   await expectNoAxeViolations(page);
+  await page.getByRole('button', { name: fr.shell.resume, exact: true }).click();
+  await expect(page.locator('.desktop-icon:has([data-app="usb"])')).toBeEnabled();
 });
 
 for (const delivery of ['http', 'file'] as const) {
@@ -236,6 +238,16 @@ for (const delivery of ['http', 'file'] as const) {
     await sendSafeAiPrompt(page);
     await page.getByRole('button', { name: 'Découvrir mon bilan' }).click();
     await expect(page.getByText('6 bons réflexes sur 6 situations explorées')).toBeVisible();
+    await page.getByRole('button', { name: fr.shell.resume, exact: true }).click();
+    await page.locator('.desktop-icon:has([data-app="usb"])').dblclick();
+    await page.locator('#usb-file-0').dblclick();
+    await expect(page.locator('.feedback-card[data-outcome="risky"]')).toBeVisible();
+    await expect(page.getByText(fr.feedback.replay, { exact: true })).toBeVisible();
+    await page.getByRole('button', { name: fr.feedback.finish, exact: true }).click();
+    await expect(page.getByText('6 bons réflexes sur 6 situations explorées')).toBeVisible();
+    await expect(
+      page.locator('li').filter({ hasText: fr.desktop.usb }).locator('[data-outcome="safe"]'),
+    ).toBeVisible();
     await page.getByRole('button', { name: 'Passer au joueur suivant' }).click();
     await page.getByRole('button', { name: 'Quitter et effacer ma progression' }).click();
     await expect(page.getByLabel('Mot de passe', { exact: true })).toHaveValue('');
@@ -641,7 +653,7 @@ test('application launchers do not advertise unavailable navigation during feedb
   await page.keyboard.press('Escape');
   await advance(page);
   await page.getByRole('button', { name: 'Démarrer', exact: true }).click();
-  await expect(page.locator('.start-menu .start-app:has([data-app="usb"])')).toBeDisabled();
+  await expect(page.locator('.start-menu .start-app:has([data-app="usb"])')).toBeEnabled();
   await expect(page.locator('.start-menu .start-app:has([data-app="mail"])')).toBeEnabled();
 });
 

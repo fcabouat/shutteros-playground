@@ -1,12 +1,7 @@
 <script lang="ts">
   import type { GameState, Intent } from '@shutteros/core/model/game';
   import type { GameConfig } from '@shutteros/core/model/configuration';
-  import {
-    challengeOrder,
-    safeCount,
-    assessedCount,
-    allComplete,
-  } from '@shutteros/core/projections/game';
+  import { challengeOrder, safeCount, assessedCount } from '@shutteros/core/projections/game';
   import { getI18n } from '../i18n/context';
   const i18n = getI18n();
   const challenges = $derived(i18n.challenges);
@@ -109,10 +104,9 @@
           <p class="text-muted mt-1 text-xs">{copy.debrief.privacy}</p>
         </div>
         <div class="flex flex-wrap gap-3">
-          {#if !allComplete(snapshot)}<button
-              class="button button-soft"
-              onclick={() => dispatch({ type: 'close' })}>{copy.shell.resume}</button
-            >{/if}<button class="button button-primary" onclick={() => dispatch({ type: 'logout' })}
+          <button class="button button-soft" onclick={() => dispatch({ type: 'close' })}
+            >{copy.shell.resume}</button
+          ><button class="button button-primary" onclick={() => dispatch({ type: 'logout' })}
             >{copy.shell.nextPlayer}<Icon name="arrow" size={17} /></button
           >
         </div>

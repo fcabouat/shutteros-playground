@@ -46,13 +46,13 @@
             {@const done = hasResult(snapshot, id)}
             <button
               class="start-app flex flex-col items-center gap-2 rounded-lg p-2 text-center"
-              disabled={done || !canExplore(snapshot)}
+              disabled={!canExplore(snapshot)}
               onclick={() => run({ type: 'open', id })}
-              aria-label={`${copy.os.openApp} ${copy.desktop[id]}`}
+              aria-label={`${copy.os.openApp} ${copy.desktop[id]}${done ? ` · ${copy.desktop.replay}` : ''}`}
             >
               <span class="app-icon small" data-app={id}><Icon name={id} size={22} /></span><span
                 class="text-xs leading-snug">{copy.desktop[id]}</span
-              >{#if done}<span class="text-muted text-[0.65rem]">{copy.desktop.done}</span>{/if}
+              >{#if done}<span class="text-muted text-[0.65rem]">{copy.desktop.replay}</span>{/if}
             </button>
           {/each}
         </div>

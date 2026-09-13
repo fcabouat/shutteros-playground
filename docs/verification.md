@@ -23,7 +23,7 @@ On Linux hosts without the browser's system libraries, use `pnpm exec playwright
 | Area                      | Checks                                                                                                                                                 |
 | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Architecture              | Core compiles without DOM types or runtime dependencies; import-boundary tests reject forbidden dependencies.                                          |
-| Game rules                | Session and challenge deadlines, free/guided transitions, background incidents, invalid intents, routines, scoring and reset.                          |
+| Game rules                | Global session deadline, free/guided transitions, replay without rescoring, background incidents, invalid intents, routines and reset.                 |
 | Configuration             | Strict decoding, bounded loading, invalid input, local logo filenames and portable image embedding.                                                    |
 | Packaging                 | Script serialization, CSP integrity, dependency license inventory, notice parity and removal of build intermediates.                                   |
 | Browser behavior          | Complete HTTP and offline journeys, both languages, navigation, dialogs, drafts, timeout/reset, narrow layouts, keyboard controls, branding and About. |
@@ -31,7 +31,7 @@ On Linux hosts without the browser's system libraries, use `pnpm exec playwright
 | Maintenance               | Knip unused-file/dependency/export checks, workflow syntax, frozen dependency installation and registry advisory audit.                                |
 | Ubuntu scripts            | ShellCheck, shell/unit syntax, Python/TypeScript contract parity and sandboxed install/refusal/rollback/verification/removal tests.                    |
 
-Local challenge timing can be disabled from Start. The global session deadline remains mandatory and is not extendable by players; no WCAG timing-adjustment conformance is claimed. Operators can configure a longer session before an event.
+The global session deadline is the only timer. It remains mandatory and is not extendable by players; no WCAG timing-adjustment conformance is claimed. Operators can configure a longer session before an event.
 
 The browser fixture serves files from `dist/` on loopback port 4183. It has no development-server fallback and does not reuse an interactive preview. Keep that port available while running the suite.
 

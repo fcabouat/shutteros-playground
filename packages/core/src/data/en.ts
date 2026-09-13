@@ -132,15 +132,15 @@ export const en: Catalog = {
     internal: 'Internal assistant',
     commercial: 'Commercial AI service',
     internalNote: 'Your organisation’s workspace',
-    commercialNote: 'Personal account · external service',
+    commercialNote: 'Service hosted by an external provider',
     connect: 'Open chat',
     switch: 'Switch tool',
     policy: 'AI policy for this exercise',
     policyIntro: 'For this simulation, the organisation has set these rules:',
     policyRules: [
-      'The internal assistant is approved for drafting templates without personal data or confidential information.',
-      'This commercial service used with a personal account is not approved for work.',
-      'If unsure about a document or use, ask for guidance before sending it.',
+      'Both tools are approved for requesting a general template without personal data or confidential information.',
+      'These meeting notes contain a confidential project: they must not be sent to either tool, even after names are removed.',
+      'For other uses, follow your organisation’s policy and AI usage charter. If unsure, ask for guidance before sending.',
     ],
     choosePrompt: 'Prepare the message',
     full: 'Copy my notes',
@@ -165,17 +165,17 @@ export const en: Catalog = {
       'internal-generic':
         'You used the approved tool with a general request, without internal notes or personal data. Fill in the template in your work tools and review the result.',
       'commercial-full':
-        'These notes would have been shared with an external service that is not approved here. A useful AI answer does not undo the exposure of the information you sent.',
+        'These personal and confidential notes would have been shared with an external service. This tool can handle a general request, but the exercise policy does not allow sending these notes.',
       'commercial-masked':
-        'Removing the name protected neither the identifiable person nor the confidential budget. The message would have been shared with an external service that is not approved here.',
+        'Removing the name protected neither the identifiable person nor the confidential budget. These details would have been shared with the external service despite the exercise policy.',
       'commercial-generic':
-        'Your message leaves out the sensitive notes: that is a useful precaution. But this personal service is not approved for work in this exercise. Use your organisation’s approved tool.',
+        'You requested a general template from the commercial service without sharing the sensitive notes. This use is permitted in the exercise. Fill in the template in your work tools and review the result.',
     },
   },
   education: {
     ai: [
       'Combined details (role, location, date or an unusual situation) can identify someone even after their name is removed. Anonymisation requires care and expertise: if unsure, do not send the document.',
-      'Even without personal data, a budget, project or procedure may remain confidential. An internal tool or paid subscription is not blanket permission. A commercial tool may be approved for a defined purpose: follow your organisation’s policy.',
+      'Even after anonymisation, a budget, project or procedure may remain confidential. An approved internal tool can suit information of low sensitivity if the policy and AI usage charter allow it. For a commercial service, also check which data may leave your organisation: paying for a subscription is not enough.',
       'If information was shared by mistake, report it promptly through the established security channel. Deleting the chat does not guarantee removal from the service. Also check AI responses before using them.',
     ],
     more: 'A little more context',
@@ -250,6 +250,7 @@ export const en: Catalog = {
     ai: 'AI assistant',
     completed: (n: number) => `${n} situation${n === 1 ? '' : 's'} explored`,
     done: 'Explored',
+    replay: 'Replay for practice',
     doubleClick: 'Double-click to open · Enter on the keyboard',
     usb: 'Found USB drive',
     mail: 'Mail',
@@ -277,6 +278,7 @@ export const en: Catalog = {
     continue: 'Continue exploring',
     incident: 'Respond to the incident',
     finish: 'Discover my recap',
+    replay: 'This practice replay does not change your first result in the recap.',
     mfaIgnoredTitle: 'You did not approve. Reporting is still needed.',
     mfaIgnored:
       'Ignoring an unexpected request avoids approving it, but reporting it lets the security team handle the attempt.',

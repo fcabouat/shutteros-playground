@@ -10,10 +10,12 @@
   let {
     snapshot,
     result,
+    replay,
     dispatch,
   }: {
     snapshot: Extract<GameState, { phase: 'session' }>;
     result: ChallengeResult;
+    replay: boolean;
     dispatch: (intent: Intent) => void;
   } = $props();
   const content = $derived(challenges[result.id]);
@@ -57,6 +59,9 @@
                   ? copy.usb.ejected
                   : content.feedback[result.outcome]}
         </p>
+        {#if replay}<p class="text-muted mt-3 text-xs leading-relaxed">
+            {copy.feedback.replay}
+          </p>{/if}
       </LearningPanel>
     </div>
   </div>

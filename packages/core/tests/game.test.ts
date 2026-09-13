@@ -597,7 +597,7 @@ describe('game runtime', () => {
     ['internal', 'generic', 'safe'],
     ['commercial', 'full', 'risky'],
     ['commercial', 'masked', 'risky'],
-    ['commercial', 'generic', 'risky'],
+    ['commercial', 'generic', 'safe'],
   ] as const)('evaluates AI submission %s/%s in the core', (tool, prompt, outcome) => {
     const opened = apply(desktop(), { type: 'open', id: 'ai' }, 1);
     expect(opened).toMatchObject({ scene: { kind: 'challenge', step: 'explore' } });
@@ -675,6 +675,64 @@ describe('game runtime', () => {
     });
   });
 
+  it.each([
+    ['usb', 'station', 'safe', 'open', 'risky'],
+    ['incident', 'restart', 'risky', 'notify', 'safe'],
+    ['mail', 'report', 'safe', 'reply', 'risky'],
+    ['spoof', 'understood', 'safe', 'understood', 'safe'],
+    ['web', 'submit', 'risky', 'known-address', 'safe'],
+    ['mfa', 'approve', 'risky', 'deny-report', 'safe'],
+    ['ai', 'commercial-full', 'risky', 'commercial-generic', 'safe'],
+  ] as const)(
+    'replays %s without replacing its first result',
+    (id, firstChoice, firstOutcome, choiceId, outcome) => {
+      const original = {
+        ...desktop(),
+        results: [{ id, choiceId: firstChoice, outcome: firstOutcome }],
+      };
+      let replay = apply(original, { type: 'open', id }, 10);
+      expect(replay).toMatchObject({ phase: 'session', scene: { kind: 'challenge', id } });
+      if (id === 'incident') replay = apply(replay, { type: 'choose', choiceId: 'isolate' }, 11);
+      replay = apply(replay, { type: 'choose', choiceId }, 12);
+      expect(replay).toMatchObject({
+        phase: 'session',
+        deadline: original.deadline,
+        scene: { kind: 'feedback', replay: true, result: { id, choiceId, outcome } },
+      });
+      if (replay.phase !== 'session' || replay.scene.kind !== 'feedback')
+        throw new Error('Expected replay feedback');
+      expect(replay.results).toBe(original.results);
+      expect(replay.knowledge).toBe(original.knowledge);
+      expect(replay.usbInfected).toBe(original.usbInfected);
+      expect(safeCount(replay)).toBe(safeCount(original));
+      expect(assessedCount(replay)).toBe(assessedCount(original));
+      expect(incidentFollowsFeedback(replay, replay.scene.result)).toBe(false);
+      expect(apply(replay, { type: 'continue' }, 13)).toMatchObject({ scene: { kind: 'desktop' } });
+    },
+  );
+
+  it('does not carry a replayed incident into the outstanding guided work', () => {
+    const original = {
+      ...desktop(),
+      results: [{ id: 'incident', choiceId: 'restart', outcome: 'risky' }],
+    } as const;
+    const replay = apply(original, { type: 'open', id: 'incident' }, 1);
+    const isolated = apply(replay, { type: 'choose', choiceId: 'isolate' }, 2);
+    const elsewhere = apply(isolated, { type: 'open', id: 'mail' }, 3);
+    expect(elsewhere).toMatchObject({ pendingIncident: null, results: original.results });
+    const guided = apply(isolated, { type: 'finish-experience' }, 4);
+    expect(guided).toMatchObject({
+      mode: 'guided',
+      pendingIncident: null,
+      results: original.results,
+      scene: { kind: 'challenge', id: 'usb' },
+    });
+    expect(apply(isolated, { type: 'tick' }, original.deadline)).toMatchObject({
+      phase: 'login',
+      reason: 'expired',
+    });
+  });
+
   it('completes all seven challenges once and reaches the debrief without duplicate score', () => {
     let state: GameState = desktop();
     const complete = (
@@ -703,6 +761,17 @@ describe('game runtime', () => {
       expect(assessedCount(state)).toBe(6);
       expect(safeCount(state)).toBe(6);
       expect(apply(state, { type: 'continue' }, 60)).toEqual({ ...state, now: 60 });
+      const resumed = apply({ ...state, mode: 'guided' }, { type: 'close' }, 61);
+      expect(resumed).toMatchObject({
+        mode: 'free',
+        scene: { kind: 'desktop' },
+        deadline: state.deadline,
+      });
+      const replay = apply(resumed, { type: 'open', id: 'usb' }, 62);
+      const feedback = apply(replay, { type: 'choose', choiceId: 'open' }, 63);
+      const recap = apply(feedback, { type: 'continue' }, 64);
+      expect(recap).toMatchObject({ scene: { kind: 'debrief' }, results: state.results });
+      expect(safeCount(recap)).toBe(6);
     }
   });
 });
