@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { tick } from 'svelte';
   import { getI18n } from '../i18n/context';
   const i18n = getI18n();
   const copy = $derived(i18n.text);
@@ -103,10 +104,20 @@
       <button class="button button-soft" onclick={() => (sent = false)}>{copy.spoof.again}</button
       ><button
         class="button button-primary"
-        disabled={!observedAddress}
-        onclick={() => {
-          if (observedAddress) dispatch({ type: 'choose', choiceId: 'understood' });
-        }}>{copy.spoof.understood}<Icon name="check" size={16} /></button
+        onclick={async (event) => {
+          // Keep the next step actionable without skipping the address inspection.
+          if (!observedAddress) {
+            const button = event.currentTarget;
+            inspected = true;
+            observedAddress = true;
+            await tick();
+            button.scrollIntoView({ block: 'nearest' });
+          } else dispatch({ type: 'choose', choiceId: 'understood' });
+        }}
+        >{observedAddress ? copy.spoof.understood : copy.spoof.inspectNext}<Icon
+          name={observedAddress ? 'check' : 'down'}
+          size={16}
+        /></button
       >
     </div>
   {/if}

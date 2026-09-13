@@ -379,6 +379,7 @@ export const en: Catalog = {
     received: 'Here is the received message',
     receivedNote: 'The recipient sees the name first. Expand the address to see what is behind it.',
     inspect: 'Expand sender',
+    inspectNext: 'Check the sender’s address',
     again: 'Change and try again',
     understood: 'I understand: I verify identity',
     notice:

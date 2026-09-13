@@ -101,8 +101,10 @@ test('guided completion sweeps remaining situations without local timers', async
   await page.getByRole('button', { name: 'Envoyer dans la simulation' }).click();
   await expect(
     page.getByRole('button', { name: 'J’ai compris : je vérifie l’identité' }),
-  ).toBeDisabled();
-  await page.getByRole('button', { name: 'Déplier l’expéditeur' }).click();
+  ).toHaveCount(0);
+  await page.getByRole('button', { name: fr.spoof.inspectNext, exact: true }).click();
+  await expect(page.getByTestId('received-address')).toHaveText(config.mailLegitimateAddress);
+  await expect(page.locator('[data-challenge="spoof"]')).toBeVisible();
   await page.getByRole('button', { name: 'J’ai compris : je vérifie l’identité' }).click();
   await advanceGuided(page);
   await page.getByRole('button', { name: 'Revenir à mon favori connu', exact: false }).click();
@@ -700,9 +702,14 @@ for (const viewport of [
     await openNext(page, 'spoof');
     await page.getByRole('button', { name: 'Envoyer dans la simulation' }).focus();
     await page.keyboard.press('Enter');
-    await expect(
-      page.getByRole('button', { name: 'J’ai compris : je vérifie l’identité' }),
-    ).toBeVisible();
+    const inspectSender = page.getByRole('button', { name: fr.spoof.inspectNext, exact: true });
+    await inspectSender.focus();
+    await expect(inspectSender).toBeInViewport({ ratio: 0.99 });
+    await page.keyboard.press('Enter');
+    await expect(page.getByTestId('received-address')).toBeVisible();
+    const acknowledgeSender = page.getByRole('button', { name: fr.spoof.understood, exact: true });
+    await acknowledgeSender.focus();
+    await expect(acknowledgeSender).toBeInViewport({ ratio: 0.99 });
     await expectNoAxeViolations(page);
     await openNext(page, 'ai', false);
     await page.getByRole('button', { name: fr.ai.connect, exact: true }).click();
