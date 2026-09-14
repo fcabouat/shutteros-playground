@@ -69,7 +69,6 @@ describe('gitflow initializer', () => {
   it('overrides inherited preferences that would change the finish graph or push it partially', () => {
     const globalConfig = join(root, 'global.gitconfig');
     const options = [
-      'ff-master',
       'nodevelopmerge',
       'pushproduction',
       'pushdevelop',
@@ -85,13 +84,35 @@ describe('gitflow initializer', () => {
         '[gitflow "hotfix.finish"]\n\tpush = true\n\tsquash = true\n\tnotag = true\n',
     );
     environment = { ...environment, GIT_CONFIG_GLOBAL: globalConfig };
-    expect(git('config', '--bool', 'gitflow.release.finish.ff-master')).toBe('true');
     expect(initialize().status).toBe(0);
     for (const option of options)
       expect(git('config', '--local', '--bool', `gitflow.release.finish.${option}`)).toBe('false');
     for (const option of ['push', 'squash', 'notag'])
       expect(git('config', '--local', '--bool', `gitflow.hotfix.finish.${option}`)).toBe('false');
-    expect(readFileSync(globalConfig, 'utf8')).toContain('ff-master = true');
+    expect(readFileSync(globalConfig, 'utf8')).toContain('notag = true');
+  });
+
+  it('removes the broken local AVH ff-master setting instead of setting it false', () => {
+    git('config', 'gitflow.release.finish.ff-master', 'false');
+    expect(initialize().status).toBe(0);
+    expect(
+      spawnSync('git', ['config', '--get', 'gitflow.release.finish.ff-master'], {
+        cwd: root,
+        env: environment,
+      }).status,
+    ).toBe(1);
+  });
+
+  it('refuses an inherited broken AVH setting without changing the global file', () => {
+    const globalConfig = join(root, 'global.gitconfig');
+    const content = '[gitflow "release.finish"]\nff-master = false\n';
+    writeFileSync(globalConfig, content);
+    environment = { ...environment, GIT_CONFIG_GLOBAL: globalConfig };
+    const result = initialize();
+    expect(result.status).not.toBe(0);
+    expect(result.stderr).toContain('remove inherited gitflow.release.finish.ff-master');
+    expect(readFileSync(globalConfig, 'utf8')).toBe(content);
+    expect(existsSync(join(root, '.git/hooks/filter-flow-release-start-version'))).toBe(false);
   });
 
   it('refuses a conflicting hook without replacing it or partially installing links', () => {

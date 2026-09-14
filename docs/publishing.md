@@ -71,9 +71,12 @@ Contributors without write access fork the repository and open a pull request fr
 ### Release
 
 ```sh
-git flow release start minor        # or patch, major, or an explicit X.Y.Z
-git flow release finish 0.4.0
-git push --atomic origin main develop refs/tags/v0.4.0
+(
+  set -e
+  git flow release start minor      # or patch, major, or an explicit X.Y.Z
+  git flow release finish 0.4.0      # use the version printed by start
+  git push --atomic origin main develop refs/tags/v0.4.0
+)
 ```
 
 `start` computes the next version from `develop`, writes it to the application, core and component package manifests, and commits `chore(release): vX.Y.Z` on `release/X.Y.Z`. `finish` first runs `pnpm verify` and stops on any failure; it then merges into `main`, creates the annotated tag `vX.Y.Z`, merges the release branch back into `develop` and deletes it. The hook prints the atomic push that publishes all three references together, or none. `SHUTTEROS_SKIP_VERIFY=1` bypasses the local verification when CI already verified the same commit; the tag is still verified by CI before publication.
@@ -81,10 +84,17 @@ git push --atomic origin main develop refs/tags/v0.4.0
 ### Hotfix
 
 ```sh
-git flow hotfix start patch         # branches from main; the version is computed from main
-git flow hotfix finish 0.4.1
-git push --atomic origin main develop refs/tags/v0.4.1
+(
+  set -e
+  git flow hotfix start patch       # computes the version from main
+  git flow hotfix finish 0.4.1
+  git push --atomic origin main develop refs/tags/v0.4.1
+)
 ```
+
+The subshell stops at the first failure: never run the push after a failed start or finish. After a history rewrite, old local tags and delivery branches may still exist even after `fetch --prune`. Prefer a fresh clone, or back up and reconcile those references with the remote before starting a release. A tag collision is a stop condition, not permission to overwrite a published tag.
+
+AVH 1.12.3 cannot read `gitflow.release.finish.ff-master` without a shell error. The initializer removes its old local setting and uses AVH's default (no fast-forward); an inherited setting causes an explicit refusal rather than modifying global configuration.
 
 ### What CI does with a push
 

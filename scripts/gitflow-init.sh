@@ -9,6 +9,14 @@ command -v git-flow >/dev/null 2>&1 || git flow version >/dev/null 2>&1 || {
 }
 root=$(git rev-parse --show-toplevel)
 cd "$root"
+# AVH 1.12.3 interpolates this option into an invalid shell variable (FLAGS_ff-master).
+# Its built-in default is already false. Remove our old local setting, but never
+# rewrite a user's global/system configuration on their behalf.
+if git config --show-scope --get-all gitflow.release.finish.ff-master |
+  awk '$1 != "local" { found = 1 } END { exit !found }'; then
+  echo 'remove inherited gitflow.release.finish.ff-master (AVH 1.12.3 cannot read this option); inspect: git config --show-origin --get-all gitflow.release.finish.ff-master' >&2
+  exit 1
+fi
 # Refuse all hook conflicts before changing branches or local Gitflow configuration.
 git_dir=$(git rev-parse --absolute-git-dir)
 hooks_dir="$git_dir/hooks"
@@ -61,7 +69,8 @@ for kind in release hotfix; do
   done
   git config "gitflow.$kind.finish.nobackmerge" true
 done
-for option in ff-master nodevelopmerge pushproduction pushdevelop pushtag; do
+git config --local --unset-all gitflow.release.finish.ff-master 2>/dev/null || true
+for option in nodevelopmerge pushproduction pushdevelop pushtag; do
   git config "gitflow.release.finish.$option" false
 done
 # Annotated tag messages come from the finish-tag-message hooks; a default avoids an editor prompt.
