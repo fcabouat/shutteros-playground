@@ -1,6 +1,7 @@
 import { releaseMessages } from './release-messages.mjs';
 import { execFileSync } from 'node:child_process';
 import { appendFileSync, readFileSync } from 'node:fs';
+import { createReleasePull, releaseAppIdentity } from './create-release-pr.mjs';
 
 const run = (command, ...args) => execFileSync(command, args, { stdio: 'inherit' });
 const read = (command, ...args) => execFileSync(command, args, { encoding: 'utf8' }).trim();
@@ -11,6 +12,7 @@ const repository = process.env.GITHUB_REPOSITORY;
 if (!/^[\w.-]+\/[\w.-]+$/.test(repository ?? '')) throw new Error('Expected GITHUB_REPOSITORY.');
 const summary = [];
 try {
+  const { author: releaseAuthor } = releaseAppIdentity();
   // A manual recovery must publish current main, not an old workflow checkout.
   // Fetch failures are fatal; they are never interpreted as an absent tag.
   run(
@@ -111,36 +113,36 @@ try {
     if (remoteHead && remoteHead !== deliverySha)
       throw new Error(`${deliveryBranch} exists at a different commit; refusing to move it.`);
     if (!remoteHead) run('git', 'push', 'origin', `${deliverySha}:refs/heads/${deliveryBranch}`);
-    let pr = read(
-      'gh',
-      'pr',
-      'list',
-      '--head',
-      deliveryBranch,
-      '--base',
-      'develop',
-      '--json',
-      'url',
-      '--jq',
-      '.[0].url // empty',
-    );
-    if (!pr)
-      pr = read(
+    const pulls = JSON.parse(
+      read(
         'gh',
         'pr',
-        'create',
+        'list',
         '--head',
         deliveryBranch,
         '--base',
         'develop',
-        '--title',
-        releaseMessages(version, deliveryBranch.split('/')[0]).develop,
-        '--body',
-        'Return the published release to develop. Automation verifies the merge and preserves release ancestry with a merge commit.',
-      );
-    summary.push(`- Integration PR queued for verification and merge: ${pr}`);
-    const { number } = JSON.parse(read('gh', 'pr', 'view', pr, '--json', 'number'));
-    run('gh', 'workflow', 'run', 'ci.yml', '--ref', deliveryBranch, '-f', `release_pr=${number}`);
+        '--json',
+        'url,author,headRefName,headRefOid,isCrossRepository',
+      ),
+    );
+    const existingPull = pulls.find(
+      (pull) =>
+        !pull.isCrossRepository &&
+        pull.headRefName === deliveryBranch &&
+        pull.headRefOid === deliverySha,
+    );
+    let pr = existingPull?.url;
+    if (!pr)
+      pr = createReleasePull({
+        head: deliveryBranch,
+        base: 'develop',
+        title: releaseMessages(version, deliveryBranch.split('/')[0]).develop,
+        body: 'Return the published release to develop. Automation verifies the merge and preserves release ancestry with a merge commit.',
+      });
+    if (existingPull && existingPull.author?.login !== releaseAuthor)
+      summary.push(`- Existing legacy integration PR requires manual recovery: ${pr}`);
+    else summary.push(`- Integration PR queued for verification and merge: ${pr}`);
   }
 } catch (error) {
   summary.push(

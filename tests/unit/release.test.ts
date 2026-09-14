@@ -25,6 +25,7 @@ function fixture() {
     fail: '',
     pulls: [] as Record<string, unknown>[],
     calls: [] as string[],
+    auth: [] as { action: string; token?: string }[],
   };
   writeFileSync(stateFile, JSON.stringify(initial));
   // Stateful GitHub double. The real publication script and real Git run;
@@ -36,8 +37,10 @@ const fs = require('node:fs');
 const file = process.env.FAKE_GITHUB;
 const state = JSON.parse(fs.readFileSync(file));
 const args = process.argv.slice(2);
-const action = args.slice(0, 2).join(' ');
+const createsPull = args[0] === 'api' && args[1] === '--method' && args[2] === 'POST' && args[3] === 'repos/fixture/test/pulls';
+const action = createsPull ? 'pull create' : args.slice(0, 2).join(' ');
 state.calls.push(action);
+state.auth.push({action, token: process.env.GH_TOKEN});
 fs.writeFileSync(file, JSON.stringify(state));
 if (state.fail === action) { console.error('HTTP 403: access denied'); process.exit(1); }
 if (action.startsWith('api repos/fixture/test/commits/')) {
@@ -48,10 +51,8 @@ switch (action) {
   case 'api --paginate': console.log(state.release ? 'v0.1.1' : ''); break;
   case 'release create': state.release = true; break;
   case 'release view': if (!state.release) process.exit(1); console.log(JSON.stringify({tagName:'v0.1.1', isDraft: state.fail === 'draft', url:'https://github.com/fixture/test/releases/tag/v0.1.1'})); break;
-  case 'pr list': console.log(state.pr ? 'https://github.com/fixture/test/pull/2' : ''); break;
-  case 'pr create': if (args[args.indexOf('--title') + 1] !== 'chore(release): merge v0.1.1 into develop') process.exit(2); state.pr = true; console.log('https://github.com/fixture/test/pull/2'); break;
-  case 'pr view': console.log(JSON.stringify({number:2})); break;
-  case 'workflow run': if (args[args.indexOf('--ref') + 1] !== 'release/0.1.1' || args.at(-1) !== 'release_pr=2') process.exit(2); break;
+  case 'pr list': console.log(JSON.stringify(state.pr ? [{url:'https://github.com/fixture/test/pull/2',author:{login:state.legacyAuthor ? 'github-actions[bot]' : 'release-app[bot]'},headRefName:'release/0.1.1',headRefOid:state.pulls[0].head.sha,isCrossRepository:false}] : [])); break;
+  case 'pull create': if (!args.includes('title=chore(release): merge v0.1.1 into develop')) process.exit(2); state.pr = true; console.log('https://github.com/fixture/test/pull/2'); break;
   default: console.error('Unexpected gh call', args); process.exit(2);
 }
 fs.writeFileSync(file, JSON.stringify(state));
@@ -64,6 +65,9 @@ fs.writeFileSync(file, JSON.stringify(state));
     FAKE_GITHUB: stateFile,
     GITHUB_REPOSITORY: 'fixture/test',
     GITHUB_STEP_SUMMARY: join(root, 'summary.md'),
+    GH_TOKEN: 'normal-token',
+    RELEASE_PR_TOKEN: 'release-pr-token',
+    RELEASE_APP_SLUG: 'release-app',
     GIT_AUTHOR_NAME: 'Test',
     GIT_AUTHOR_EMAIL: 'test@example.invalid',
     GIT_COMMITTER_NAME: 'Test',
@@ -132,6 +136,8 @@ fs.writeFileSync(file, JSON.stringify(state));
     updateState,
     deliverySha,
     publish: () => execute(process.execPath, publisher),
+    publishWithoutReleaseToken: () =>
+      execute('env', 'RELEASE_PR_TOKEN=', process.execPath, publisher),
   };
 }
 
@@ -143,7 +149,17 @@ test('creates the remote tag, release and integration PR; retry creates no dupli
   expect(f.git('rev-parse', 'v0.1.1^{}')).toBe(f.git('rev-parse', 'HEAD'));
   expect(f.git('ls-remote', 'origin', 'refs/tags/v0.1.1')).toContain(tag);
   expect(f.state().calls.filter((call) => call === 'release create')).toHaveLength(1);
-  expect(f.state().calls.filter((call) => call === 'pr create')).toHaveLength(1);
+  expect(f.state().calls.filter((call) => call === 'pull create')).toHaveLength(1);
+  expect(f.state().calls).not.toContain('workflow run');
+  expect(f.state().auth.find(({ action }) => action === 'pull create')?.token).toBe(
+    'release-pr-token',
+  );
+  expect(
+    f
+      .state()
+      .auth.filter(({ action }) => action !== 'pull create')
+      .every(({ token }) => token === 'normal-token'),
+  ).toBe(true);
   expect(readFileSync(join(f.root, 'summary.md'), 'utf8')).toContain('Published release: https://');
 });
 
@@ -153,7 +169,7 @@ test('restores an auto-deleted delivery branch at the verified merged PR head', 
   f.publish();
   expect(f.git('ls-remote', 'origin', 'refs/heads/release/0.1.1')).toContain(f.deliverySha);
   expect(f.state().pr).toBe(true);
-  expect(f.state().calls).toContain('workflow run');
+  expect(f.state().calls).not.toContain('workflow run');
 });
 
 test('does not create another return PR after the delivery head reaches develop', () => {
@@ -303,7 +319,7 @@ test('an existing requested-release Changeset is preserved and takes precedence'
   expect(readFileSync(note, 'utf8')).toContain('User-authored release note.');
 });
 
-test.each(['release create', 'pr create', 'workflow run'])('recovers after %s fails', (action) => {
+test.each(['release create', 'pull create'])('recovers after %s fails', (action) => {
   const f = fixture();
   f.fail(action);
   expect(f.publish).toThrow();
@@ -313,6 +329,27 @@ test.each(['release create', 'pr create', 'workflow run'])('recovers after %s fa
   f.publish();
   expect(f.state().release && f.state().pr).toBe(true);
   expect(f.git('rev-parse', 'v0.1.1')).toBe(tag);
+});
+
+test('missing release App credentials fail before creating or pushing a tag', () => {
+  const f = fixture();
+  expect(f.publishWithoutReleaseToken).toThrow(/RELEASE_PR_TOKEN/);
+  expect(f.git('tag', '--list')).toBe('');
+  expect(f.git('ls-remote', '--tags', 'origin')).toBe('');
+  expect(f.state().calls).toEqual([]);
+});
+
+test('reuses a legacy return PR without dispatching or creating another', () => {
+  const f = fixture();
+  f.updateState({ pr: true });
+  const state = f.state();
+  writeFileSync(join(f.root, 'github.json'), JSON.stringify({ ...state, legacyAuthor: true }));
+  f.publish();
+  expect(f.state().calls.filter((call) => call === 'pull create')).toHaveLength(0);
+  expect(f.state().calls).not.toContain('workflow run');
+  expect(readFileSync(join(f.root, 'summary.md'), 'utf8')).toContain(
+    'Existing legacy integration PR requires manual recovery',
+  );
 });
 
 test('access denial does not masquerade as an absent release or create a tag', () => {

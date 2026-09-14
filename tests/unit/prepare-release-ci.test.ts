@@ -10,7 +10,7 @@ afterEach(() => {
   for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true });
 });
 
-function fixture({ changeset = true, labeled = true } = {}) {
+function fixture({ changeset = true } = {}) {
   const root = mkdtempSync(join(tmpdir(), 'shutteros-prepare-ci-'));
   roots.push(root);
   const repo = join(root, 'repo');
@@ -19,12 +19,9 @@ function fixture({ changeset = true, labeled = true } = {}) {
   mkdirSync(repo);
   mkdirSync(bin);
   const initial = {
-    requests: labeled
-      ? [{ number: 17, url: 'https://example.test/17', mergeCommit: { oid: '' } }]
-      : [],
     open: [] as Record<string, unknown>[],
-    edits: [] as number[],
     calls: [] as string[],
+    auth: [] as { action: string; token?: string }[],
     failCreate: false,
   };
   writeFileSync(stateFile, JSON.stringify(initial));
@@ -38,19 +35,17 @@ const state = JSON.parse(fs.readFileSync(file));
 const args = process.argv.slice(2);
 const action = args.slice(0, 2).join(' ');
 state.calls.push(args.join(' '));
+const createsPull = args[0] === 'api' && args[1] === '--method' && args[2] === 'POST' && args[3] === 'repos/fixture/test/pulls';
+state.auth.push({action: createsPull ? 'pull create' : action, token: process.env.GH_TOKEN});
 if (action === 'pr list') {
-  console.log(JSON.stringify(args.includes('merged') ? state.requests : state.open));
-} else if (action === 'pr create') {
+  console.log(JSON.stringify(state.open));
+} else if (createsPull) {
   if (state.failCreate) { fs.writeFileSync(file, JSON.stringify(state)); process.exit(1); }
-  const branch = args[args.indexOf('--head') + 1];
+  const branch = args.find((arg) => arg.startsWith('head=')).slice(5);
   const oid = cp.execFileSync('git', ['rev-parse', branch], {encoding:'utf8'}).trim();
-  state.open = [{url:'https://example.test/release', headRefName:branch, headRefOid:oid, baseRefName:'main', isCrossRepository:false}];
+  state.open = [{url:'https://example.test/release', headRefName:branch, headRefOid:oid, baseRefName:'main', isCrossRepository:false, author:{login:'release-app[bot]'}}];
   console.log('https://example.test/release');
-} else if (action === 'pr view') {
-  console.log(JSON.stringify({number: 19}));
-} else if (action === 'pr edit') {
-  state.edits.push(Number(args[2]));
-} else if (action !== 'workflow run') {
+} else {
   console.error('Unexpected gh call', args); process.exit(2);
 }
 fs.writeFileSync(file, JSON.stringify(state));
@@ -61,6 +56,10 @@ fs.writeFileSync(file, JSON.stringify(state));
     ...process.env,
     PATH: `${bin}:${process.env.PATH}`,
     FAKE_GITHUB: stateFile,
+    GITHUB_REPOSITORY: 'fixture/test',
+    GH_TOKEN: 'normal-token',
+    RELEASE_PR_TOKEN: 'release-pr-token',
+    RELEASE_APP_SLUG: 'release-app',
     GITHUB_STEP_SUMMARY: join(root, 'summary.md'),
     GITHUB_OUTPUT: join(root, 'output.txt'),
     GIT_AUTHOR_NAME: 'Test',
@@ -117,11 +116,6 @@ fs.writeFileSync(file, JSON.stringify(state));
   git('remote', 'add', 'origin', join(root, 'remote.git'));
   git('push', '-u', 'origin', 'develop');
   const verified = git('rev-parse', 'HEAD');
-  if (labeled) {
-    const state = JSON.parse(readFileSync(stateFile, 'utf8'));
-    state.requests[0].mergeCommit.oid = verified;
-    writeFileSync(stateFile, JSON.stringify(state));
-  }
   const state = () => JSON.parse(readFileSync(stateFile, 'utf8')) as typeof initial;
   const update = (values: Partial<typeof initial>) =>
     writeFileSync(stateFile, JSON.stringify({ ...state(), ...values }));
@@ -136,13 +130,13 @@ fs.writeFileSync(file, JSON.stringify(state));
 }
 
 test('no Changeset is a no-op without changing Git', () => {
-  const f = fixture({ changeset: false, labeled: false });
+  const f = fixture({ changeset: false });
   expect(f.run()).toContain('No pending Changeset');
   expect(f.git('branch', '--list', 'release/*')).toBe('');
 });
 
 test('manual request prepares only a release branch and pull request', () => {
-  const f = fixture({ labeled: false });
+  const f = fixture();
   f.run();
   expect(f.git('ls-remote', '--heads', 'origin', 'release/0.3.0')).toContain(
     'refs/heads/release/0.3.0',
@@ -153,10 +147,26 @@ test('manual request prepares only a release branch and pull request', () => {
   expect(
     f
       .state()
-      .calls.some((call: string) =>
-        call.includes('--title chore(release): merge v0.3.0 into main'),
-      ),
+      .calls.some((call: string) => call.includes('title=chore(release): merge v0.3.0 into main')),
   ).toBe(true);
+  expect(f.state().calls.some((call: string) => call.startsWith('workflow run'))).toBe(false);
+  expect(f.state().auth.find(({ action }) => action === 'pull create')?.token).toBe(
+    'release-pr-token',
+  );
+  expect(
+    f
+      .state()
+      .auth.filter(({ action }) => action !== 'pull create')
+      .every(({ token }) => token === 'normal-token'),
+  ).toBe(true);
+});
+
+test('missing release App credentials fail before creating a branch', () => {
+  const f = fixture();
+  expect(() => f.run({ RELEASE_PR_TOKEN: '' })).toThrow(/RELEASE_PR_TOKEN/);
+  expect(f.git('branch', '--list', 'release/*')).toBe('');
+  expect(f.git('ls-remote', '--heads', 'origin', 'release/*')).toBe('');
+  expect(f.state().calls).toEqual([]);
 });
 
 test('prepares from a CI checkout with detached HEAD and no local develop branch', () => {
@@ -176,7 +186,6 @@ test('retry after PR creation failure pushes the prepared branch', () => {
   const f = fixture();
   f.update({ failCreate: true });
   expect(() => f.run()).toThrow();
-  expect(f.state().edits).toEqual([]);
   f.update({ failCreate: false });
   f.git('switch', 'develop');
   f.run();
@@ -185,7 +194,7 @@ test('retry after PR creation failure pushes the prepared branch', () => {
   );
 });
 
-test('existing delivery PR resumes through CI without creating another release', () => {
+test('reports an existing delivery PR without restarting its checks', () => {
   const f = fixture();
   f.git('branch', 'release/0.3.0');
   f.git('switch', 'develop');
@@ -198,20 +207,16 @@ test('existing delivery PR resumes through CI without creating another release',
         headRefOid: f.verified,
         baseRefName: 'main',
         isCrossRepository: false,
+        author: { login: 'release-app[bot]' },
       },
     ],
   });
   f.run();
-  expect(
-    f
-      .state()
-      .calls.some((call: string) =>
-        call.includes('workflow run ci.yml --ref release/0.3.0 -f release_pr=18'),
-      ),
-  ).toBe(true);
+  expect(f.state().calls.some((call: string) => call.startsWith('workflow run'))).toBe(false);
+  expect(f.run()).toContain('awaiting its checks');
 });
 
-test('existing return PR resumes through CI', () => {
+test('reports an existing return PR without restarting its checks', () => {
   const f = fixture();
   f.update({
     open: [
@@ -222,17 +227,35 @@ test('existing return PR resumes through CI', () => {
         headRefOid: f.verified,
         baseRefName: 'develop',
         isCrossRepository: false,
+        author: { login: 'release-app[bot]' },
       },
     ],
   });
   f.run();
+  expect(f.state().calls.some((call: string) => call.startsWith('workflow run'))).toBe(false);
+  expect(f.run()).toContain('awaiting its checks');
+});
+
+test('an existing legacy delivery PR is reported without creating a duplicate', () => {
+  const f = fixture();
+  f.update({
+    open: [
+      {
+        number: 18,
+        url: 'https://example.test/legacy',
+        headRefName: 'release/0.3.0',
+        headRefOid: f.verified,
+        baseRefName: 'main',
+        isCrossRepository: false,
+        author: { login: 'github-actions[bot]' },
+      },
+    ],
+  });
+  expect(f.run()).toContain('requires manual recovery');
   expect(
-    f
-      .state()
-      .calls.some((call: string) =>
-        call.includes('workflow run ci.yml --ref release/0.2.0 -f release_pr=20'),
-      ),
-  ).toBe(true);
+    f.state().calls.filter((call: string) => call.includes('repos/fixture/test/pulls')),
+  ).toHaveLength(0);
+  expect(f.state().calls.some((call: string) => call.startsWith('workflow run'))).toBe(false);
 });
 
 test('a superseded verified develop run defers without preparing', () => {
@@ -247,14 +270,12 @@ test('a checkout other than the verified develop commit is rejected', () => {
   const f = fixture();
   f.git('commit', '--allow-empty', '-m', 'unverified checkout');
   expect(() => f.run()).toThrow(/Checkout differs from the verified commit/);
-  expect(f.state().edits).toEqual([]);
   expect(f.git('branch', '--list', 'release/0.3.0')).toBe('');
 });
 
 test('no application Changeset acknowledges the request without creating a version', () => {
   const f = fixture({ changeset: false });
   expect(f.run()).toContain('No pending Changeset');
-  expect(f.state().edits).toEqual([]);
   expect(existsSync(join(f.repo, '.changeset/release.md'))).toBe(false);
   expect(f.git('branch', '--list', 'release/*')).toBe('');
 });
