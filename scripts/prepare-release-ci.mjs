@@ -4,6 +4,7 @@ import { appendFileSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createReleasePull, releaseAppIdentity } from './create-release-pr.mjs';
 
 const run = (command, ...args) => execFileSync(command, args, { stdio: 'inherit' });
 const read = (command, ...args) => execFileSync(command, args, { encoding: 'utf8' }).trim();
@@ -11,6 +12,7 @@ const json = (...args) => JSON.parse(read('gh', ...args));
 const summary = [];
 const temporary = mkdtempSync(join(tmpdir(), 'shutteros-ci-release-'));
 try {
+  const { author: releaseAuthor } = releaseAppIdentity();
   if (read('git', 'status', '--porcelain')) throw new Error('Release checkout must be clean.');
   run('git', 'fetch', 'origin', '--tags');
   const verified = process.env.GITHUB_SHA;
@@ -29,7 +31,7 @@ try {
     '--limit',
     '100',
     '--json',
-    'number,url,headRefName,headRefOid,baseRefName,isCrossRepository',
+    'number,url,headRefName,headRefOid,baseRefName,isCrossRepository,author',
   );
   const delivery = open.find(
     (pr) =>
@@ -47,17 +49,10 @@ try {
   if (existingPull) {
     if (existingPull.headRefName === 'main')
       throw new Error(`Finish the previous main-to-develop return first: ${existingPull.url}`);
-    run(
-      'gh',
-      'workflow',
-      'run',
-      'ci.yml',
-      '--ref',
-      existingPull.headRefName,
-      '-f',
-      `release_pr=${existingPull.number}`,
-    );
-    summary.push(`- Resuming the existing release: ${existingPull.url}`);
+    if (existingPull.author?.login === releaseAuthor)
+      summary.push(`- Existing release pull request is awaiting its checks: ${existingPull.url}`);
+    else
+      summary.push(`- Existing legacy pull request requires manual recovery: ${existingPull.url}`);
   } else {
     // SHA checkouts have no local develop ref, but Changesets resolves that
     // configured base even inside its disposable worktree. Attach it before planning.
@@ -94,21 +89,12 @@ try {
         run(process.execPath, fileURLToPath(new URL('./release.mjs', import.meta.url)), 'prepare');
         run('git', 'push', '--set-upstream', 'origin', branch);
       }
-      const url = read(
-        'gh',
-        'pr',
-        'create',
-        '--head',
-        branch,
-        '--base',
-        'main',
-        '--title',
-        releaseMessages(next).main,
-        '--body',
-        'Requested from develop. Automation verifies this merge, waits for required checks, then merges and publishes the Changesets version. The release branch is subsequently merged back into develop.',
-      );
-      const number = json('pr', 'view', url, '--json', 'number').number;
-      run('gh', 'workflow', 'run', 'ci.yml', '--ref', branch, '-f', `release_pr=${number}`);
+      const url = createReleasePull({
+        head: branch,
+        base: 'main',
+        title: releaseMessages(next).main,
+        body: 'Requested from develop. Automation verifies this merge, waits for required checks, then merges and publishes the Changesets version. The release branch is subsequently merged back into develop.',
+      });
       summary.push(`- Release queued for verification and merge: ${url}`);
     }
   }

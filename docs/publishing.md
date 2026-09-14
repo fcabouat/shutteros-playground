@@ -67,7 +67,7 @@ This is the decision to publish, not just to draft a PR. GitHub then:
 3. Verifies main, creates the tag and GitHub release, and deploys Pages when enabled.
 4. Opens, verifies and merges a return PR from the same release branch into `develop`.
 
-The technical PRs remain visible; normal delivery needs no further manual merge. Failed checks, conflicts or branch changes stop the affected stage. A prepared release is reused on retry, and published tags are never moved. If a release is already in progress, another request resumes that delivery rather than cutting a second one.
+The technical PRs remain visible; normal delivery needs no further manual merge. Failed checks, conflicts or branch changes stop the affected stage. A prepared release is reused on retry, and published tags are never moved. If a release is already in progress, another request links to its PR rather than cutting a second one.
 
 Automated messages follow the same templates for PR titles and merge commits:
 
@@ -79,13 +79,26 @@ Hotfix merges use `chore(hotfix)`. Merge commit bodies retain the PR link; GitHu
 
 ### Repository setup
 
-Install GitHub CLI (`gh`) and run `gh auth login` once for the local launcher. Under **Settings → Actions → General**, allow Actions to create pull requests. Allow merge commits, keep `verify` required on `main` and `develop`, and permit Actions to create version tags. Required human reviews or environment approvals will still pause delivery; for this solo-maintainer workflow, leave their required count at zero. No admin bypass is used.
+Install GitHub CLI (`gh`) and run `gh auth login` once for the local launcher. Under **Settings → Actions → General**, allow Actions to create pull requests. Allow merge commits, keep `verify` required on `main` and `develop` (plus CodeQL if desired), and permit Actions to create version tags. Required human reviews or environment approvals will still pause delivery; for this solo-maintainer workflow, leave their required count at zero. Do not require the `merge-release` job: it performs the merge after the required checks. No admin bypass is used.
 
-The built-in Actions token needs no stored personal token. Each bot merge explicitly dispatches the next workflow because token-authored pushes do not normally trigger another run. If a separate required workflow, such as CodeQL, awaits approval, approve it in GitHub; the release does not bypass that check. See [GitHub's workflow trigger rules](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/trigger-a-workflow).
+Automatic delivery uses a private GitHub App **only to create pull requests**. PRs created with the built-in `GITHUB_TOKEN` require workflow approval; an App identity lets ordinary PR verification and CodeQL start without that extra click. Branch pushes, merges, tags and releases still use the temporary Actions token. See [GitHub's trigger rules](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/trigger-a-workflow).
+
+Configure the App once:
+
+1. Under your account **Settings → Developer settings → GitHub Apps → New GitHub App**, choose a unique name and the repository URL as its homepage. Disable the webhook; this App receives no events. Set **Only on this account**.
+2. Grant repository **Pull requests: Read and write**. Leave other optional permissions unset; Metadata read access is implicit. Install it on **only this repository**.
+3. Generate a private key. In the repository's **Settings → Secrets and variables → Actions**, save its full PEM contents as the secret `RELEASE_APP_PRIVATE_KEY`.
+4. Add Actions variables `RELEASE_APP_CLIENT_ID` (the App's Client ID) and `RELEASE_APP_SLUG` (the final segment of its `github.com/apps/...` URL, without `[bot]`).
+
+The workflow requests a short-lived, repository-scoped PR token and checks its identity before creating delivery branches or publishing tags. Missing configuration fails explicitly; there is no fallback to approval-dependent PR creation. No personal access token is needed. Keep the private key out of the checkout and rotate it if exposed.
+
+Only same-repository `release/X.Y.Z` or `hotfix/X.Y.Z` PRs authored by that App can merge automatically. The controller checks their head and tested base again before merging and respects required checks and branch protection. Contributors with repository write access remain trusted; fork PRs receive neither the App key nor write permissions. Each Actions-token merge dispatches the next base-branch run explicitly because its push event does not start one.
 
 ### Recovery and publication status
 
-Run `pnpm release` again from develop to resume preparation or an open delivery/return PR. If develop advanced during initial verification, rerun to include and verify its new head. For a transient job failure, rerun the failed job; for a moved PR base, start a new run so the proposed merge is tested again. The internal **release_pr** input identifies that PR when dispatching on its `release/X.Y.Z` branch.
+A new release request reuses a prepared branch or reports an existing delivery PR; it does not restart that PR's checks. For a transient failure, rerun the failed job. If the base moved, run **CI and recovery** on the delivery branch with **release_pr** set to the PR number, so its new proposed merge is tested before another merge attempt. If develop advanced during initial preparation, start a fresh Release request from develop.
+
+PRs created before the App was configured retain their old author. Finish those manually after their checks pass; the new controller deliberately does not adopt them. After a manual merge into main, its push starts publication. A manually merged return needs no extra release request.
 
 To resume an interrupted publication, run **CI and recovery** on current `main` with **resume_release** enabled. It reuses completed stages and requires the version tag, if present, to identify that exact main commit. An already-tagged version with changed content needs a new release. Rerunning an old job retains its old workflow code.
 
