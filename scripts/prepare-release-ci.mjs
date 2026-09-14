@@ -59,6 +59,11 @@ try {
     );
     summary.push(`- Resuming the existing release: ${existingPull.url}`);
   } else {
+    // SHA checkouts have no local develop ref, but Changesets resolves that
+    // configured base even inside its disposable worktree. Attach it before planning.
+    run('git', 'switch', 'develop');
+    if (read('git', 'rev-parse', 'HEAD') !== verified)
+      throw new Error('Local develop differs from the verified commit.');
     const report = join(temporary, 'plan.json');
     run(process.execPath, fileURLToPath(new URL('./release.mjs', import.meta.url)), 'plan', report);
     const plan = JSON.parse(readFileSync(report, 'utf8'));
@@ -86,7 +91,6 @@ try {
       } else {
         run('git', 'config', 'user.name', 'github-actions[bot]');
         run('git', 'config', 'user.email', '41898282+github-actions[bot]@users.noreply.github.com');
-        run('git', 'switch', 'develop');
         run(process.execPath, fileURLToPath(new URL('./release.mjs', import.meta.url)), 'prepare');
         run('git', 'push', '--set-upstream', 'origin', branch);
       }
