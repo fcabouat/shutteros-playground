@@ -7,7 +7,7 @@ The source is a personal MIT project. The public demo uses the generic ShutterOS
 1. Use a GitHub repository with Actions enabled, `develop` as its default integration branch, and `main` for releases and Pages. Forks can use the same workflow; the deployment path is derived from the repository name.
 2. Run the [release verification](verification.md) from a clean checkout. Check that the source excludes organisation assets, generated branding, `.env` files, `dist/`, and local browser reports.
 3. In **Settings → Pages → Build and deployment**, select **GitHub Actions** as the source. Add the repository Actions variable **`PAGES_ENABLED` = `true`** under **Settings → Secrets and variables → Actions → Variables**.
-4. Run **CI and recovery** manually on `main`, or push a commit to it. The deployment job runs only after verification succeeds, only on `main`, and only when the variable is enabled. Pull requests never deploy.
+4. Run **CI** manually on `main`, or push a commit to it. The deployment job runs only after verification succeeds, only on `main`, and only when the variable is enabled. Pull requests never deploy.
 5. In **Settings → Environments → github-pages**, restrict deployment branches to `main`.
 6. Inspect the Actions run and open the URL reported by the `github-pages` deployment. Verify login, one situation, language switching, logout, and the browser console on that URL.
 
@@ -45,64 +45,59 @@ The browser test fixture serves only the selected build directory on loopback po
 
 GitHub documents the required publishing source, artifact, permissions, and environment in [custom Pages workflows](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages).
 
-## Release from develop
+## Releases with git-flow
 
-Merge feature and dependency PRs into `develop` as usual. Include a `pnpm changeset` note for releasable changes. These merges do not trigger a release.
+Releases are made locally with the [git-flow AVH](https://github.com/petervanderdoes/gitflow-avh) client and its repository-tracked hooks in `.gitflow/hooks`. GitHub Actions only verifies what is pushed and publishes from the version tag; nothing on GitHub creates branches, pull requests, tags or commits. The AVH repository is archived (last release 1.12.3); the distribution packages `gitflow-avh` (Arch), `git-flow` (Debian/Ubuntu) and `git-flow-avh` (Homebrew) ship that version, which is the one these hooks are tested against.
 
-When you decide to publish, switch to a clean local `develop` and run:
+One-time setup in each clone, after installing the client:
 
 ```sh
-pnpm release patch
-# or: pnpm release minor
+pnpm gitflow:init
 ```
 
-The command fast-forwards your local branch if necessary, starts GitHub Actions, and exits. You can close the terminal immediately. You can also use **Actions → Release → Run workflow**, choose **develop**, and select the version bump. The Release workflow only acknowledges the request; follow the linked **CI and recovery** runs for delivery status. There is no need to wait for the preceding develop CI run: the release workflow verifies the requested commit itself.
+This runs `git flow init` with the project conventions (`main`, `develop`, `feature/`, `bugfix/`, `release/`, `hotfix/`, `support/`, tag prefix `v`), points git-flow at the tracked hooks, disables automatic pushes and selects nvie-style back-merges of the release branch into `develop`.
 
-The requested type is a minimum: stronger pending Changesets take precedence. With no argument, `pnpm release` uses only the pending Changesets; without any, it creates no release. Explicit patch/minor/major requests also work without a prewritten note.
+### Everyday work
 
-This is the decision to publish, not just to draft a PR. GitHub then:
+```sh
+git flow feature start <topic>      # branches from develop
+git flow feature finish <topic>     # merges --no-ff into develop and deletes the branch
+git push origin develop
+```
 
-1. Verifies develop and lets Changesets calculate the version and changelog.
-2. Creates `release/X.Y.Z` and its PR to `main`, tests the proposed merge, waits for required checks, and merges with a merge commit.
-3. Verifies main, creates the tag and GitHub release, and deploys Pages when enabled.
-4. Opens, verifies and merges a return PR from the same release branch into `develop`.
+Contributors without write access fork the repository and open a pull request from their feature branch into `develop`; the same CI verifies it.
 
-The technical PRs remain visible; normal delivery needs no further manual merge. Failed checks, conflicts or branch changes stop the affected stage. A prepared release is reused on retry, and published tags are never moved. If a release is already in progress, another request links to its PR rather than cutting a second one.
+### Release
 
-Automated messages follow the same templates for PR titles and merge commits:
+```sh
+git flow release start minor        # or patch, major, or an explicit X.Y.Z
+git flow release finish 0.4.0
+git push --atomic origin main develop refs/tags/v0.4.0
+```
 
-- `chore(release): prepare vX.Y.Z` for the versioning commit.
-- `chore(release): merge vX.Y.Z into main` for delivery.
-- `chore(release): merge vX.Y.Z into develop` for the return.
+`start` computes the next version from `develop`, writes it to `package.json` and `packages/core/package.json`, and commits `chore(release): vX.Y.Z` on `release/X.Y.Z`. `finish` first runs `pnpm verify` and stops on any failure; it then merges into `main`, creates the annotated tag `vX.Y.Z`, merges the release branch back into `develop` and deletes it. The hook prints the atomic push that publishes all three references together, or none. `SHUTTEROS_SKIP_VERIFY=1` bypasses the local verification when CI already verified the same commit; the tag is still verified by CI before publication.
 
-Hotfix merges use `chore(hotfix)`. Merge commit bodies retain the PR link; GitHub releases and annotated tags use `ShutterOS Playground vX.Y.Z`.
+### Hotfix
 
-### Repository setup
+```sh
+git flow hotfix start patch         # branches from main; the version is computed from main
+git flow hotfix finish 0.4.1
+git push --atomic origin main develop refs/tags/v0.4.1
+```
 
-Install GitHub CLI (`gh`) and run `gh auth login` once for the local launcher. Under **Settings → Actions → General**, allow Actions to create pull requests. Allow merge commits, keep `verify` required on `main` and `develop` (plus CodeQL if desired), and permit Actions to create version tags. Required human reviews or environment approvals will still pause delivery; for this solo-maintainer workflow, leave their required count at zero. Do not require the `merge-release` job: it performs the merge after the required checks. No admin bypass is used.
+### What CI does with a push
 
-Automatic delivery uses a private GitHub App **only to create pull requests**. PRs created with the built-in `GITHUB_TOKEN` require workflow approval; an App identity lets ordinary PR verification and CodeQL start without that extra click. Branch pushes, merges, tags and releases still use the temporary Actions token. See [GitHub's trigger rules](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/trigger-a-workflow).
+- Any push to `main`, `develop`, `release/*`, `hotfix/*` and any pull request: the `verify` job.
+- A push of `main`: after `verify`, the Pages deployment. A run whose commit is no longer the tip of `main` skips the deployment, so a re-run of an older run cannot replace a newer site.
+- A push of a `v*` tag: after `verify` of that exact commit (which also checks that the tag matches `package.json`), the `release` job creates the GitHub release with generated notes, the standalone `shutteros-portable-vX.Y.Z.html` and the kiosk build `shutteros-kiosk-vX.Y.Z.zip`. An existing release is left untouched, so re-running the job after a partial failure is safe.
 
-Configure the App once:
+A release therefore triggers two verification runs, one for `main` and one for the tag. This is deliberate: publication is gated on the verification of the published commit, not on the local hook.
 
-1. Under your account **Settings → Developer settings → GitHub Apps → New GitHub App**, choose a unique name and the repository URL as its homepage. Disable the webhook; this App receives no events. Set **Only on this account**.
-2. Grant repository **Pull requests: Read and write**. Leave other optional permissions unset; Metadata read access is implicit. Install it on **only this repository**.
-3. Generate a private key. In the repository's **Settings → Secrets and variables → Actions**, save its full PEM contents as the secret `RELEASE_APP_PRIVATE_KEY`.
-4. Add Actions variables `RELEASE_APP_CLIENT_ID` (the App's Client ID) and `RELEASE_APP_SLUG` (the final segment of its `github.com/apps/...` URL, without `[bot]`).
+### Repository settings
 
-The workflow requests a short-lived, repository-scoped PR token and checks its identity before creating delivery branches or publishing tags. Missing configuration fails explicitly; there is no fallback to approval-dependent PR creation. No personal access token is needed. Keep the private key out of the checkout and rotate it if exposed.
-
-Only same-repository `release/X.Y.Z` or `hotfix/X.Y.Z` PRs authored by that App can merge automatically. The controller checks their head and tested base again before merging and respects required checks and branch protection. Contributors with repository write access remain trusted; fork PRs receive neither the App key nor write permissions. Each Actions-token merge dispatches the next base-branch run explicitly because its push event does not start one.
-
-### Recovery and publication status
-
-A new release request reuses a prepared branch or reports an existing delivery PR; it does not restart that PR's checks. For a transient failure, rerun the failed job. If the base moved, run **CI and recovery** on the delivery branch with **release_pr** set to the PR number, so its new proposed merge is tested before another merge attempt. If develop advanced during initial preparation, start a fresh Release request from develop.
-
-PRs created before the App was configured retain their old author. Finish those manually after their checks pass; the new controller deliberately does not adopt them. After a manual merge into main, its push starts publication. A manually merged return needs no extra release request.
-
-To resume an interrupted publication, run **CI and recovery** on current `main` with **resume_release** enabled. It reuses completed stages and requires the version tag, if present, to identify that exact main commit. An already-tagged version with changed content needs a new release. Rerunning an old job retains its old workflow code.
-
-Check **verification, CodeQL, Pages, tag/release creation, and the return PR separately**. A green `verify` is not proof that delivery finished. Pages and release publication are independent because kiosk use does not require Pages. Actions summaries provide the publication and PR links.
+- `main` and `develop`: block force pushes and deletion. Do not require pull requests or status checks on them; `git flow ... finish` pushes merge commits directly and CI verifies afterwards. Dependabot and external contributions still arrive as pull requests.
+- **Settings → General**: allow merge commits; automatically deleting head branches is optional (git-flow deletes release and hotfix branches itself).
+- No secrets, tokens or GitHub Apps are needed: every push comes from the maintainer's own credentials.
 
 ## Maintenance and release review
 

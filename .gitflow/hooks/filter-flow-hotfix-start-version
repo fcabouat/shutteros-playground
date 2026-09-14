@@ -1,0 +1,5 @@
+#!/bin/sh
+# git flow hotfix start <patch|minor|major|X.Y.Z>: compute the hotfix version.
+# shellcheck source=.gitflow/hooks/gitflow-common.sh
+. "$(dirname "$0")/gitflow-common.sh"
+resolve_version "${1:-patch}" "$MASTER_BRANCH"

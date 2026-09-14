@@ -1,64 +1,30 @@
-name: CI and recovery
+name: CI
 
+# Verification runs on every push and pull request. Releases are made locally with
+# git-flow (see docs/publishing.md); pushing the version tag publishes the GitHub
+# release, and pushing main deploys Pages. Nothing here creates branches, PRs or tags.
 on:
   push:
-    branches: [main, develop]
+    branches: [main, develop, 'release/**', 'hotfix/**']
+    tags: ['v*']
   pull_request:
   workflow_dispatch:
-    inputs:
-      prepare_release:
-        description: 'Prepare a release PR from verified develop'
-        type: boolean
-        default: false
-      release_type:
-        description: 'Minimum version bump (auto uses pending Changesets)'
-        type: choice
-        options: [auto, patch, minor, major]
-        default: auto
-      release_pr:
-        description: 'Internal: verify and merge a prepared release or return PR'
-        type: string
-        default: ''
-      resume_release:
-        description: 'Publish or resume the current main version after verification'
-        type: boolean
-        default: false
 
 permissions:
   contents: read
 
 concurrency:
-  # Ordinary PR verification and manual recovery serialize the same delivery.
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || inputs.release_pr || github.ref }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   verify:
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    outputs:
-      release_base: ${{ steps.candidate.outputs.base }}
     steps:
-      - name: Validate the release verification request
-        if: inputs.release_pr != ''
-        env:
-          RELEASE_PR: ${{ inputs.release_pr }}
-        run: |
-          [[ "$RELEASE_PR" =~ ^[1-9][0-9]*$ ]]
-          [[ "$GITHUB_REF" =~ ^refs/heads/(release|hotfix)/[0-9]+\.[0-9]+\.[0-9]+$ ]]
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          ref: ${{ inputs.release_pr && format('refs/pull/{0}/merge', inputs.release_pr) || github.sha }}
-          fetch-depth: 2
-      - name: Record the tested merge base
-        id: candidate
-        if: github.event_name == 'pull_request' || inputs.release_pr != ''
-        env:
-          EXPECTED_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
-        run: |
-          test "$(git rev-parse HEAD^2)" = "$EXPECTED_HEAD"
-          echo "base=$(git rev-parse HEAD^1)" >> "$GITHUB_OUTPUT"
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: '24'
@@ -73,10 +39,10 @@ jobs:
           "$RUNNER_TEMP/actionlint/actionlint"
       - run: npm install --global pnpm@11.19.0
       - run: pnpm install --frozen-lockfile
-      - name: Validate the Ubuntu kit without modifying the runner
+      - name: Validate shell scripts and the Ubuntu kit without modifying the runner
         run: |
-          shellcheck deployment/ubuntu/*.sh deployment/ubuntu/session deployment/ubuntu/launch-chromium deployment/ubuntu/tests/*.sh
-          for script in deployment/ubuntu/*.sh deployment/ubuntu/session deployment/ubuntu/launch-chromium deployment/ubuntu/tests/*.sh; do
+          shellcheck -x deployment/ubuntu/*.sh deployment/ubuntu/session deployment/ubuntu/launch-chromium deployment/ubuntu/tests/*.sh scripts/gitflow-init.sh .gitflow/hooks/*
+          for script in deployment/ubuntu/*.sh deployment/ubuntu/session deployment/ubuntu/launch-chromium deployment/ubuntu/tests/*.sh scripts/gitflow-init.sh .gitflow/hooks/*; do
             sh -n "$script"
           done
           node deployment/ubuntu/tests/configuration-contract.test.mjs
@@ -92,6 +58,11 @@ jobs:
       - run: pnpm audit --audit-level high
       - run: pnpm exec playwright install --with-deps chromium --only-shell
       - run: pnpm verify
+      - name: Check that a version tag matches package.json
+        if: github.ref_type == 'tag'
+        env:
+          TAG: ${{ github.ref_name }}
+        run: test "$TAG" = "v$(node scripts/version.mjs current)"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: shutteros-static-and-portable
@@ -114,6 +85,7 @@ jobs:
           BUILD_ROOT=dist/site/demo BASE_PATH="$BASE_PATH/demo" pnpm test:e2e
           pnpm test:site
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        if: github.ref == 'refs/heads/main'
         with:
           path: dist/site/
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -123,165 +95,69 @@ jobs:
           path: playwright-report/
           retention-days: 7
 
-  prepare-release:
-    needs: verify
-    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/develop' && inputs.prepare_release == true
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    permissions:
-      contents: write
-      pull-requests: write
-      actions: write
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          ref: ${{ github.sha }}
-          fetch-depth: 0
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
-          node-version: '24'
-          package-manager-cache: false
-      - name: Install release tools
-        run: |
-          npm install --global pnpm@11.19.0
-          pnpm install --frozen-lockfile
-      # Only PR creation uses the App identity: it triggers ordinary PR CI without approval.
-      - name: Create a repository-scoped PR token
-        id: release-app
-        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
-        with:
-          client-id: ${{ vars.RELEASE_APP_CLIENT_ID }}
-          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
-          owner: ${{ github.repository_owner }}
-          repositories: ${{ github.event.repository.name }}
-          permission-pull-requests: write
-      - name: Check the configured release identity
-        env:
-          CONFIGURED_SLUG: ${{ vars.RELEASE_APP_SLUG }}
-          ACTUAL_SLUG: ${{ steps.release-app.outputs.app-slug }}
-        run: test -n "$CONFIGURED_SLUG" && test "$CONFIGURED_SLUG" = "$ACTUAL_SLUG"
-      - name: Prepare or resume the requested release
-        run: node scripts/prepare-release-ci.mjs
-        env:
-          GH_TOKEN: ${{ github.token }}
-          RELEASE_PR_TOKEN: ${{ steps.release-app.outputs.token }}
-          RELEASE_APP_SLUG: ${{ vars.RELEASE_APP_SLUG }}
-          RELEASE_TYPE: ${{ inputs.release_type || 'auto' }}
-
-  merge-release:
-    needs: verify
-    if: >-
-      (github.event_name == 'pull_request' && vars.RELEASE_APP_SLUG != '' &&
-       github.event.pull_request.user.login == format('{0}[bot]', vars.RELEASE_APP_SLUG) &&
-       github.event.pull_request.head.repo.full_name == github.repository &&
-       (github.base_ref == 'main' || github.base_ref == 'develop') &&
-       (startsWith(github.head_ref, 'release/') || startsWith(github.head_ref, 'hotfix/'))) ||
-      (github.event_name == 'workflow_dispatch' && inputs.release_pr != '' &&
-       (startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/hotfix/')))
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    permissions:
-      contents: write
-      pull-requests: write
-      actions: write
-      checks: read
-      statuses: read
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
-          node-version: '24'
-          package-manager-cache: false
-      - name: Merge the verified PR and continue delivery
-        run: node scripts/merge-release-pr.mjs
-        env:
-          GH_TOKEN: ${{ github.token }}
-          RELEASE_PR: ${{ inputs.release_pr || github.event.pull_request.number }}
-          RELEASE_HEAD_REF: ${{ github.head_ref || github.ref_name }}
-          RELEASE_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-          RELEASE_APP_SLUG: ${{ vars.RELEASE_APP_SLUG }}
-          VERIFIED_BASE_SHA: ${{ needs.verify.outputs.release_base }}
-
   deploy:
     needs: verify
-    if: >-
-      vars.PAGES_ENABLED == 'true' &&
-      github.event_name != 'pull_request' &&
-      github.ref == 'refs/heads/main'
+    if: vars.PAGES_ENABLED == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
+      contents: read
       pages: write
       id-token: write
-    outputs:
-      page_url: ${{ steps.deployment.outputs.page_url }}
+    # Deployments queue instead of racing; a re-run of an older run must not win.
+    concurrency:
+      group: github-pages
+      cancel-in-progress: false
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Deploy the verified static artifact
+      - name: Skip when main has moved past this commit
+        id: tip
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          tip=$(gh api "repos/$GH_REPO/branches/main" --jq .commit.sha)
+          echo "current=$([ "$tip" = "$GITHUB_SHA" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+          [ "$tip" = "$GITHUB_SHA" ] || echo "::notice::main is now at $tip; not deploying $GITHUB_SHA"
+      - name: Deploy the verified site
         id: deployment
+        if: steps.tip.outputs.current == 'true'
         uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
 
   release:
     needs: verify
-    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || inputs.resume_release == true)
+    if: github.event_name == 'push' && github.ref_type == 'tag'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
       contents: write
-      pull-requests: write
-      actions: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          persist-credentials: false
           fetch-depth: 0
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      - uses: actions/download-artifact@33a35e2ca9d5d54f8d9e1a3cbd8bfd3a5d2d8d01 # v6.0.0
         with:
-          node-version: '24'
-          package-manager-cache: false
-      # Only PR creation uses the App identity: it triggers ordinary PR CI without approval.
-      - name: Create a repository-scoped PR token
-        id: release-app
-        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
-        with:
-          client-id: ${{ vars.RELEASE_APP_CLIENT_ID }}
-          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
-          owner: ${{ github.repository_owner }}
-          repositories: ${{ github.event.repository.name }}
-          permission-pull-requests: write
-      - name: Check the configured release identity
+          name: shutteros-static-and-portable
+          path: dist
+      - name: Package the kiosk build
         env:
-          CONFIGURED_SLUG: ${{ vars.RELEASE_APP_SLUG }}
-          ACTUAL_SLUG: ${{ steps.release-app.outputs.app-slug }}
-        run: test -n "$CONFIGURED_SLUG" && test "$CONFIGURED_SLUG" = "$ACTUAL_SLUG"
-      - name: Tag the verified commit and propose integration
-        run: node scripts/publish-release.mjs
+          TAG: ${{ github.ref_name }}
+        run: |
+          cp dist/portable/shutteros.html "shutteros-portable-$TAG.html"
+          (cd dist && zip -qr "../shutteros-kiosk-$TAG.zip" . -x 'portable/*')
+      - name: Create the GitHub release once
         env:
           GH_TOKEN: ${{ github.token }}
-          RELEASE_PR_TOKEN: ${{ steps.release-app.outputs.token }}
-          RELEASE_APP_SLUG: ${{ vars.RELEASE_APP_SLUG }}
-
-  publication-summary:
-    needs: [verify, deploy, release]
-    if: always() && github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
-    runs-on: ubuntu-latest
-    permissions: {}
-    steps:
-      - name: Report each publication stage
-        env:
-          VERIFY: ${{ needs.verify.result }}
-          PAGES: ${{ needs.deploy.result }}
-          PAGE_URL: ${{ needs.deploy.outputs.page_url }}
-          RELEASE: ${{ needs.release.result }}
+          TAG: ${{ github.ref_name }}
         run: |
-          {
-            echo '## Publication outcomes'
-            echo "- Verification: $VERIFY"
-            echo "- Pages: $PAGES $PAGE_URL"
-            echo "- Tag, GitHub release and integration PR: $RELEASE"
-            echo 'A successful verification alone does not mean publication is complete.'
-            echo 'See the release job summary for verified artifact links. Check CodeQL separately under Security.'
-          } >> "$GITHUB_STEP_SUMMARY"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "::notice::release $TAG already exists; nothing to do"
+            exit 0
+          fi
+          previous=$(git tag --list 'v*' --sort=-v:refname | grep -vx "$TAG" | head -1 || true)
+          gh release create "$TAG" --verify-tag --title "ShutterOS Playground $TAG" --generate-notes \
+            ${previous:+--notes-start-tag "$previous"} \
+            "shutteros-portable-$TAG.html" "shutteros-kiosk-$TAG.zip"
