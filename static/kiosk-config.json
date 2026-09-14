@@ -18,9 +18,8 @@
   "supportLabel": "Équipes de sécurité informatique (SSI)",
   "supportContact": "Annuaire interne · contact SSI",
   "stationLabel": "Station blanche de l’accueil",
-  "mailLegitimateAddress": "camille.martin@organisation.example",
-  "mailImpersonatorAddress": "usurpateur@externe.example",
-  "explorationSeconds": 25,
+  "mailLegitimateAddress": "alex.martin@organisation.example",
+  "mailImpersonatorAddress": "planning@services-personnel.danger.com",
   "idleReminderSeconds": 45,
   "eventIntervalSeconds": 90
 }

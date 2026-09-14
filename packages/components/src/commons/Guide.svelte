@@ -1,28 +1,27 @@
 <script lang="ts">
   import { Dialog } from 'bits-ui';
-  import type { ChallengeId, Intent } from '@shutteros/core/model/game';
   import { getI18n } from '../i18n/context';
   const i18n = getI18n();
-  const challenges = $derived(i18n.challenges);
   const copy = $derived(i18n.text);
   import Icon from './Icon.svelte';
   let {
     open = $bindable(false),
-    id,
+    destination,
     canNavigate,
-    dispatch,
+    remaining,
+    onNavigate,
   }: {
     open?: boolean;
-    id: ChallengeId | null;
+    destination: string | null;
     canNavigate: boolean;
-    dispatch: (intent: Intent) => void;
+    remaining: number;
+    onNavigate: () => void;
   } = $props();
-  let detailed = $state(false);
 </script>
 
 <Dialog.Root bind:open>
-  <Dialog.Trigger class="companion-trigger" aria-label={copy.shell.guide} title={copy.shell.guide}
-    ><Icon name="sparkles" size={23} /></Dialog.Trigger
+  <Dialog.Trigger class="companion-trigger" aria-label={copy.guide.prompt} title={copy.guide.prompt}
+    ><Icon name="sparkles" size={23} /><span>{copy.guide.prompt}</span></Dialog.Trigger
   >
   <Dialog.Portal>
     <Dialog.Overlay class="dialog-overlay" />
@@ -34,18 +33,24 @@
         >
       </div>
       <Dialog.Title class="text-xl font-semibold tracking-tight">{copy.guide.name}</Dialog.Title>
+      {#if remaining > 0}
+        <p class="mt-3 font-medium">
+          {remaining === 1
+            ? copy.guide.remainingOne
+            : copy.guide.remainingMany.replace('{count}', String(remaining))}
+        </p>
+      {/if}
       <Dialog.Description class="text-muted mt-3 leading-relaxed"
-        >{id ? challenges[id].hints[detailed ? 1 : 0] : copy.guide.complete}</Dialog.Description
+        >{destination
+          ? copy.guide.destination.replace('{activity}', destination)
+          : copy.guide.complete}</Dialog.Description
       >
       <div class="mt-6 flex flex-wrap gap-3">
-        {#if id && !detailed}<button class="button button-soft" onclick={() => (detailed = true)}
-            >{copy.guide.nudge}<Icon name="light" size={17} /></button
-          >{/if}
-        {#if canNavigate && id}<button
+        {#if canNavigate && destination}<button
             class="button button-primary"
             onclick={() => {
               open = false;
-              dispatch({ type: 'open', id: id! });
+              onNavigate();
             }}>{copy.guide.next}<Icon name="arrow" size={17} /></button
           >{/if}
         <Dialog.Close class="button button-text">{copy.guide.dismiss}</Dialog.Close>

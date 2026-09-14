@@ -1,6 +1,6 @@
 #!/bin/sh
 # One-time local setup for git-flow (AVH edition): branch names, the "v" tag prefix,
-# the repository-tracked hooks and automatic pushes after release/hotfix finish.
+# repository-tracked hooks, and explicit local release/hotfix publication.
 # Run it from any clone: sh scripts/gitflow-init.sh
 set -eu
 command -v git-flow >/dev/null 2>&1 || git flow version >/dev/null 2>&1 || {
@@ -9,6 +9,22 @@ command -v git-flow >/dev/null 2>&1 || git flow version >/dev/null 2>&1 || {
 }
 root=$(git rev-parse --show-toplevel)
 cd "$root"
+# Refuse all hook conflicts before changing branches or local Gitflow configuration.
+git_dir=$(git rev-parse --absolute-git-dir)
+hooks_dir="$git_dir/hooks"
+for hook in .gitflow/hooks/*; do
+  name=$(basename "$hook")
+  destination="$hooks_dir/$name"
+  target=$(node -e \
+    "const { relative, resolve } = require('node:path'); console.log(relative(process.argv[1], resolve(process.argv[2])))" \
+    "$hooks_dir" "$hook")
+  if [ -e "$destination" ] || [ -L "$destination" ]; then
+    if [ ! -L "$destination" ] || [ "$(readlink "$destination")" != "$target" ]; then
+      echo "refusing to replace existing hook: $destination" >&2
+      exit 1
+    fi
+  fi
+done
 # git-flow 1.12.3 suggests "master" by default; name both branches explicitly and make
 # sure a local main exists (a fresh clone of develop only tracks origin/main).
 git rev-parse -q --verify main >/dev/null || git branch --track main origin/main
@@ -19,24 +35,35 @@ git flow init -d -f -t v >/dev/null
 # relative links: an absolute gitflow.path.hooks silently stops applying once the
 # clone is moved or renamed, and git-flow then passes versions through unchanged.
 git config --unset gitflow.path.hooks 2>/dev/null || true
-git_dir=$(git rev-parse --git-dir)
-mkdir -p "$git_dir/hooks"
+mkdir -p "$hooks_dir"
 for hook in .gitflow/hooks/*; do
   name=$(basename "$hook")
-  ln -sfn "$(realpath --relative-to="$git_dir/hooks" "$hook")" "$git_dir/hooks/$name"
+  destination="$hooks_dir/$name"
+  if [ ! -L "$destination" ]; then
+    target=$(node -e \
+      "const { relative, resolve } = require('node:path'); console.log(relative(process.argv[1], resolve(process.argv[2])))" \
+      "$hooks_dir" "$hook")
+    ln -s "$target" "$destination"
+  fi
 done
-[ -x "$git_dir/hooks/filter-flow-release-start-version" ] || {
+[ -x "$hooks_dir/filter-flow-release-start-version" ] || {
   echo 'the git-flow hooks are not executable from the git directory' >&2
   exit 1
 }
 # Features always merge with a merge commit, as in nvie's model.
 git config gitflow.feature.finish.no-ff true
-# Publishing stays an explicit, atomic push printed by the finish hook.
-git config gitflow.release.finish.push false
-git config gitflow.hotfix.finish.push false
-# Merge the release or hotfix branch itself back into develop (nvie-style), not main.
-git config gitflow.release.finish.nobackmerge true
-git config gitflow.hotfix.finish.nobackmerge true
+# Override inherited AVH preferences that would omit a tag, flatten a merge or
+# publish only some references. Finish must produce the graph that CI validates;
+# publication remains the explicit atomic push printed by the finish hook.
+for kind in release hotfix; do
+  for option in push squash notag; do
+    git config "gitflow.$kind.finish.$option" false
+  done
+  git config "gitflow.$kind.finish.nobackmerge" true
+done
+for option in ff-master nodevelopmerge pushproduction pushdevelop pushtag; do
+  git config "gitflow.release.finish.$option" false
+done
 # Annotated tag messages come from the finish-tag-message hooks; a default avoids an editor prompt.
 git config gitflow.release.finish.message 'ShutterOS Playground'
 git config gitflow.hotfix.finish.message 'ShutterOS Playground'

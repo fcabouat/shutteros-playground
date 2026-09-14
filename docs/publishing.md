@@ -11,7 +11,7 @@ The source is a personal MIT project. The public demo uses the generic ShutterOS
 5. In **Settings → Environments → github-pages**, restrict deployment branches to `main`.
 6. Inspect the Actions run and open the URL reported by the `github-pages` deployment. Verify login, one situation, language switching, logout, and the browser console on that URL.
 
-The workflow uses pinned action revisions, a frozen lockfile, Node 24, dependency advisory checking, lint, formatting, type checks, Knip, unit tests, static and portable builds, Chromium end-to-end tests, and a Storybook build. Pull requests run verification; pushes run it only on `main` and `develop`, avoiding duplicate runs on working branches. Only the deployment job receives Pages write and OIDC permissions. It deploys the same Pages artifact that passed the browser tests; it does not rebuild after verification.
+The workflow uses pinned action revisions, a frozen lockfile, Node 24, dependency advisory checking, lint, formatting, type checks, Knip, unit tests, static and portable builds, Chromium end-to-end tests, and a Storybook build. Pull requests run verification; pushes run it on `main`, `develop`, delivery branches and version tags. Only the deployment job receives Pages write and OIDC permissions. It deploys the same Pages artifact that passed the browser tests; it does not rebuild after verification.
 
 ## Paths and artifacts
 
@@ -31,7 +31,7 @@ The **shutteros-static-and-portable** Actions artifact contains the root-path bu
 | `/api/`                            | Core TypeScript reference, generated from source                                 |
 | `/storybook/`                      | Interactive component catalog                                                    |
 
-These paths sit below the repository prefix on a project Pages site. The previous root demo URL now opens the product page, whose primary action opens the game. Direct kiosk URLs and downloads continue to use the game-only build. Language links are ordinary URLs, without cookies or stored preferences; English-only technical references are marked as such.
+These paths sit below the repository prefix on a project Pages site. Direct kiosk URLs and downloads use the game-only build. Language links are ordinary URLs, without cookies or stored preferences; English-only technical references are marked as such.
 
 To reproduce the project-path verification locally:
 
@@ -56,6 +56,7 @@ pnpm gitflow:init
 ```
 
 This runs `git flow init` with the project conventions (`main`, `develop`, `feature/`, `bugfix/`, `release/`, `hotfix/`, `support/`, tag prefix `v`), links the tracked hooks into the git directory (relative links, so a moved clone keeps them), disables automatic pushes and selects nvie-style back-merges of the release branch into `develop`.
+The initializer is idempotent when those exact links already exist. If any destination is a regular file or points somewhere else, it stops before creating links and reports the conflicting path; inspect and move that local hook yourself before rerunning it.
 
 ### Everyday work
 
@@ -75,7 +76,7 @@ git flow release finish 0.4.0
 git push --atomic origin main develop refs/tags/v0.4.0
 ```
 
-`start` computes the next version from `develop`, writes it to `package.json` and `packages/core/package.json`, and commits `chore(release): vX.Y.Z` on `release/X.Y.Z`. `finish` first runs `pnpm verify` and stops on any failure; it then merges into `main`, creates the annotated tag `vX.Y.Z`, merges the release branch back into `develop` and deletes it. The hook prints the atomic push that publishes all three references together, or none. `SHUTTEROS_SKIP_VERIFY=1` bypasses the local verification when CI already verified the same commit; the tag is still verified by CI before publication.
+`start` computes the next version from `develop`, writes it to the application, core and component package manifests, and commits `chore(release): vX.Y.Z` on `release/X.Y.Z`. `finish` first runs `pnpm verify` and stops on any failure; it then merges into `main`, creates the annotated tag `vX.Y.Z`, merges the release branch back into `develop` and deletes it. The hook prints the atomic push that publishes all three references together, or none. `SHUTTEROS_SKIP_VERIFY=1` bypasses the local verification when CI already verified the same commit; the tag is still verified by CI before publication.
 
 ### Hotfix
 
@@ -89,7 +90,9 @@ git push --atomic origin main develop refs/tags/v0.4.1
 
 - Any push to `main`, `develop`, `release/*`, `hotfix/*` and any pull request: the `verify` job.
 - A push of `main`: after `verify`, the Pages deployment. A run whose commit is no longer the tip of `main` skips the deployment, so a re-run of an older run cannot replace a newer site.
-- A push of a `v*` tag: after `verify` of that exact commit (which also checks that the tag matches `package.json`), the `release` job creates the GitHub release with generated notes, the standalone `shutteros-portable-vX.Y.Z.html` and the kiosk build `shutteros-kiosk-vX.Y.Z.zip`. An existing release is left untouched, so re-running the job after a partial failure is safe.
+- A push of a `v*` tag: after `verify` of that exact commit, the tag check requires an annotated tag, matching application, core and component package versions, ancestry from `main`, and the two merges of the same delivery tip into `main` and `develop`. The `release` job creates the GitHub release with generated notes, the standalone `shutteros-portable-vX.Y.Z.html` and the kiosk build `shutteros-kiosk-vX.Y.Z.zip`. If the release already exists after a partial run, a rerun uploads only missing assets and leaves existing assets untouched.
+
+Git records tag type, commit identity, ancestry and parent relationships. Those checks establish the graph produced by this repository's configured release or hotfix finish without relying on a commit subject. Git cannot prove which client executable created an otherwise identical graph, so the local AVH test and repository instructions remain the evidence for the tool invocation itself.
 
 A release therefore triggers two verification runs, one for `main` and one for the tag. This is deliberate: publication is gated on the verification of the published commit, not on the local hook.
 
@@ -124,5 +127,5 @@ Before changing visibility, review existing issues, PRs, workflow logs and
 artifacts. Rewriting branch history does not remove them, and
 [Actions history becomes public](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/managing-repository-settings/setting-repository-visibility).
 After the initial push, protect `main` and `develop` against force pushes and
-deletion, and require `verify`. For a solo maintainer, required PRs can use zero
-required approvals; do not require an approval the author cannot provide.
+deletion. Keep `verify` visible on every delivery push, but do not make it a
+required pre-merge check that would reject the documented local Gitflow finish.

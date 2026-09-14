@@ -35,12 +35,12 @@
     class="desktop-icons grid auto-rows-min grid-cols-[112px] content-start gap-2"
     aria-label={copy.shell.desktop}
   >
-    {#each challengeOrder as id (id)}
-      {@const done = hasResult(snapshot, id)}
+    {#each challengeOrder.filter((id) => id !== 'spoof') as id (id)}
+      {@const done = hasResult(snapshot, id) && (id !== 'mail' || hasResult(snapshot, 'spoof'))}
       <button
         class="desktop-icon relative flex flex-col items-center justify-center gap-2 rounded-lg text-center"
         class:selected={selected === id}
-        class:running={activeId === id}
+        class:running={activeId === id || (id === 'mail' && activeId === 'spoof')}
         disabled={!canExplore(snapshot)}
         onclick={(event) => activate(id, event)}
         aria-describedby={done ? undefined : helpId}

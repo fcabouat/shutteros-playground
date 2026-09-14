@@ -1,5 +1,5 @@
-import type { Preview } from '@storybook/sveltekit';
-import '../src/lib/components/theme.css';
+import type { Preview } from '@storybook/svelte-vite';
+import '@shutteros/components/theme.css';
 
 const preview: Preview = {
   parameters: { layout: 'fullscreen', controls: { expanded: true } },

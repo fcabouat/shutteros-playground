@@ -9,17 +9,18 @@
   import { browserClock } from '../infrastructure/clock';
   import { createKioskInput } from '../infrastructure/kiosk-input';
   import { createRuntime } from './runtime';
+  import { activityIsVisible, loginHelpStarted } from '@shutteros/core/projections/game';
   import { initialState } from '@shutteros/core/runtime/game';
-  import { getI18n } from '../components/i18n/context';
-  import { preferredLocale } from '../components/i18n/locale';
+  import { getI18n } from '@shutteros/components/i18n/context';
+  import { preferredLocale } from '@shutteros/components/i18n/locale';
   const i18n = getI18n();
   const copy = $derived(i18n.text);
   let kioskInput: ReturnType<typeof createKioskInput> | undefined;
   import type { GameState, Intent } from '@shutteros/core/model/game';
-  import Login from '../components/screens/Login.svelte';
-  import Session from '../components/screens/Session.svelte';
-  import Brand from '../components/commons/Brand.svelte';
-  import Icon from '../components/commons/Icon.svelte';
+  import Login from '@shutteros/components/screens/Login.svelte';
+  import Session from '@shutteros/components/screens/Session.svelte';
+  import Brand from '@shutteros/components/commons/Brand.svelte';
+  import Icon from '@shutteros/components/commons/Icon.svelte';
   import { branding } from '../branding.generated';
 
   let {
@@ -44,6 +45,7 @@
   let legalNoticesFailed = $state(false);
   let mounted = false;
   let loadGeneration = 0;
+  let documentVisible = $state(true);
 
   // Retry owns a new generation as well as cancellation: an old fetch may finish
   // after abort, but it must not install a runtime over a newer configuration load.
@@ -92,9 +94,17 @@
   function activity() {
     // Pointer movement is noisy; a second-level activity timestamp is enough for
     // the idle reminder and avoids reducing/publishing on every movement event.
+    if (runtime && game.phase === 'login' && !loginHelpStarted(game)) {
+      dispatch({ type: 'activity' });
+    }
     if (game.phase === 'session' && game.now - game.routines.lastActivityAt >= 1000)
       dispatch({ type: 'activity' });
   }
+
+  $effect(() => {
+    if (game.phase === 'login' && activityIsVisible(game) !== documentVisible)
+      dispatch({ type: 'activity-visible', visible: documentVisible });
+  });
 
   // Document metadata is a browser effect owned by the application boundary.
   $effect(() => {
@@ -103,6 +113,7 @@
 
   onMount(() => {
     mounted = true;
+    documentVisible = !document.hidden;
     // An explicit URL choice is useful for links and previews; otherwise follow
     // the browser preference. The query is intentionally ephemeral and never saved.
     const requested = new URLSearchParams(window.location.search).get('lang');
@@ -125,7 +136,13 @@
   });
 </script>
 
-<svelte:window onkeydown={operatorShortcut} onpointermove={activity} onpointerdown={activity} />
+<svelte:document onvisibilitychange={() => (documentVisible = !document.hidden)} />
+<svelte:window
+  onkeydown={operatorShortcut}
+  onpointermove={activity}
+  onpointerdown={activity}
+  oninput={activity}
+/>
 <svelte:head><title>{branding.applicationName} — {copy.tagline}</title></svelte:head>
 
 {#if result?.ok}
@@ -147,6 +164,7 @@
         {branding}
         {legalNotices}
         {legalNoticesFailed}
+        {documentVisible}
         {embeddedOrganizationLogo}
         {embeddedPartnerOrganizationLogo}
       />{/if}

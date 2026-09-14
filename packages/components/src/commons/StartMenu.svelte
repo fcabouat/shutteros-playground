@@ -12,6 +12,7 @@
     dispatch,
     applicationName = 'ShutterOS',
     onSettings,
+    onAccount,
     onAbout,
   }: {
     snapshot: Extract<GameState, { phase: 'session' }>;
@@ -19,6 +20,7 @@
     dispatch: (intent: Intent) => void;
     applicationName?: string;
     onSettings: () => void;
+    onAccount: () => void;
     onAbout: () => void;
   } = $props();
   let open = $state(false);
@@ -42,8 +44,9 @@
           <span class="text-muted text-xs">{copy.desktop.completed(snapshot.results.length)}</span>
         </div>
         <div class="grid grid-cols-3 gap-2 px-4 py-3">
-          {#each challengeOrder as id (id)}
-            {@const done = hasResult(snapshot, id)}
+          {#each challengeOrder.filter((id) => id !== 'spoof') as id (id)}
+            {@const done =
+              hasResult(snapshot, id) && (id !== 'mail' || hasResult(snapshot, 'spoof'))}
             <button
               class="start-app flex flex-col items-center gap-2 rounded-lg p-2 text-center"
               disabled={!canExplore(snapshot)}
@@ -58,6 +61,15 @@
         </div>
         <div class="border-t border-[var(--line)] px-6 py-3">
           <p class="mb-3 text-xs font-semibold">{copy.os.tools}</p>
+          <button
+            class="start-tool flex w-full items-center gap-3 rounded-lg p-2 text-left"
+            onclick={() => {
+              open = false;
+              onAccount();
+            }}
+            ><Icon name="key" size={19} /><span class="text-sm">{copy.routines.account}</span
+            ></button
+          >
           <button
             class="start-tool flex w-full items-center gap-3 rounded-lg p-2 text-left"
             onclick={() => {

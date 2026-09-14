@@ -1,13 +1,16 @@
-// Single source of truth for the release version: the root package.json, mirrored
-// into packages/core so both workspace packages keep the same version (the pair
-// was previously kept in sync by a Changesets "fixed" group). Used by the git-flow
-// hooks in .gitflow/hooks; tests/unit/version.test.ts covers the bump rules.
+// Single source of truth for the release version: the root application package,
+// mirrored into the independently checked core and component packages. Used by the
+// Gitflow hooks in .gitflow/hooks; tests/unit/version.test.ts covers the rules.
 import { execFileSync } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-export const packageFiles = ['package.json', 'packages/core/package.json'];
+export const packageFiles = [
+  'package.json',
+  'packages/core/package.json',
+  'packages/components/package.json',
+];
 const semver = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/;
 
 /** @param {unknown} value */
@@ -57,6 +60,23 @@ export function readVersion(root, ref) {
 }
 
 /**
+ * Read and validate every version mirrored for a release.
+ * @param {string} root
+ * @param {string} [ref]
+ * @returns {string[]}
+ */
+export function readVersions(root, ref) {
+  return packageFiles.map((file) => {
+    const source = ref
+      ? execFileSync('git', ['show', `${ref}:${file}`], { cwd: root, encoding: 'utf8' })
+      : readFileSync(resolve(root, file), 'utf8');
+    const version = JSON.parse(source).version;
+    if (!isVersion(version)) throw new Error(`${ref ? `${ref}:` : ''}${file} has no X.Y.Z version`);
+    return version;
+  });
+}
+
+/**
  * Rewrite the version field only; keep Prettier's two-space layout and final newline.
  * @param {string} root
  * @param {string} version
@@ -71,6 +91,66 @@ export function writeVersion(root, version) {
   }
 }
 
+/**
+ * Validate the immutable Git evidence used to publish a release. The graph proves
+ * the configured two-merge finish shape; Git cannot identify which client created it.
+ * @param {string} root
+ * @param {string} tag
+ * @param {string} [testedCommit]
+ * @returns {string}
+ */
+export function validateTag(root, tag, testedCommit = 'HEAD') {
+  const version = tag.startsWith('v') ? tag.slice(1) : '';
+  if (!isVersion(version)) throw new Error(`release tag is not vX.Y.Z: ${tag}`);
+
+  /** @param {...string} args */
+  const git = (...args) =>
+    execFileSync('git', args, {
+      cwd: root,
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'pipe'],
+    }).trim();
+  const tagRef = `refs/tags/${tag}`;
+  if (git('cat-file', '-t', tagRef) !== 'tag') {
+    throw new Error(`${tag} must be an annotated tag`);
+  }
+  const tagCommit = git('rev-parse', `${tagRef}^{}`);
+  const expectedCommit = git('rev-parse', testedCommit);
+  if (tagCommit !== expectedCommit) {
+    throw new Error(`${tag} points to ${tagCommit}, not tested commit ${expectedCommit}`);
+  }
+
+  const versions = readVersions(root, tagCommit);
+  if (versions.some((candidate) => candidate !== version)) {
+    throw new Error(`${tag} does not match package versions: ${versions.join(', ')}`);
+  }
+
+  try {
+    git('merge-base', '--is-ancestor', tagCommit, 'origin/main');
+  } catch {
+    throw new Error(`${tagCommit} is not on origin/main`);
+  }
+
+  const taggedParents = git('rev-list', '--parents', '-n', '1', tagCommit).split(/\s+/);
+  if (taggedParents.length !== 3) {
+    throw new Error(`${tag} must identify the two-parent main merge from a Gitflow finish`);
+  }
+  const deliveryTip = taggedParents[2];
+  const developMerges = git('rev-list', '--first-parent', '--merges', '--parents', 'origin/develop')
+    .split('\n')
+    .filter(Boolean)
+    .map((line) => line.split(/\s+/));
+  const hasBackMerge = developMerges.some(
+    (parents) => parents.length === 3 && parents[2] === deliveryTip,
+  );
+  if (!hasBackMerge) {
+    throw new Error(
+      `${tag} delivery tip ${deliveryTip} is not the second parent of a develop finish merge`,
+    );
+  }
+  return version;
+}
+
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const root = resolve(fileURLToPath(new URL('..', import.meta.url)));
   const [command, argument, ...rest] = process.argv.slice(2);
@@ -83,9 +163,11 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     } else if (command === 'set' && argument) {
       writeVersion(root, nextVersion(readVersion(root), argument));
       console.log(readVersion(root));
+    } else if (command === 'validate-tag' && argument) {
+      console.log(validateTag(root, argument, rest[0] ?? 'HEAD'));
     } else {
       console.error(
-        'usage: node scripts/version.mjs current [--ref <branch>] | next <patch|minor|major|X.Y.Z> [--ref <branch>] | set <X.Y.Z>',
+        'usage: node scripts/version.mjs current [--ref <branch>] | next <patch|minor|major|X.Y.Z> [--ref <branch>] | set <X.Y.Z> | validate-tag <vX.Y.Z> [tested-commit]',
       );
       process.exit(2);
     }

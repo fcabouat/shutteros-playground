@@ -1,13 +1,22 @@
 import type { GameConfig } from '../model/configuration';
-import { allComplete, hasResult, incidentFollowsFeedback } from '../projections/game';
+import { activityDefinition } from '../data/activities';
+import {
+  allComplete,
+  hasResult,
+  incidentFollowsFeedback,
+  pendingRoutines,
+} from '../projections/game';
 import { currentKnowledgeId, knowledgeAnswer } from '../services/knowledge';
 import { passwordCategory } from '../services/passwords';
 import {
   challengeOrder,
   choiceOutcome,
+  guidanceDelayMs,
   type ChallengeId,
   type ChallengeResult,
   type GameState,
+  type GuidanceClock,
+  type GuidanceLevel,
   type Intent,
   type Scene,
 } from '../model/game';
@@ -20,6 +29,7 @@ export function initialState(now = 0): GameState {
     now: finiteTime(now, 0),
     reason: 'initial',
     failedAttempts: 0,
+    loginGuidance: freshGuidance(finiteTime(now, 0), true, 0, false),
   };
 }
 
@@ -61,13 +71,13 @@ export function transition(
     case 'tick':
       return timed;
     case 'continue':
-      return continueScene(timed, config);
+      return continueScene(timed);
     case 'open':
-      return openChallenge(timed, intent.id, config);
+      return openChallenge(timed, intent.id);
     case 'finish-experience':
       return finishExperience(timed);
-    case 'begin-decision':
-      return beginDecision(timed);
+    case 'request-hint':
+      return requestHint(timed);
     case 'send-ai':
       return timed.scene.kind === 'challenge' &&
         timed.scene.id === 'ai' &&
@@ -87,10 +97,18 @@ export function transition(
       return answerKnowledge(timed, intent.answerId);
     case 'activity':
       return recordActivity(timed);
+    case 'activity-visible':
+      return setActivityVisible(timed, intent.visible);
     case 'routine':
       return updateRoutine(timed, intent.id, intent.action);
     case 'practice-lock':
-      return { ...timed, locked: true, routines: { ...timed.routines, lockPracticed: true } };
+      return {
+        ...timed,
+        locked: true,
+        scene:
+          timed.scene.kind === 'challenge' ? pauseChallenge(timed.scene, timed.now) : timed.scene,
+        routines: { ...timed.routines, lockPracticed: true },
+      };
     case 'resume-lock':
       return timed;
     case 'dismiss-idle':
@@ -112,7 +130,12 @@ function transitionLogin(
     case 'login': {
       const loginCategory = passwordCategory(intent.password, config);
       if (loginCategory === null) {
-        return { ...state, now, failedAttempts: Math.min(3, state.failedAttempts + 1) };
+        return {
+          ...state,
+          now,
+          failedAttempts: Math.min(3, state.failedAttempts + 1),
+          loginGuidance: beginGuidance(state.loginGuidance, now),
+        };
       }
       return {
         phase: 'session',
@@ -134,22 +157,35 @@ function transitionLogin(
           idleDismissed: false,
         },
         locked: false,
-        pendingIncident: null,
+        activityVisible: true,
+        pausedActivities: {},
       };
     }
     case 'logout':
       return loginState(state.generation + 1, now, 'logout');
     case 'tick':
+      return { ...state, now };
+    case 'activity':
+      return {
+        ...state,
+        now,
+        loginGuidance: beginGuidance(state.loginGuidance, now),
+      };
+    case 'activity-visible':
+      return {
+        ...state,
+        now,
+        loginGuidance: setGuidanceVisible(state.loginGuidance, intent.visible, now),
+      };
     case 'continue':
     case 'open':
     case 'finish-experience':
-    case 'begin-decision':
+    case 'request-hint':
     case 'choose':
     case 'send-ai':
     case 'close':
     case 'debrief':
     case 'answer-check':
-    case 'activity':
     case 'routine':
     case 'practice-lock':
     case 'resume-lock':
@@ -160,25 +196,31 @@ function transitionLogin(
   }
 }
 
-function continueScene(
-  state: Extract<GameState, { phase: 'session' }>,
-  config: GameConfig,
-): GameState {
+function continueScene(state: Extract<GameState, { phase: 'session' }>): GameState {
   switch (state.scene.kind) {
     case 'intro':
       return state.mode === 'guided'
         ? advanceGuided(state)
         : { ...state, scene: { kind: 'desktop' } };
-    case 'feedback':
+    case 'feedback': {
       if (state.mode === 'guided') return advanceGuided(state);
       if (incidentFollowsFeedback(state, state.scene.result)) {
-        return openChallenge({ ...state, scene: { kind: 'desktop' } }, 'incident', config);
+        return openChallenge({ ...state, scene: { kind: 'desktop' } }, 'incident');
       }
-      return allComplete(state)
-        ? { ...state, scene: { kind: 'debrief' } }
-        : { ...state, scene: { kind: 'desktop' } };
+      // Keep the inbox discoverable: its second message is a separate activity.
+      const otherMail =
+        state.scene.result.id === 'mail'
+          ? 'spoof'
+          : state.scene.result.id === 'spoof'
+            ? 'mail'
+            : null;
+      if (otherMail !== null && !hasResult(state, otherMail)) {
+        return openChallenge({ ...state, scene: { kind: 'desktop' } }, otherMail);
+      }
+      return allComplete(state) ? completeGuided(state) : { ...state, scene: { kind: 'desktop' } };
+    }
     case 'routines':
-      return { ...state, scene: { kind: 'debrief' } };
+      return routinesComplete(state) ? { ...state, scene: { kind: 'debrief' } } : state;
     case 'desktop':
     case 'challenge':
     case 'debrief':
@@ -191,9 +233,9 @@ function continueScene(
 function openChallenge(
   state: Extract<GameState, { phase: 'session' }>,
   id: ChallengeId,
-  config: GameConfig,
 ): GameState {
   if (!isChallengeId(id) || state.mode === 'guided') return state;
+  if (state.scene.kind === 'challenge' && state.scene.id === id) return state;
   const available =
     state.scene.kind === 'desktop'
       ? state
@@ -201,21 +243,15 @@ function openChallenge(
         ? leaveFreeChallenge(state)
         : state;
   if (available.scene.kind !== 'desktop') return state;
-  if (id === 'incident' && available.pendingIncident !== null) {
+  const paused = available.pausedActivities[id];
+  if (paused !== undefined) {
     return {
       ...available,
-      pendingIncident: null,
-      scene: { kind: 'challenge', id, ...available.pendingIncident, step: 'notify' },
+      pausedActivities: withoutPausedActivity(available.pausedActivities, id),
+      scene: resumeChallenge(paused, available.now, available.activityVisible),
     };
   }
-  const scene: Scene = {
-    kind: 'challenge',
-    id,
-    startedAt: available.now,
-    exploreUntil: available.now + config.explorationDurationMs,
-    // MFA has no native exploratory action before its choices.
-    step: id === 'mfa' ? 'choose' : 'explore',
-  };
+  const scene = newChallenge(id, available.now, available.activityVisible, 0);
   return { ...available, scene };
 }
 
@@ -226,21 +262,11 @@ function openChallenge(
  */
 function finishExperience(state: Extract<GameState, { phase: 'session' }>): GameState {
   if (state.mode === 'guided') return state;
-  const pendingIncident =
-    state.scene.kind === 'challenge' &&
-    state.scene.id === 'incident' &&
-    !hasResult(state, 'incident') &&
-    state.scene.step === 'notify'
-      ? {
-          startedAt: state.scene.startedAt,
-          exploreUntil: state.scene.exploreUntil,
-        }
-      : state.pendingIncident;
   const preferred =
     state.scene.kind === 'challenge' && !hasResult(state, state.scene.id)
       ? state.scene.id
       : nextUnanswered(state);
-  const guided = { ...state, mode: 'guided' as const, pendingIncident };
+  const guided = { ...state, mode: 'guided' as const };
   return preferred === null ? completeGuided(guided) : openGuidedChallenge(guided, preferred);
 }
 
@@ -248,28 +274,21 @@ function openGuidedChallenge(
   state: Extract<GameState, { phase: 'session' }>,
   id: ChallengeId,
 ): GameState {
-  if (id === 'incident' && state.pendingIncident !== null) {
+  if (state.scene.kind === 'challenge' && state.scene.id === id) {
     return {
       ...state,
-      pendingIncident: null,
-      scene: {
-        kind: 'challenge',
-        id,
-        startedAt: state.pendingIncident.startedAt,
-        exploreUntil: state.pendingIncident.exploreUntil,
-        step: 'notify',
-      },
+      scene: revealChoices(resumeChallenge(state.scene, state.now, state.activityVisible)),
     };
   }
-  const scene: Scene = {
-    kind: 'challenge',
-    id,
-    startedAt: state.now,
-    exploreUntil: state.now,
-    // Composing a message is the decision surface for sender and AI scenarios.
-    step: id === 'spoof' || id === 'ai' ? 'explore' : 'choose',
-  };
-  return { ...state, scene };
+  const paused = state.pausedActivities[id];
+  if (paused !== undefined) {
+    return {
+      ...state,
+      pausedActivities: withoutPausedActivity(state.pausedActivities, id),
+      scene: revealChoices(resumeChallenge(paused, state.now, state.activityVisible)),
+    };
+  }
+  return { ...state, scene: newChallenge(id, state.now, state.activityVisible, 2) };
 }
 
 function advanceGuided(state: Extract<GameState, { phase: 'session' }>): GameState {
@@ -281,14 +300,21 @@ function completeGuided(state: Extract<GameState, { phase: 'session' }>): GameSt
   return { ...state, scene: routinesComplete(state) ? { kind: 'debrief' } : { kind: 'routines' } };
 }
 
-function beginDecision(state: Extract<GameState, { phase: 'session' }>): GameState {
-  const scene = state.scene;
-  if (scene.kind !== 'challenge' || scene.step !== 'explore') return state;
+function requestHint(state: Extract<GameState, { phase: 'session' }>): GameState {
+  if (state.scene.kind !== 'challenge') return state;
+  const currentLevel = elapsedGuidanceLevel(state.scene.guidance, state.now);
+  if (currentLevel === 2) return state;
+  const requestedLevel = (currentLevel + 1) as GuidanceLevel;
   return {
     ...state,
     scene: {
-      ...scene,
-      step: 'choose',
+      ...state.scene,
+      guidance: {
+        ...state.scene.guidance,
+        requestedLevel,
+        activeElapsedMs: 0,
+        activeSince: state.scene.guidance.visible ? state.now : null,
+      },
     },
   };
 }
@@ -297,17 +323,35 @@ function choose(state: Extract<GameState, { phase: 'session' }>, choiceId: strin
   const scene = state.scene;
   if (scene.kind !== 'challenge') return state;
   if (typeof choiceId !== 'string') return state;
-  // Native surfaces can emit choices during exploration (for example opening the
-  // USB file). The action drawer is one input path, not a mandatory permission gate.
-  const outcome = choiceOutcome(scene.id, scene.step === 'notify' ? 'notify' : 'choose', choiceId);
+  const definition = activityDefinition(scene.id);
+  const actions = definition.steps[scene.step].actions as Readonly<
+    Record<string, { outcome: 'safe' | 'risky'; nextStep?: 'choose' | 'notify' }>
+  >;
+  const action = Object.prototype.hasOwnProperty.call(actions, choiceId)
+    ? actions[choiceId]
+    : undefined;
+  const outcome = choiceOutcome(scene.id, scene.step, choiceId);
   if (outcome === null) return state;
 
-  // Isolation is only the first half of the response. Reporting completes it,
-  // whether isolation came from the network control or the action drawer.
-  if (scene.id === 'incident' && scene.step !== 'notify' && choiceId === 'isolate') {
-    return { ...state, scene: { ...scene, step: 'notify' } };
+  if (action?.nextStep !== undefined) {
+    return {
+      ...state,
+      scene: {
+        ...scene,
+        startedAt: state.now,
+        step: action.nextStep,
+        priorChoiceId: choiceId,
+        // Each step has its own discovery time; only the guided finale opens choices immediately.
+        guidance: freshGuidance(state.now, scene.guidance.visible, state.mode === 'guided' ? 2 : 0),
+      },
+    };
   }
-  return recordResult(state, { id: scene.id, outcome, choiceId });
+  return recordResult(state, {
+    id: scene.id,
+    outcome,
+    choiceId,
+    ...(scene.priorChoiceId === undefined ? {} : { priorChoiceId: scene.priorChoiceId }),
+  });
 }
 
 /**
@@ -320,41 +364,43 @@ function recordResult(
   result: ChallengeResult,
 ): GameState {
   if (hasResult(state, result.id)) {
-    return { ...state, scene: { kind: 'feedback', result, replay: true } };
+    return {
+      ...state,
+      pausedActivities: withoutPausedActivity(state.pausedActivities, result.id),
+      scene: { kind: 'feedback', result, replay: true },
+    };
   }
   return {
     ...state,
     results: [...state.results, result],
     usbInfected: state.usbInfected || (result.id === 'usb' && result.outcome === 'risky'),
+    pausedActivities: withoutPausedActivity(state.pausedActivities, result.id),
     scene: { kind: 'feedback', result, replay: false },
   };
 }
 
 function closeScene(state: Extract<GameState, { phase: 'session' }>): GameState {
   if (state.mode === 'free' && state.scene.kind === 'challenge') return leaveFreeChallenge(state);
-  if (state.scene.kind === 'debrief') {
+  if (
+    state.scene.kind === 'debrief' ||
+    (state.mode === 'free' && state.scene.kind === 'routines')
+  ) {
     return { ...state, mode: 'free', scene: { kind: 'desktop' } };
   }
   return state;
 }
 
-/**
- * Ordinary exploration attempts can be abandoned. An isolated incident instead
- * leaves a reporting obligation in pendingIncident. Minimizing
- * is different: Session.svelte hides the view without sending a close command.
- */
+/** Unresolved attempts are paused and can resume without losing their step or help. */
 function leaveFreeChallenge(
   state: Extract<GameState, { phase: 'session' }>,
 ): Extract<GameState, { phase: 'session' }> {
   if (state.scene.kind !== 'challenge') return state;
-  const pendingIncident =
-    state.scene.id === 'incident' && !hasResult(state, 'incident') && state.scene.step === 'notify'
-      ? {
-          startedAt: state.scene.startedAt,
-          exploreUntil: state.scene.exploreUntil,
-        }
-      : state.pendingIncident;
-  return { ...state, pendingIncident, scene: { kind: 'desktop' } };
+  const paused = pauseChallenge(state.scene, state.now);
+  return {
+    ...state,
+    pausedActivities: { ...state.pausedActivities, [paused.id]: paused },
+    scene: { kind: 'desktop' },
+  };
 }
 
 function transitionLocked(
@@ -366,15 +412,24 @@ function transitionLocked(
       return state;
     case 'activity':
       return recordActivity(state);
+    case 'activity-visible':
+      return setActivityVisible(state, intent.visible);
     case 'resume-lock':
-      return { ...state, locked: false };
+      return {
+        ...state,
+        locked: false,
+        scene:
+          state.scene.kind === 'challenge'
+            ? resumeChallenge(state.scene, state.now, state.activityVisible)
+            : state.scene,
+      };
     case 'logout':
       return loginState(state.generation + 1, state.now, 'logout');
     case 'login':
     case 'continue':
     case 'open':
     case 'finish-experience':
-    case 'begin-decision':
+    case 'request-hint':
     case 'send-ai':
     case 'choose':
     case 'close':
@@ -393,6 +448,23 @@ function recordActivity(state: Extract<GameState, { phase: 'session' }>): GameSt
   return {
     ...state,
     routines: { ...state.routines, lastActivityAt: state.now, idleDismissed: false },
+  };
+}
+
+function setActivityVisible(
+  state: Extract<GameState, { phase: 'session' }>,
+  visible: boolean,
+): GameState {
+  if (typeof visible !== 'boolean' || visible === state.activityVisible) return state;
+  return {
+    ...state,
+    activityVisible: visible,
+    scene:
+      state.scene.kind !== 'challenge'
+        ? state.scene
+        : visible
+          ? resumeChallenge(state.scene, state.now, !state.locked)
+          : pauseChallenge(state.scene, state.now),
   };
 }
 
@@ -425,11 +497,7 @@ function nextUnanswered(state: Extract<GameState, { phase: 'session' }>): Challe
 }
 
 function routinesComplete(state: Extract<GameState, { phase: 'session' }>): boolean {
-  return (
-    state.routines.password === 'done' &&
-    state.routines.update === 'scheduled' &&
-    state.routines.lockPracticed
-  );
+  return pendingRoutines(state).length === 0;
 }
 
 function isChallengeId(value: unknown): value is ChallengeId {
@@ -462,7 +530,123 @@ function loginState(
   now: number,
   reason: Extract<GameState, { phase: 'login' }>['reason'],
 ): GameState {
-  return { phase: 'login', generation, now, reason, failedAttempts: 0 };
+  return {
+    phase: 'login',
+    generation,
+    now,
+    reason,
+    failedAttempts: 0,
+    loginGuidance: freshGuidance(now, true, 0, false),
+  };
+}
+
+function newChallenge(
+  id: ChallengeId,
+  now: number,
+  visible: boolean,
+  requestedLevel: GuidanceLevel,
+): Extract<Scene, { kind: 'challenge' }> {
+  return {
+    kind: 'challenge',
+    id,
+    startedAt: now,
+    step: activityDefinition(id).initialStep,
+    guidance: freshGuidance(now, visible, requestedLevel),
+  };
+}
+
+function freshGuidance(
+  now: number,
+  visible: boolean,
+  requestedLevel: GuidanceLevel,
+  start = true,
+): GuidanceClock {
+  return {
+    requestedLevel,
+    started: start,
+    activeElapsedMs: 0,
+    activeSince: start && visible ? now : null,
+    visible,
+  };
+}
+
+function activeGuidanceMs(guidance: GuidanceClock, now: number): number {
+  return (
+    guidance.activeElapsedMs +
+    (guidance.activeSince === null ? 0 : Math.max(0, now - guidance.activeSince))
+  );
+}
+
+function elapsedGuidanceLevel(guidance: GuidanceClock, now: number): GuidanceLevel {
+  return Math.min(
+    2,
+    guidance.requestedLevel + Math.floor(activeGuidanceMs(guidance, now) / guidanceDelayMs),
+  ) as GuidanceLevel;
+}
+
+function pauseGuidance(guidance: GuidanceClock, now: number): GuidanceClock {
+  return {
+    ...guidance,
+    activeElapsedMs: activeGuidanceMs(guidance, now),
+    activeSince: null,
+    visible: false,
+  };
+}
+
+function beginGuidance(guidance: GuidanceClock, now: number): GuidanceClock {
+  if (guidance.started) return guidance;
+  return { ...guidance, started: true, activeSince: guidance.visible ? now : null };
+}
+
+function resumeGuidance(guidance: GuidanceClock, now: number): GuidanceClock {
+  if (!guidance.started || !guidance.visible || guidance.activeSince !== null) return guidance;
+  return { ...guidance, activeSince: now };
+}
+
+function setGuidanceVisible(guidance: GuidanceClock, visible: boolean, now: number): GuidanceClock {
+  if (visible === guidance.visible) return guidance;
+  return visible
+    ? resumeGuidance({ ...guidance, visible: true }, now)
+    : pauseGuidance(guidance, now);
+}
+
+function pauseChallenge(
+  scene: Extract<Scene, { kind: 'challenge' }>,
+  now: number,
+): Extract<Scene, { kind: 'challenge' }> {
+  return { ...scene, guidance: pauseGuidance(scene.guidance, now) };
+}
+
+function resumeChallenge(
+  scene: Extract<Scene, { kind: 'challenge' }>,
+  now: number,
+  visible: boolean,
+): Extract<Scene, { kind: 'challenge' }> {
+  return {
+    ...scene,
+    guidance: visible
+      ? resumeGuidance({ ...scene.guidance, visible: true }, now)
+      : { ...scene.guidance, visible: false, activeSince: null },
+  };
+}
+
+function revealChoices(
+  scene: Extract<Scene, { kind: 'challenge' }>,
+): Extract<Scene, { kind: 'challenge' }> {
+  return {
+    ...scene,
+    guidance: { ...scene.guidance, requestedLevel: 2 },
+  };
+}
+
+function withoutPausedActivity(
+  activities: Extract<GameState, { phase: 'session' }>['pausedActivities'],
+  id: ChallengeId,
+): Extract<GameState, { phase: 'session' }>['pausedActivities'] {
+  if (!Object.prototype.hasOwnProperty.call(activities, id)) return activities;
+  const remaining = { ...activities };
+  delete remaining[id];
+  return remaining;
 }
 
 function assertNever(value: never): never {

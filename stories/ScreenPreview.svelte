@@ -1,14 +1,14 @@
 <script lang="ts">
-  import Provider from '../src/lib/components/i18n/Provider.svelte';
-  import Login from '../src/lib/components/screens/Login.svelte';
-  import Session from '../src/lib/components/screens/Session.svelte';
+  import Provider from '@shutteros/components/i18n/Provider.svelte';
+  import Login from '@shutteros/components/screens/Login.svelte';
+  import Session from '@shutteros/components/screens/Session.svelte';
   import type { GameState, Intent } from '@shutteros/core/model/game';
   import type { GameConfig } from '@shutteros/core/model/configuration';
   import type { Locale } from '@shutteros/core/data/catalog';
   import { transition } from '@shutteros/core/runtime/game';
   import { untrack } from 'svelte';
-  import projectLicense from '../LICENSE?raw';
-  import thirdPartyNotices from '../static/THIRD-PARTY-NOTICES.txt?raw';
+  const projectLicense = 'Story fixture: project license';
+  const thirdPartyNotices = 'Story fixture: third-party software notices';
 
   let {
     initial,

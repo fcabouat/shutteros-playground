@@ -36,6 +36,7 @@
     </div>
     <div class="browser-bookmarks border-b border-[var(--line)] px-3 py-1.5">
       <button
+        data-hint-target="bookmark"
         title={copy.web.knownDomain}
         class="rounded px-2 py-1 text-xs"
         onclick={() => dispatch({ type: 'choose', choiceId: 'known-address' })}
