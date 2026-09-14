@@ -1,5 +1,15 @@
 # shutteros-playground
 
+## 0.3.1
+
+### Patch Changes
+
+- 7003fee: Restore the local develop reference before Changesets planning in detached CI checkouts.
+- 6946aa7: Start a release from develop with one command. GitHub handles Changesets versioning, verified release and return merges, tags and publication without an open terminal. Feature merges remain independent of release requests.
+- Maintenance release.
+- f48517e: Give release requests a dedicated GitHub workflow with only the version choice; keep recovery inputs in the technical workflow.
+- @shutteros/core@0.3.1
+
 ## 0.3.0
 
 ### Minor Changes
