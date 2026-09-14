@@ -159,6 +159,19 @@ test('manual request prepares only a release branch and pull request', () => {
   ).toBe(true);
 });
 
+test('prepares from a CI checkout with detached HEAD and no local develop branch', () => {
+  const f = fixture();
+  f.git('switch', '--detach', f.verified);
+  f.git('branch', '-D', 'develop');
+  expect(f.git('branch', '--list', 'develop')).toBe('');
+  f.run();
+  expect(f.git('rev-parse', 'develop')).toBe(f.verified);
+  expect(f.git('rev-parse', 'release/0.3.0^')).toBe(f.verified);
+  expect(f.git('ls-remote', '--heads', 'origin', 'develop')).toContain(f.verified);
+  expect(f.git('ls-remote', '--tags', 'origin')).toBe('');
+  expect(f.state().open).toHaveLength(1);
+});
+
 test('retry after PR creation failure pushes the prepared branch', () => {
   const f = fixture();
   f.update({ failCreate: true });
