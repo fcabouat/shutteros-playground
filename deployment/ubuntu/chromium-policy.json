@@ -1,0 +1,22 @@
+{
+  "AutofillAddressEnabled": false,
+  "AutofillCreditCardEnabled": false,
+  "BrowserSignin": 0,
+  "AudioCaptureAllowed": false,
+  "DefaultGeolocationSetting": 2,
+  "DefaultNotificationsSetting": 2,
+  "DefaultPopupsSetting": 2,
+  "DeveloperToolsAvailability": 2,
+  "DownloadRestrictions": 3,
+  "ExtensionInstallBlocklist": ["*"],
+  "IncognitoModeAvailability": 2,
+  "MetricsReportingEnabled": false,
+  "PasswordManagerEnabled": false,
+  "PrintingEnabled": false,
+  "PromptForDownloadLocation": false,
+  "SyncDisabled": true,
+  "TranslateEnabled": false,
+  "URLAllowlist": ["http://127.0.0.1:8080"],
+  "URLBlocklist": ["*", "view-source:*"],
+  "VideoCaptureAllowed": false
+}

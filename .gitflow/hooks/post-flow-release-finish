@@ -1,0 +1,7 @@
+#!/bin/sh
+# git-flow ignores the exit code of post hooks, so nothing is pushed here: print the
+# one atomic push that publishes this delivery (main, develop and the tag together).
+version=$(printf '%s\n' "$1" | sed 's/^v//')
+echo
+echo "Release v$version merged and tagged locally. Publish it with:"
+echo "  git push --atomic origin $MASTER_BRANCH $DEVELOP_BRANCH refs/tags/v$version"

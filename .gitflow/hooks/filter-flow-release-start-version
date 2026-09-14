@@ -1,0 +1,5 @@
+#!/bin/sh
+# git flow release start <patch|minor|major|X.Y.Z>: compute the release version.
+# shellcheck source=.gitflow/hooks/gitflow-common.sh
+. "$(dirname "$0")/gitflow-common.sh"
+resolve_version "${1:-patch}" "$DEVELOP_BRANCH"

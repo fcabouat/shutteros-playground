@@ -1,0 +1,16 @@
+#!/bin/sh
+# Refuse to finish unless the branch carries its version and the full verification passes.
+# Set SHUTTEROS_SKIP_VERIFY=1 to bypass verification deliberately (documented emergency use).
+# shellcheck source=.gitflow/hooks/gitflow-common.sh
+. "$(dirname "$0")/gitflow-common.sh"
+version=$(bare_version "$1")
+current=$(node scripts/version.mjs current)
+if [ "$current" != "$version" ]; then
+  echo "package.json is at $current, branch expects $version" >&2
+  exit 1
+fi
+if [ "${SHUTTEROS_SKIP_VERIFY:-0}" = 1 ]; then
+  echo "verification skipped by request (SHUTTEROS_SKIP_VERIFY=1)" >&2
+  exit 0
+fi
+pnpm verify

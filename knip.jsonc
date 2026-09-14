@@ -1,0 +1,17 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "workspaces": {
+    ".": {
+      // Playwright starts this fixture through a shell command, not an import.
+      "entry": [
+        "tests/e2e/serve-build.mjs",
+        "scripts/site-notices.mjs",
+        "site/locale.js",
+        "site/*.css",
+      ],
+    },
+    "packages/core": {
+      "includeEntryExports": true,
+    },
+  },
+}

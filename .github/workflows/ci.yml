@@ -1,0 +1,163 @@
+name: CI
+
+# Verification runs on every push and pull request. Releases are made locally with
+# git-flow (see docs/publishing.md); pushing the version tag publishes the GitHub
+# release, and pushing main deploys Pages. Nothing here creates branches, PRs or tags.
+on:
+  push:
+    branches: [main, develop, 'release/**', 'hotfix/**']
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Validate workflow syntax
+        run: |
+          mkdir -p "$RUNNER_TEMP/actionlint"
+          curl -fsSL --retry 3 -o "$RUNNER_TEMP/actionlint.tar.gz" \
+            https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_linux_amd64.tar.gz
+          echo "8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8  $RUNNER_TEMP/actionlint.tar.gz" | sha256sum -c -
+          tar -xzf "$RUNNER_TEMP/actionlint.tar.gz" -C "$RUNNER_TEMP/actionlint" actionlint
+          "$RUNNER_TEMP/actionlint/actionlint"
+      - run: npm install --global pnpm@11.19.0
+      - run: pnpm install --frozen-lockfile
+      - name: Validate shell scripts and the Ubuntu kit without modifying the runner
+        run: |
+          shellcheck -x deployment/ubuntu/*.sh deployment/ubuntu/session deployment/ubuntu/launch-chromium deployment/ubuntu/tests/*.sh scripts/gitflow-init.sh .gitflow/hooks/*
+          for script in deployment/ubuntu/*.sh deployment/ubuntu/session deployment/ubuntu/launch-chromium deployment/ubuntu/tests/*.sh scripts/gitflow-init.sh .gitflow/hooks/*; do
+            sh -n "$script"
+          done
+          node deployment/ubuntu/tests/configuration-contract.test.mjs
+          sh deployment/ubuntu/tests/installer-refusal.test.sh
+          sh deployment/ubuntu/tests/installer-nominal.test.sh
+          python3 -m json.tool deployment/ubuntu/chromium-policy.json >/dev/null
+          python3 deployment/ubuntu/validate-config.py static/kiosk-config.json
+          sed 's|^ExecStart=/usr/local/lib/shutteros-kiosk/session$|ExecStart=/usr/bin/true|' \
+            deployment/ubuntu/shutteros-kiosk.service > "$RUNNER_TEMP/shutteros-kiosk.service"
+          cp deployment/ubuntu/shutteros-static.service "$RUNNER_TEMP/shutteros-static.service"
+          systemd-analyze verify \
+            "$RUNNER_TEMP/shutteros-static.service" "$RUNNER_TEMP/shutteros-kiosk.service"
+      - run: pnpm audit --audit-level high
+      - run: pnpm exec playwright install --with-deps chromium --only-shell
+      - run: pnpm verify
+      - name: Check that a version tag matches package.json
+        if: github.ref_type == 'tag'
+        env:
+          TAG: ${{ github.ref_name }}
+        run: test "$TAG" = "v$(node scripts/version.mjs current)"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: shutteros-static-and-portable
+          path: dist/
+          retention-days: 14
+      - name: Select the GitHub Pages base path
+        env:
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          owner="${REPOSITORY%%/*}"
+          name="${REPOSITORY#*/}"
+          if [ "${name,,}" = "${owner,,}.github.io" ]; then
+            echo 'BASE_PATH=' >> "$GITHUB_ENV"
+          else
+            echo "BASE_PATH=/$name" >> "$GITHUB_ENV"
+          fi
+      - name: Build and exercise the Pages artifact
+        run: |
+          pnpm build:site
+          BUILD_ROOT=dist/site/demo BASE_PATH="$BASE_PATH/demo" pnpm test:e2e
+          pnpm test:site
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        if: github.ref == 'refs/heads/main'
+        with:
+          path: dist/site/
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: failure()
+        with:
+          name: browser-test-report
+          path: playwright-report/
+          retention-days: 7
+
+  deploy:
+    needs: verify
+    if: vars.PAGES_ENABLED == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    # Deployments queue instead of racing; a re-run of an older run must not win.
+    concurrency:
+      group: github-pages
+      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Skip when main has moved past this commit
+        id: tip
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          tip=$(gh api "repos/$GH_REPO/branches/main" --jq .commit.sha)
+          echo "current=$([ "$tip" = "$GITHUB_SHA" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+          [ "$tip" = "$GITHUB_SHA" ] || echo "::notice::main is now at $tip; not deploying $GITHUB_SHA"
+      - name: Deploy the verified site
+        id: deployment
+        if: steps.tip.outputs.current == 'true'
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
+
+  release:
+    needs: verify
+    if: github.event_name == 'push' && github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: shutteros-static-and-portable
+          path: dist
+      - name: Package the kiosk build
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          cp dist/portable/shutteros.html "shutteros-portable-$TAG.html"
+          (cd dist && zip -qr "../shutteros-kiosk-$TAG.zip" . -x 'portable/*')
+      - name: Create the GitHub release once
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "::notice::release $TAG already exists; nothing to do"
+            exit 0
+          fi
+          previous=$(git tag --list 'v*' --sort=-v:refname | grep -vx "$TAG" | head -1 || true)
+          gh release create "$TAG" --verify-tag --title "ShutterOS Playground $TAG" --generate-notes \
+            ${previous:+--notes-start-tag "$previous"} \
+            "shutteros-portable-$TAG.html" "shutteros-kiosk-$TAG.zip"

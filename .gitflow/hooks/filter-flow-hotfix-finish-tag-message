@@ -1,0 +1,3 @@
+#!/bin/sh
+# Annotated tag message used by git flow release finish.
+echo "ShutterOS Playground $2"

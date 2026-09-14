@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "sessionMinutes": 15,
+  "acceptedPasswords": [
+    "Bureau2026",
+    "Office2026",
+    "HackingSession2026",
+    "password",
+    "motdepasse",
+    "123456",
+    "Bienvenue2026!",
+    "azerty",
+    "mot de passe"
+  ],
+  "caseSensitivePasswords": false,
+  "showPasswordHint": true,
+  "playerName": "Camille Martin",
+  "supportLabel": "Équipes de sécurité informatique (SSI)",
+  "supportContact": "Annuaire interne · contact SSI",
+  "stationLabel": "Station blanche de l’accueil",
+  "mailLegitimateAddress": "camille.martin@organisation.example",
+  "mailImpersonatorAddress": "usurpateur@externe.example",
+  "explorationSeconds": 25,
+  "idleReminderSeconds": 45,
+  "eventIntervalSeconds": 90
+}

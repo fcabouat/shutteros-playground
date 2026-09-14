@@ -1,0 +1,10 @@
+packages:
+  - .
+  - packages/*
+
+allowBuilds:
+  esbuild: true
+
+# SvelteKit currently selects cookie 0.6; 0.7 fixes GHSA-pxg6-pf52-xh8x.
+overrides:
+  'cookie@<0.7.0': '0.7.2'
