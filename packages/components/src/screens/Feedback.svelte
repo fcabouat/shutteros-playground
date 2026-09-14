@@ -1,11 +1,17 @@
 <script lang="ts">
-  import type { GameState, ChallengeResult, Intent } from '@shutteros/core/model/game';
-  import { allComplete, incidentFollowsFeedback } from '@shutteros/core/projections/game';
+  import {
+    choiceOutcome,
+    type GameState,
+    type ChallengeResult,
+    type Intent,
+  } from '@shutteros/core/model/game';
+  import { experienceComplete, incidentFollowsFeedback } from '@shutteros/core/projections/game';
   import { getI18n } from '../i18n/context';
   const i18n = getI18n();
   const challenges = $derived(i18n.challenges);
   const copy = $derived(i18n.text);
   import Icon from '../commons/Icon.svelte';
+  import DecisionReview from '../commons/DecisionReview.svelte';
   import LearningPanel from '../commons/LearningPanel.svelte';
   let {
     snapshot,
@@ -20,6 +26,9 @@
   } = $props();
   const content = $derived(challenges[result.id]);
   const infection = $derived(incidentFollowsFeedback(snapshot, result));
+  const decisionStep = $derived(
+    choiceOutcome(result.id, 'notify', result.choiceId) === null ? 'choose' : 'notify',
+  );
 </script>
 
 <section class="feedback-card flex w-full flex-col" data-outcome={result.outcome}>
@@ -48,6 +57,10 @@
             ? copy.feedback.mfaIgnoredTitle
             : copy.feedback[result.outcome]}
         </h1>
+        {#if result.priorChoiceId}
+          <DecisionReview id={result.id} step="choose" selectedChoiceId={result.priorChoiceId} />
+        {/if}
+        <DecisionReview id={result.id} step={decisionStep} selectedChoiceId={result.choiceId} />
         <p class="text-muted mt-3 text-sm leading-relaxed">
           {result.id === 'ai' && Object.hasOwn(copy.ai.feedback, result.choiceId)
             ? copy.ai.feedback[result.choiceId as keyof typeof copy.ai.feedback]
@@ -72,7 +85,7 @@
           ? copy.experience.next
           : infection
             ? copy.feedback.incident
-            : allComplete(snapshot)
+            : experienceComplete(snapshot)
               ? copy.feedback.finish
               : copy.feedback.continue}<Icon name="arrow" size={18} /></button
       >

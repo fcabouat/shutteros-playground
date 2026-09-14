@@ -8,7 +8,8 @@
 ShutterOS is a French/English cybersecurity awareness game for the browser or a shared kiosk. In five to fifteen minutes, players explore a
 fictional desktop and practise seven situations involving a found USB drive, an
 incident, urgent mail, sender spoofing, a look-alike login, an unexpected sign-in
-request, and sharing work information with an AI assistant.
+request, and sharing work information with an AI assistant. An eighth activity covers
+passwords, updates and screen locking before the recap.
 
 [**Play the live demo**](https://fcabouat.github.io/shutteros-playground/demo/?lang=en) · [Jouer en français](https://fcabouat.github.io/shutteros-playground/demo/?lang=fr)
 

@@ -1,6 +1,6 @@
 {
   "name": "shutteros-playground",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "ShutterOS Playground — an independent cybersecurity awareness game for European Cybersecurity Month",
   "type": "module",
@@ -15,7 +15,8 @@
     "notices:update": "node scripts/package-notices.mjs --update-source",
     "preview": "vite preview --host 127.0.0.1",
     "check:core": "tsc -p packages/core/tsconfig.json",
-    "check": "node scripts/prepare-branding.mjs && node scripts/prepare-portable-configuration.mjs && tsc -p packages/core/tsconfig.json && svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+    "check:components": "pnpm --filter @shutteros/components check",
+    "check": "node scripts/prepare-branding.mjs && node scripts/prepare-portable-configuration.mjs && tsc -p packages/core/tsconfig.json && pnpm --filter @shutteros/components check && svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "lint": "eslint .",
     "knip": "node scripts/prepare-branding.mjs && node scripts/prepare-portable-configuration.mjs && knip",
     "format": "prettier --write .",
@@ -33,17 +34,15 @@
     "gitflow:init": "sh scripts/gitflow-init.sh"
   },
   "dependencies": {
-    "@internationalized/date": "^3.8.1",
-    "@lucide/svelte": "^1.44.0",
-    "@shutteros/core": "workspace:*",
-    "bits-ui": "2.19.2"
+    "@shutteros/components": "workspace:*",
+    "@shutteros/core": "workspace:*"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.10.2",
     "@eslint/js": "^9.39.0",
     "@playwright/test": "1.63.0",
     "@storybook/addon-svelte-csf": "^5.0.0",
-    "@storybook/sveltekit": "10.6.0",
+    "@storybook/svelte-vite": "10.6.0",
     "@sveltejs/adapter-static": "3.0.10",
     "@sveltejs/kit": "2.70.3",
     "@sveltejs/vite-plugin-svelte": "7.3.0",

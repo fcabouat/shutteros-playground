@@ -13,5 +13,8 @@
     "packages/core": {
       "includeEntryExports": true,
     },
+    "packages/components": {
+      "includeEntryExports": true,
+    },
   },
 }

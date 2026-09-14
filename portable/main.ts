@@ -5,7 +5,7 @@ import {
   embeddedOrganizationLogo,
   embeddedPartnerOrganizationLogo,
 } from './configuration.generated';
-import '../src/lib/components/theme.css';
+import '@shutteros/components/theme.css';
 
 mount(Application, {
   target: document.getElementById('app')!,

@@ -9,6 +9,7 @@
   type Point = { x: number; y: number };
   type Props = {
     title: string;
+    family?: 'vigilance' | 'protection';
     icon: WindowIcon;
     onMinimize: () => void;
     onClose?: () => void;
@@ -21,6 +22,7 @@
 
   let {
     title,
+    family,
     icon,
     onMinimize,
     onClose,
@@ -50,7 +52,7 @@
   });
 
   function workspace(): HTMLElement | null {
-    return frame?.closest<HTMLElement>('.os-workspace') ?? null;
+    return frame?.closest<HTMLElement>('.view-host') ?? null;
   }
 
   function clamp(point: Point, rect: DOMRect, bounds: DOMRect): Point {
@@ -153,7 +155,14 @@
       offset = { x: 0, y: 0 };
     };
     window.addEventListener('resize', resetOnResize);
-    return () => window.removeEventListener('resize', resetOnResize);
+    // Opening guidance also changes the usable bounds without resizing the viewport.
+    const observer = new ResizeObserver(resetOnResize);
+    const bounds = workspace();
+    if (bounds) observer.observe(bounds);
+    return () => {
+      window.removeEventListener('resize', resetOnResize);
+      observer.disconnect();
+    };
   });
 </script>
 
@@ -170,6 +179,7 @@
   style:transform={maximized ? 'translate(0, 0)' : `translate(${offset.x}px, ${offset.y}px)`}
 >
   <header
+    data-family={family}
     class="window-titlebar flex shrink-0 items-center justify-between gap-3 border-b border-[var(--line)] px-5 py-3"
   >
     <button
@@ -187,6 +197,10 @@
       <span class="app-icon tiny" data-app={icon}><Icon name={icon} size={15} /></span>
       <span class="truncate text-sm font-medium">{title}</span>
     </button>
+    {#if family}<span class="activity-family" data-family={family}
+        ><Icon name={family === 'protection' ? 'secure' : 'shield'} size={14} />{copy.guidance
+          .families[family]}</span
+      >{/if}
     <span id={hintId} class="sr-only">{moveHint}</span>
     <div class="flex shrink-0 items-center gap-2 text-xs">
       <button
@@ -220,7 +234,14 @@
       {/if}
     </div>
   </header>
-  <div bind:this={body} class="window-body min-h-0 flex-1 overflow-y-auto">
+  <!-- svelte-ignore a11y_no_noninteractive_tabindex (a scrollable reading area needs a keyboard entry point even when it contains no controls) -->
+  <div
+    bind:this={body}
+    class="window-body min-h-0 flex-1 overflow-y-auto"
+    role="group"
+    aria-label={title}
+    tabindex="0"
+  >
     {@render children()}
   </div>
 </section>

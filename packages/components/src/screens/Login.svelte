@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { GameConfig } from '@shutteros/core/model/configuration';
+  import { loginHintVisible } from '@shutteros/core/projections/game';
   import { passwordHint } from '@shutteros/core/services/passwords';
   import type { GameState, Intent } from '@shutteros/core/model/game';
   import { getI18n } from '../i18n/context';
@@ -9,7 +10,7 @@
   import Organizations from '../commons/Organizations.svelte';
   import Icon from '../commons/Icon.svelte';
   import Language from '../commons/Language.svelte';
-  import type { Branding } from '../../branding.generated';
+  import type { Branding } from './branding';
 
   let {
     snapshot,
@@ -27,6 +28,7 @@
     branding?: Branding;
   } = $props();
   let password = $state('');
+  const showHelp = $derived(loginHintVisible(snapshot));
   function login() {
     dispatch({ type: 'login', password });
     password = '';
@@ -89,17 +91,19 @@
               }
             }}
             placeholder={copy.login.placeholder}
-            aria-describedby={snapshot.failedAttempts >= 3
-              ? 'password-help password-error'
-              : snapshot.failedAttempts > 0
-                ? 'password-error'
-                : undefined}
+            aria-describedby={[
+              showHelp ? 'password-help' : '',
+              snapshot.failedAttempts > 0 ? 'password-error' : '',
+            ]
+              .filter(Boolean)
+              .join(' ') || undefined}
             aria-invalid={snapshot.failedAttempts > 0}
             class="min-w-0 flex-1 bg-transparent px-4 py-3.5 text-base outline-none"
           />
         </div>
-        {#if snapshot.failedAttempts >= 3}<p
+        {#if showHelp}<p
             id="password-help"
+            role="status"
             class="mt-3 text-center text-xs text-white/85"
           >
             {copy.login.helper}
@@ -137,10 +141,7 @@
         </p>
       </aside>
     {:else}
-      <aside
-        class="mx-auto max-w-[240px] text-center text-sm text-white/80"
-        hidden={snapshot.failedAttempts < 3}
-      >
+      <aside class="mx-auto max-w-[240px] text-center text-sm text-white/80" hidden={!showHelp}>
         <Icon name="light" size={28} />
         <p class="mt-3">{copy.login.physicalHint}</p>
       </aside>

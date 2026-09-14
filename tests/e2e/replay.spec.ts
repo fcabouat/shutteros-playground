@@ -18,6 +18,12 @@ async function openStart(page: Page, id: string) {
   await expect(page.locator(`[data-challenge="${id}"]`)).toBeVisible();
 }
 
+async function chooseFromGuidance(page: Page, choiceId: string) {
+  await page.locator('.activity-guidance .guidance-trigger').click();
+  await page.locator('.activity-guidance .guidance-trigger').click();
+  await page.locator(`.action-dock-panel [data-choice="${choiceId}"]`).click();
+}
+
 for (const delivery of ['http', 'file'] as const) {
   test(`completed situations can be replayed without replacing the original result (${delivery})`, async ({
     page,
@@ -25,8 +31,7 @@ for (const delivery of ['http', 'file'] as const) {
     await enter(page, delivery);
     const usbIcon = page.locator('.desktop-icon:has([data-app="usb"])');
     await usbIcon.dblclick();
-    await page.getByRole('button', { name: 'Que faire ?', exact: true }).click();
-    await page.getByRole('button', { name: 'Passer par la station blanche', exact: false }).click();
+    await chooseFromGuidance(page, 'station');
     await expect(page.locator('.feedback-card[data-outcome="safe"]')).toBeVisible();
     await page.getByRole('button', { name: 'Continuer l’exploration' }).click();
 

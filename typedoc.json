@@ -5,7 +5,8 @@
     "packages/core/src/runtime",
     "packages/core/src/projections",
     "packages/core/src/services",
-    "packages/core/src/data/catalog.ts"
+    "packages/core/src/data/catalog.ts",
+    "packages/core/src/data/activities.ts"
   ],
   "entryPointStrategy": "expand",
   "tsconfig": "packages/core/tsconfig.json",
@@ -14,5 +15,5 @@
   "name": "ShutterOS core — API",
   "includeVersion": true,
   "excludeInternal": true,
-  "intentionallyNotExported": ["challengeChoices", "Translatable", "fr"]
+  "intentionallyNotExported": ["Translatable", "fr"]
 }

@@ -9,14 +9,11 @@ const answers: Readonly<Record<KnowledgeId, Readonly<Record<string, boolean>>>> 
 
 /**
  * Optional questions belong to a learning context, not to a separate game phase.
- * Password practice follows renewal in mail or guided routines; incident/MFA checks follow
+ * Password practice follows guided account renewal; incident/MFA checks follow
  * their feedback. Answers stay outside primary challenge results and progression.
  */
 export function currentKnowledgeId(state: GameState): KnowledgeId | null {
   if (state.phase !== 'session') return null;
-  if (state.scene.kind === 'challenge' && state.scene.id === 'mail') {
-    return state.routines.password === 'done' ? 'password' : null;
-  }
   if (state.scene.kind === 'routines' && state.routines.password === 'done') {
     return 'password';
   }

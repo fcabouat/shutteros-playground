@@ -61,6 +61,11 @@ export const challenges: Challenges = {
         detail: 'Il ressemble à un document, je veux voir son contenu.',
       },
       {
+        id: 'archive',
+        label: 'Ouvrir l’archive de photos',
+        detail: 'Le fichier ZIP paraît moins suspect que le programme déguisé.',
+      },
+      {
         id: 'eject',
         label: 'Éjecter la clé',
         detail: 'Arrêter l’exploration et retirer le support.',
@@ -122,59 +127,75 @@ export const challenges: Challenges = {
       'Isoler le réseau. Alerter les équipes de sécurité informatique. Suivre leurs consignes.',
   },
   mail: {
-    title: 'Une prime. Et beaucoup d’urgence.',
+    title: 'Une pièce jointe presque ordinaire.',
     app: 'Messagerie',
-    tagline: 'Un message des ressources humaines réclame une action immédiate.',
-    question: 'Comment vérifiez-vous cette demande ?',
+    tagline: 'Un message plausible arrive avec une adresse étrange et un fichier à ouvrir.',
+    question: 'Que faites-vous de ce message ?',
     hints: [
-      'Un mail attend une réponse. Le nom de l’expéditeur semble familier…',
-      'Affichez l’adresse complète. Pour confirmer, ne reprenez pas les coordonnées contenues dans le message suspect.',
+      'Le sujet et le ton paraissent ordinaires. Examinez aussi l’adresse complète et la pièce jointe.',
+      'Répondre reste dans le canal choisi par l’expéditeur. Le signalement permet aux équipes de sécurité informatique d’examiner le message.',
     ],
     choices: [
-      { id: 'open', label: 'Ouvrir le lien', detail: 'La demande a l’air officielle.' },
+      {
+        id: 'open',
+        label: 'Ouvrir la pièce jointe',
+        detail: 'Le message explique pourquoi elle a été envoyée.',
+      },
       {
         id: 'reply',
         label: 'Répondre au message',
-        detail: 'Demander à son auteur si le mail est authentique.',
-      },
-      {
-        id: 'verify',
-        label: 'Contacter les RH via l’annuaire',
-        detail: 'Vérifier par un second canal déjà connu.',
+        detail: 'Demander à l’expéditeur de confirmer la pièce jointe.',
       },
       {
         id: 'report',
-        label: 'Signaler le message',
-        detail: 'Le transmettre au canal de signalement prévu.',
+        label: 'Transmettre aux équipes de sécurité informatique',
+        detail: 'Utiliser le canal de signalement prévu par l’organisation.',
       },
     ],
     feedback: {
-      safe: 'Vous avez quitté le canal potentiellement piégé. Votre contact habituel peut confirmer la demande, indépendamment du message reçu.',
+      safe: 'Vous avez transmis le message suspect au canal prévu. Les équipes de sécurité informatique peuvent l’examiner sans exécuter la pièce jointe.',
       risky:
-        'Le lien et la réponse restent dans le canal choisi par l’expéditeur. Un imposteur peut confirmer sa propre histoire.',
+        'Ouvrir la pièce jointe ou répondre reste dans le scénario préparé par l’expéditeur. Un imposteur peut confirmer sa propre histoire.',
     },
     lesson:
-      'Vérifiez l’adresse complète et la cohérence de la demande. Au moindre doute, contactez la personne par un numéro ou un canal déjà connu. L’absence de signature numérique ne suffit pas à prouver une fraude.',
-    shortLesson: 'Confirmer une demande inhabituelle par un second canal connu.',
+      'Un message plausible peut contenir une pièce jointe dangereuse. Vérifiez l’adresse complète et la cohérence de la demande, puis transmettez les messages suspects aux équipes de sécurité informatique par le canal prévu. Si vous devez confirmer, utilisez un contact connu indépendant du message.',
+    shortLesson: 'Examiner l’adresse et la demande. Signaler sans ouvrir ni répondre.',
   },
   spoof: {
-    title: 'Et si l’expéditeur, c’était vous ?',
-    app: 'Studio expéditeur',
-    tagline: 'Changez le champ « De », puis observez le message reçu.',
-    question: 'Un nom rassurant suffit-il à faire confiance ?',
+    title: 'Une adresse connue. Une demande inhabituelle.',
+    app: 'Messagerie',
+    tagline:
+      'Un contact habituel demande d’envoyer un document interne vers une adresse personnelle.',
+    question: 'Que faites-vous de cette demande ?',
     hints: [
-      'Vous savez examiner un mail. Essayez maintenant de modifier son expéditeur.',
-      'Choisissez l’adresse de l’usurpateur, gardez un nom crédible, puis envoyez le message dans la simulation.',
+      'L’adresse affichée est celle du contact habituel, mais la demande sort du cadre de travail normal.',
+      'Un compte réel peut être compromis. Transmettez le message aux équipes de sécurité informatique au lieu d’utiliser la conversation suspecte.',
     ],
-    choices: [],
+    choices: [
+      {
+        id: 'comply',
+        label: 'Envoyer le document',
+        detail: 'Le message vient de l’adresse professionnelle habituelle.',
+      },
+      {
+        id: 'reply',
+        label: 'Répondre pour confirmer',
+        detail: 'Demander dans cette conversation si la demande est correcte.',
+      },
+      {
+        id: 'report',
+        label: 'Transmettre aux équipes de sécurité informatique',
+        detail: 'Utiliser le canal de signalement prévu par l’organisation.',
+      },
+    ],
     feedback: {
-      safe: 'Quelques caractères ont suffi à changer l’identité affichée. Ce que vous voyez dans l’en-tête ne constitue pas, à lui seul, une preuve d’identité.',
+      safe: 'Vous avez signalé une demande inhabituelle avant de sortir le document interne de son environnement de travail.',
       risky:
-        'Un nom familier et une signature en bas de message peuvent être recopiés. Revenez à un contact connu pour vérifier.',
+        'Une adresse familière ne rend pas la demande sûre. Une réponse peut parvenir au même imposteur ou au compte déjà compromis.',
     },
     lesson:
-      'Une adresse d’envoi déléguée peut être légitime. Le nom affiché reste facile à modifier. Même si la messagerie vérifie l’expéditeur, une demande inhabituelle mérite une vérification auprès de votre contact connu.',
-    shortLesson: 'L’identité affichée se modifie. La confiance se vérifie.',
+      'Le nom affiché peut être copié, une adresse peut être usurpée et une boîte mail réelle peut aussi être compromise. Les systèmes de messagerie disposent de contrôles, mais l’identité visible ne suffit pas à valider une demande inhabituelle. Signalez-la par le canal prévu et vérifiez avec un contact connu indépendant du message.',
+    shortLesson: 'Même une boîte connue peut être compromise. Signaler la demande inhabituelle.',
   },
   web: {
     title: 'Un portail presque familier.',

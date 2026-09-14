@@ -4,6 +4,7 @@ type KioskConfigV1 = {
   sessionMinutes: number;
   /** V1 compatibility field; accepted and validated but unused by the runtime. */
   challengeSeconds?: number;
+  /** V1 compatibility field; assistance now uses a fixed two-minute delay. */
   explorationSeconds?: number;
   idleReminderSeconds?: number;
   eventIntervalSeconds?: number;

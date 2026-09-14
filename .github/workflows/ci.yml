@@ -25,6 +25,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          fetch-depth: 0
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: '24'
@@ -41,8 +42,8 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Validate shell scripts and the Ubuntu kit without modifying the runner
         run: |
-          shellcheck -x deployment/ubuntu/*.sh deployment/ubuntu/session deployment/ubuntu/launch-chromium deployment/ubuntu/tests/*.sh scripts/gitflow-init.sh .gitflow/hooks/*
-          for script in deployment/ubuntu/*.sh deployment/ubuntu/session deployment/ubuntu/launch-chromium deployment/ubuntu/tests/*.sh scripts/gitflow-init.sh .gitflow/hooks/*; do
+          shellcheck -x deployment/ubuntu/*.sh deployment/ubuntu/session deployment/ubuntu/launch-chromium deployment/ubuntu/tests/*.sh scripts/gitflow-init.sh scripts/publish-release.sh .gitflow/hooks/*
+          for script in deployment/ubuntu/*.sh deployment/ubuntu/session deployment/ubuntu/launch-chromium deployment/ubuntu/tests/*.sh scripts/gitflow-init.sh scripts/publish-release.sh .gitflow/hooks/*; do
             sh -n "$script"
           done
           node deployment/ubuntu/tests/configuration-contract.test.mjs
@@ -58,11 +59,11 @@ jobs:
       - run: pnpm audit --audit-level high
       - run: pnpm exec playwright install --with-deps chromium --only-shell
       - run: pnpm verify
-      - name: Check that a version tag matches package.json
+      - name: Validate the release tag and Gitflow finish graph
         if: github.ref_type == 'tag'
         env:
           TAG: ${{ github.ref_name }}
-        run: test "$TAG" = "v$(node scripts/version.mjs current)"
+        run: node scripts/version.mjs validate-tag "$TAG" "$GITHUB_SHA"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: shutteros-static-and-portable
@@ -148,16 +149,11 @@ jobs:
         run: |
           cp dist/portable/shutteros.html "shutteros-portable-$TAG.html"
           (cd dist && zip -qr "../shutteros-kiosk-$TAG.zip" . -x 'portable/*')
-      - name: Create the GitHub release once
+      - name: Create or repair the GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
           TAG: ${{ github.ref_name }}
         run: |
-          if gh release view "$TAG" >/dev/null 2>&1; then
-            echo "::notice::release $TAG already exists; nothing to do"
-            exit 0
-          fi
-          previous=$(git tag --list 'v*' --sort=-v:refname | grep -vx "$TAG" | head -1 || true)
-          gh release create "$TAG" --verify-tag --title "ShutterOS Playground $TAG" --generate-notes \
-            ${previous:+--notes-start-tag "$previous"} \
+          sh scripts/publish-release.sh "$TAG" \
             "shutteros-portable-$TAG.html" "shutteros-kiosk-$TAG.zip"

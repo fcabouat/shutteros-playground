@@ -36,6 +36,11 @@ export const englishChallenges: Challenges = {
         detail: 'It looks like a document; I want to see its contents.',
       },
       {
+        id: 'archive',
+        label: 'Open the photo archive',
+        detail: 'The ZIP file looks less suspicious than the disguised program.',
+      },
+      {
         id: 'eject',
         label: 'Eject the drive',
         detail: 'Stop exploring and remove the device.',
@@ -96,59 +101,74 @@ export const englishChallenges: Challenges = {
     shortLesson: 'Isolate the network. Alert the security team. Follow their instructions.',
   },
   mail: {
-    title: 'A bonus. And a lot of urgency.',
+    title: 'An almost ordinary attachment.',
     app: 'Mail',
-    tagline: 'A human resources message demands immediate action.',
-    question: 'How do you check this request?',
+    tagline: 'A plausible message arrives with an odd address and a file to open.',
+    question: 'What do you do with this message?',
     hints: [
-      'An email awaits a reply. The sender name looks familiar…',
-      'Show the full address. To confirm, do not use contact details in the suspicious message.',
+      'The subject and tone look ordinary. Examine the full address and attachment too.',
+      'Replying stays in the channel chosen by the sender. Reporting lets the security team examine the message.',
     ],
     choices: [
-      { id: 'open', label: 'Open the link', detail: 'The request looks official.' },
+      {
+        id: 'open',
+        label: 'Open the attachment',
+        detail: 'The message explains why it was sent.',
+      },
       {
         id: 'reply',
         label: 'Reply to the message',
-        detail: 'Ask its author whether the email is genuine.',
-      },
-      {
-        id: 'verify',
-        label: 'Contact HR via the directory',
-        detail: 'Check through a second, already known channel.',
+        detail: 'Ask the sender to confirm the attachment.',
       },
       {
         id: 'report',
-        label: 'Report the message',
-        detail: 'Send it through the organisation’s reporting channel.',
+        label: 'Forward to the security team',
+        detail: 'Use the organisation’s designated reporting channel.',
       },
     ],
     feedback: {
-      safe: 'You left the potentially trapped channel. Your usual contact can confirm the request independently.',
+      safe: 'You sent the suspicious message through the designated channel. The security team can examine it without running the attachment.',
       risky:
-        'The link and reply stay in the channel chosen by the sender. An impostor can confirm their own story.',
+        'Opening the attachment or replying stays in the situation prepared by the sender. An impostor can confirm their own story.',
     },
     lesson:
-      'Check the full address and whether the request makes sense. When in doubt, contact the person through a number or channel you already know. The absence of a digital signature alone does not prove fraud.',
-    shortLesson: 'Confirm an unusual request through a second known channel.',
+      'A plausible message can contain a dangerous attachment. Check the full address and whether the request makes sense, then forward suspicious messages to the security team through the designated channel. If you need to confirm, use a known contact independent of the message.',
+    shortLesson: 'Examine the address and request. Report without opening or replying.',
   },
   spoof: {
-    title: 'What if the sender were you?',
-    app: 'Sender studio',
-    tagline: 'Change the “From” field, then watch the received message.',
-    question: 'Is a reassuring name enough to trust?',
+    title: 'A known address. An unusual request.',
+    app: 'Mail',
+    tagline: 'A usual contact asks you to send an internal document to a personal address.',
+    question: 'What do you do with this request?',
     hints: [
-      'You know how to inspect an email. Now try changing its sender.',
-      'Choose the impostor address, keep a credible name, then send it in the simulation.',
+      'The displayed address belongs to your usual contact, but the request falls outside normal work practice.',
+      'A real account can be compromised. Forward the message to the security team instead of using the suspicious conversation.',
     ],
-    choices: [],
+    choices: [
+      {
+        id: 'comply',
+        label: 'Send the document',
+        detail: 'The message came from the usual work address.',
+      },
+      {
+        id: 'reply',
+        label: 'Reply to confirm',
+        detail: 'Ask in this conversation whether the request is correct.',
+      },
+      {
+        id: 'report',
+        label: 'Forward to the security team',
+        detail: 'Use the organisation’s designated reporting channel.',
+      },
+    ],
     feedback: {
-      safe: 'A few characters were enough to change the displayed identity. What you see in the header alone does not prove identity.',
+      safe: 'You reported an unusual request before moving the internal document outside its work environment.',
       risky:
-        'A familiar name and a signature at the bottom can be copied. Return to a known contact to check.',
+        'A familiar address does not make the request safe. A reply may reach the same impostor or already compromised account.',
     },
     lesson:
-      'A delegated sending address may be legitimate. The displayed name is easy to change. Even if the mail system verifies the sender, check an unusual request with your known contact.',
-    shortLesson: 'Displayed identity can change. Trust must be checked.',
+      'A displayed name can be copied, an address can be forged, and a real mailbox can also be compromised. Mail systems have technical checks, but visible identity alone does not validate an unusual request. Report it through the designated channel and check with a known contact independent of the message.',
+    shortLesson: 'Even a known mailbox can be compromised. Report the unusual request.',
   },
   web: {
     title: 'A nearly familiar portal.',

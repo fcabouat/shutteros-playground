@@ -15,21 +15,21 @@ pnpm audit --audit-level high
 
 On Linux hosts without the browser's system libraries, use `pnpm exec playwright install --with-deps chromium --only-shell`. This installs system packages and may require administrator privileges.
 
-`verify` stops at the first failed step. It runs lint, formatting, core TypeScript and Svelte diagnostics, Knip, unit tests, both production builds, and Chromium browser tests. The public-site build includes Storybook and TypeDoc. Site checks and the dependency advisory audit run separately from `verify`. Advisory results describe the current registry data for the resolved lockfile.
+`verify` stops at the first failed step. It runs lint, formatting, the isolated core and component checks, application Svelte diagnostics, Knip, unit tests, both production builds, and Chromium browser tests. The public-site build includes Storybook and TypeDoc. Site checks and the dependency advisory audit run separately from `verify`. Advisory results describe the current registry data for the resolved lockfile.
 
 ## Automated coverage
 
-| Area                      | Checks                                                                                                                                                 |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Architecture              | Core compiles without DOM types or runtime dependencies; import-boundary tests reject forbidden dependencies.                                          |
-| Game rules                | Global session deadline, free/guided transitions, replay without rescoring, background incidents, invalid intents, routines and reset.                 |
-| Configuration             | Strict decoding, bounded loading, invalid input, local logo filenames and portable image embedding.                                                    |
-| Packaging                 | Script serialization, CSP integrity, dependency license inventory, notice parity and removal of build intermediates.                                   |
-| Browser behavior          | Complete HTTP and offline journeys, both languages, navigation, dialogs, drafts, timeout/reset, narrow layouts, keyboard controls, branding and About. |
-| Accessibility and privacy | Axe scans in tested states, focus behavior, unexpected external requests, page errors and persistent browser storage.                                  |
-| Product site              | Local links and anchors, language navigation, demo and download paths, API and Storybook loading, mobile layout and Axe scans.                         |
-| Maintenance               | Knip unused-file/dependency/export checks, workflow syntax, frozen dependency installation and registry advisory audit.                                |
-| Ubuntu scripts            | ShellCheck, shell/unit syntax, Python/TypeScript contract parity and sandboxed install/refusal/rollback/verification/removal tests.                    |
+| Area                      | Checks                                                                                                                                                                                   |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Architecture              | Core compiles without DOM types or runtime dependencies; import-boundary tests reject forbidden dependencies.                                                                            |
+| Game rules                | Global session deadline, free/guided transitions, replay without rescoring, paused activities, progressive hints, native/guided action equivalence, invalid intents, routines and reset. |
+| Configuration             | Strict decoding, bounded loading, invalid input, local logo filenames and portable image embedding.                                                                                      |
+| Packaging                 | Script serialization, CSP integrity, dependency license inventory, notice parity and removal of build intermediates.                                                                     |
+| Browser behavior          | Complete HTTP and offline journeys, both languages, navigation, dialogs, drafts, timeout/reset, narrow layouts, keyboard controls, branding and About.                                   |
+| Accessibility and privacy | Axe scans in tested states, focus behavior, unexpected external requests, page errors and persistent browser storage.                                                                    |
+| Product site              | Local links and anchors, language navigation, demo and download paths, API and Storybook loading, mobile layout and Axe scans.                                                           |
+| Maintenance               | Knip unused-file/dependency/export checks, workflow syntax, frozen dependency installation and registry advisory audit.                                                                  |
+| Ubuntu scripts            | ShellCheck, shell/unit syntax, Python/TypeScript contract parity and sandboxed install/refusal/rollback/verification/removal tests.                                                      |
 
 Only the session deadline limits play; there is no countdown for individual answers. Players cannot extend the deadline, so no WCAG timing-adjustment conformance is claimed. Operators can configure a longer session before an event.
 
