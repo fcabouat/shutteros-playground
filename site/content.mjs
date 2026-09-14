@@ -15,7 +15,7 @@ export const content = {
     note: 'Sans inscription. Données fictives. Aucun message réellement envoyé.',
     stats: [
       ['5–15 min', 'à votre rythme'],
-      ['7 situations', 'à explorer'],
+      ['8 activités', 'à explorer'],
       ['FR / EN', 'au choix'],
       ['MIT', 'libre et personnalisable'],
     ],
@@ -109,7 +109,7 @@ export const content = {
     note: 'No sign-up. Fictional data. No messages actually sent.',
     stats: [
       ['5–15 min', 'at your own pace'],
-      ['7 situations', 'to explore'],
+      ['8 activities', 'to explore'],
       ['FR / EN', 'your choice'],
       ['MIT', 'open and customisable'],
     ],

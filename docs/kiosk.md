@@ -33,7 +33,7 @@ Use this artifact where a single local file is preferable. Because the configura
 
 ## Configuration
 
-`static/kiosk-config.json` uses version 1. It sets the fictional accepted passwords, global session duration, organisation labels, optional local organisation-logo filename, security contact details, and the two addresses used only in the sender-spoofing demonstration. The global session duration defaults to fifteen minutes.
+`static/kiosk-config.json` uses version 1. It sets the fictional accepted passwords, global session duration, organisation labels, optional local organisation-logo filename, security contact details, and fictional mail addresses used in the simulation. `mailLegitimateAddress` is the familiar sender of the unusual request; `mailImpersonatorAddress` is the suspicious sender of the ordinary request. The global session duration defaults to fifteen minutes.
 
 `supportLabel` and `supportContact` identify the organisation’s security reporting channel. Configure that direct contact; the general help desk can be a fallback if your procedure requires it. Routine workstation maintenance remains an IT responsibility.
 
@@ -43,7 +43,7 @@ On page load, `?lang=fr` or `?lang=en` selects the game language when present. O
 
 Set `showPasswordHint` to `false` to remove the digital note and use a physical one on the monitor. Write only the chosen fictional password on it. Free exploration, nudges, guided finish, and idle reminders (45 seconds by default) are configurable within the global session.
 
-Session duration accepts 1 to 30 minutes. Address fields are bounded, simple email addresses. The UI shows a clear validation error for malformed, unknown, or out-of-range values and starts no game until valid configuration is available. Older V1 files may still include `challengeSeconds` and `defaultCalmMode`; these keys remain accepted and validated for compatibility but are unused.
+Session duration accepts 1 to 30 minutes. Address fields are bounded, simple email addresses. The UI shows a clear validation error for malformed, unknown, or out-of-range values and starts no game until valid configuration is available. Older V1 files may still include `challengeSeconds`, `explorationSeconds` and `defaultCalmMode`; these keys remain accepted and validated for compatibility but are unused.
 
 Treat the accepted passwords as public game content. They are not credentials and must never be copied from a real account. The simulated login uses an ordinary text input, outside a form, with autocomplete disabled; Enter and the session button both work. Its value is not stored, logged, or sent. There is no HTML password input. This avoids the normal credential-form trigger, but a web page cannot control every browser or password-manager extension: [autocomplete is only a browser hint](https://developer.mozilla.org/en-US/docs/Web/Security/Practical_implementation_guides/Turning_off_form_autocompletion).
 

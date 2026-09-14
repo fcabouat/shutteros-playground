@@ -1,9 +1,9 @@
 #!/bin/sh
-# Bump both package.json files on the new release branch and commit the change.
+# Bump every release package on the new release branch and commit the change.
 # shellcheck source=.gitflow/hooks/gitflow-common.sh
 . "$(dirname "$0")/gitflow-common.sh"
 version=$(bare_version "$1")
 node scripts/version.mjs set "$version" >/dev/null
-git add package.json packages/core/package.json
+git add package.json packages/core/package.json packages/components/package.json
 git commit -q -m "chore(release): v$version"
 echo "Version set to $version on $3"

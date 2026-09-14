@@ -1,0 +1,24 @@
+{
+  "name": "@shutteros/components",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "files": [
+    "src"
+  ],
+  "exports": {
+    "./*.svelte": "./src/*.svelte",
+    "./*.css": "./src/*.css",
+    "./*": "./src/*.ts"
+  },
+  "scripts": {
+    "check": "svelte-check --tsconfig ./tsconfig.json"
+  },
+  "dependencies": {
+    "@internationalized/date": "^3.8.1",
+    "@lucide/svelte": "^1.44.0",
+    "@shutteros/core": "workspace:*",
+    "bits-ui": "2.19.2",
+    "svelte": "5.57.0"
+  }
+}

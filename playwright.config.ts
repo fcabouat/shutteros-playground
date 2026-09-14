@@ -15,6 +15,7 @@ export default defineConfig({
   use: {
     baseURL,
     locale: 'fr-FR',
+    launchOptions: { ignoreDefaultArgs: ['--hide-scrollbars'] },
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
   },

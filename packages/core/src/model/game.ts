@@ -1,4 +1,5 @@
 import type { KnowledgeAnswer } from './knowledge';
+import { activityDefinitions } from '../data/activities';
 
 export type ChallengeId = 'usb' | 'incident' | 'mail' | 'spoof' | 'web' | 'mfa' | 'ai';
 
@@ -25,56 +26,10 @@ export const challengeOrder = [
  * Authoritative domain actions. Labels and explanations remain in the content
  * catalogue, while the pure core owns which identifiers are valid and their effect.
  */
-const challengeChoices = {
-  // The exercise permits routine work without names in either tool, while named
-  // work stays internal. Security notes remain restricted regardless of names.
-  ai: {
-    choose: {
-      'internal-routine': 'safe',
-      'internal-routineAnonymised': 'safe',
-      'internal-confidential': 'risky',
-      'internal-confidentialAnonymised': 'risky',
-      'internal-generic': 'safe',
-      'commercial-routine': 'risky',
-      'commercial-routineAnonymised': 'safe',
-      'commercial-confidential': 'risky',
-      'commercial-confidentialAnonymised': 'risky',
-      'commercial-generic': 'safe',
-    },
-    notify: {},
-  },
-  usb: {
-    choose: { open: 'risky', eject: 'safe', station: 'safe', report: 'safe' },
-    notify: {},
-  },
-  incident: {
-    choose: { isolate: 'safe', restart: 'risky', ignore: 'risky' },
-    notify: { notify: 'safe', 'call-number': 'risky', delete: 'risky' },
-  },
-  mail: {
-    choose: { reply: 'risky', open: 'risky', verify: 'safe', report: 'safe' },
-    notify: {},
-  },
-  spoof: {
-    choose: { understood: 'safe' },
-    notify: {},
-  },
-  web: {
-    choose: { submit: 'risky', 'known-address': 'safe', 'trust-lock': 'risky' },
-    notify: {},
-  },
-  mfa: {
-    choose: { approve: 'risky', 'deny-report': 'safe', ignore: 'risky' },
-    notify: {},
-  },
-} as const satisfies Readonly<
-  Record<ChallengeId, Readonly<Record<DecisionStep, Readonly<Record<string, Outcome>>>>>
->;
-
 export type ChallengeChoiceId<
   Id extends ChallengeId,
   Step extends DecisionStep,
-> = keyof (typeof challengeChoices)[Id][Step] & string;
+> = keyof (typeof activityDefinitions)[Id]['steps'][Step]['actions'] & string;
 
 export type ChallengeDecisionChoiceId<Id extends ChallengeId> = ChallengeChoiceId<Id, 'choose'>;
 
@@ -84,20 +39,38 @@ export function choiceOutcome(
   step: DecisionStep,
   choiceId: string,
 ): Outcome | null {
-  const choices = challengeChoices[id][step] as Readonly<Record<string, Outcome>>;
+  const choices = activityDefinitions[id].steps[step].actions as Readonly<
+    Record<string, { outcome: Outcome }>
+  >;
   if (!Object.prototype.hasOwnProperty.call(choices, choiceId)) return null;
-  return choices[choiceId] ?? null;
+  return choices[choiceId]?.outcome ?? null;
 }
 
 /** Stable domain identifiers for renderers that need to enumerate valid actions. */
 export function challengeChoiceIds(id: ChallengeId, step: DecisionStep): readonly string[] {
-  return Object.keys(challengeChoices[id][step]);
+  return Object.keys(activityDefinitions[id].steps[step].actions);
 }
+
+export type GuidanceLevel = 0 | 1 | 2;
+
+/** Each unresolved help level advances after two minutes of active, visible time. */
+export const guidanceDelayMs = 120_000;
+
+export type GuidanceClock = {
+  /** Highest level explicitly requested; elapsed active time may reveal more. */
+  requestedLevel: GuidanceLevel;
+  started: boolean;
+  activeElapsedMs: number;
+  activeSince: number | null;
+  visible: boolean;
+};
 
 export type ChallengeResult = {
   id: ChallengeId;
   outcome: Outcome;
   choiceId: string;
+  /** Choice that advanced a preceding stage, currently used for incident isolation. */
+  priorChoiceId?: string;
 };
 
 /** Current learning step, independent of window placement or minimization. */
@@ -108,8 +81,9 @@ export type Scene =
       kind: 'challenge';
       id: ChallengeId;
       startedAt: number;
-      exploreUntil: number;
-      step: 'explore' | DecisionStep;
+      step: DecisionStep;
+      priorChoiceId?: string;
+      guidance: GuidanceClock;
     }
   // Replay feedback describes the latest attempt; results still owns the first one.
   | { kind: 'feedback'; result: ChallengeResult; replay: boolean }
@@ -130,6 +104,7 @@ export type GameState =
       now: number;
       reason: 'initial' | 'logout' | 'expired';
       failedAttempts: number;
+      loginGuidance: GuidanceClock;
     }
   | {
       phase: 'session';
@@ -153,12 +128,9 @@ export type GameState =
         idleDismissed: boolean;
       };
       locked: boolean;
-      // Isolation is already done, but reporting is outstanding. This survives leaving
-      // the incident window so its notification step can resume without repeating isolation.
-      pendingIncident: {
-        startedAt: number;
-        exploreUntil: number;
-      } | null;
+      activityVisible: boolean;
+      /** Unresolved attempts pause here while their activity is offscreen. */
+      pausedActivities: Partial<Record<ChallengeId, Extract<Scene, { kind: 'challenge' }>>>;
     };
 
 /**
@@ -173,13 +145,14 @@ export type Intent =
   | { type: 'continue' }
   | { type: 'open'; id: ChallengeId }
   | { type: 'finish-experience' }
-  | { type: 'begin-decision' }
+  | { type: 'request-hint' }
   | { type: 'choose'; choiceId: string }
   | { type: 'send-ai'; tool: AiTool; prompt: AiPrompt }
   | { type: 'close' }
   | { type: 'debrief' }
   | { type: 'answer-check'; answerId: string }
   | { type: 'activity' }
+  | { type: 'activity-visible'; visible: boolean }
   | { type: 'routine'; id: 'password' | 'update'; action: 'complete' | 'later' }
   | { type: 'practice-lock' }
   | { type: 'resume-lock' }

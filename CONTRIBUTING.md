@@ -15,13 +15,13 @@ The first `check` generates local branding and framework types for the editor. D
 
 Useful commands are `pnpm dev`, `pnpm test`, `pnpm check`, `pnpm lint`, and `pnpm build`. Run the checks relevant to a change before opening a pull request; see [verification](docs/verification.md) for the full release workflow.
 
-After that installation, Bun can run individual scripts, for example `bun run dev`, `bun run build`, `bun run check`, `bun run test`, and `bun run knip`. Keep Node installed. `bun test` runs a different test runner; use `bun run test` for Vitest. Use pnpm for dependency changes and the full `verify` workflow, retaining the single committed pnpm lockfile.
+After that installation, Bun remains a supported manual runner for individual development scripts, for example `bun run dev`, `bun run build`, `bun run check`, `bun run test`, and `bun run knip`. Keep Node installed. `bun test` runs a different test runner; use `bun run test` for Vitest. Use pnpm for dependency changes, Gitflow hooks, and the full `verify` and release workflows, retaining the single committed pnpm lockfile.
 
 Knip runs in `verify` and detects unused files, dependencies and exports across the application and core workspace. Framework entry points come from its plugins; `knip.jsonc` declares the test-server and static-site assets loaded outside imports, and checks core entry exports. Remove unused code or document a real entry point instead of adding broad ignore rules.
 
 ## Scope and design
 
-Keep `packages/core` independent of Svelte, the DOM, storage, system time, and package dependencies. It is a standalone workspace package so the rules can be type-checked separately from the browser application. Keep the versioned external JSON contract in `src/lib/contract` independent of `@shutteros/core`. UI components render props and emit intents; they do not contain game outcomes or timing rules. Preserve the state-machine invariants: absolute deadlines, monotonic time, no duplicate result for a challenge, and a full reset on logout or global expiry.
+Keep `packages/core` independent of Svelte, the DOM, storage, system time, and package dependencies. It is a standalone workspace package so the rules can be type-checked separately from the browser application. Keep the versioned external JSON contract in `src/lib/contract` independent of `@shutteros/core`. The independently checked `packages/components` package renders props and emits intents; it does not import application or infrastructure modules or contain game outcomes or timing rules. Preserve the state-machine invariants: absolute deadlines, monotonic time, no duplicate result for a challenge, and a full reset on logout or global expiry.
 
 Do not add real credential collection, network-backed scenarios, trackers, persistence, external embeds, CDNs, or claims that the page provides operating-system isolation. Do not turn the fictional content into a real assessment of participants.
 
@@ -47,7 +47,7 @@ Dependabot checks version updates monthly, grouped into application dependencies
 
 ## Git workflow
 
-`main` contains the reviewed distributable version; `develop` is the integration branch. Work on `feature/<topic>` or `bugfix/<topic>` branches and open a pull request into `develop`; merge with a merge commit. Releases and hotfixes are made locally with git-flow (`release/<version>`, `hotfix/<version>`, tags `v<version>`, `support/` for maintained lines) as described in the [publishing guide](docs/publishing.md#releases-with-git-flow). Run `pnpm gitflow:init` once per clone to configure the client and its tracked hooks.
+`main` contains the reviewed distributable version; `develop` is the integration branch. Work on `feature/<topic>` or `bugfix/<topic>` branches and open a pull request into `develop`; squash or rebase merging is suitable for these working branches. Release and hotfix finishes retain merge commits. Releases and hotfixes are made locally with git-flow (`release/<version>`, `hotfix/<version>`, tags `v<version>`, `support/` for maintained lines) as described in the [publishing guide](docs/publishing.md#releases-with-git-flow). Run `pnpm gitflow:init` once per clone to configure the client and its tracked hooks. The initializer refuses to overwrite an existing hook that is not already the exact tracked link.
 
 ## Dependency notices
 

@@ -1,18 +1,24 @@
 <script lang="ts">
+  import { tick } from 'svelte';
   import { Dialog } from 'bits-ui';
-  import type { Branding } from '../../branding.generated';
+  import type { Branding } from './branding';
   import type { GameConfig } from '@shutteros/core/model/configuration';
   import type { GameState, Intent, ChallengeId } from '@shutteros/core/model/game';
   import {
     nextChallenge,
+    pendingRoutines,
+    remainingActivities,
     remainingSeconds,
     idleReminderVisible,
     nextAmbientEvent,
     incidentIsolated,
     ambientSlot,
-    actionDockStartsOpen,
+    guidanceLevel,
+    activityIsVisible,
+    guidanceTarget,
     hasResult,
   } from '@shutteros/core/projections/game';
+  import { activityDefinition } from '@shutteros/core/data/activities';
   import { getI18n } from '../i18n/context';
   import Icon from '../commons/Icon.svelte';
   import Guide from '../commons/Guide.svelte';
@@ -41,6 +47,7 @@
     branding = { applicationName: 'ShutterOS' },
     legalNotices = null,
     legalNoticesFailed = false,
+    documentVisible = true,
   }: {
     snapshot: Extract<GameState, { phase: 'session' }>;
     config: GameConfig;
@@ -50,15 +57,16 @@
     branding?: Branding;
     legalNotices?: { projectLicense: string; thirdPartyNotices: string } | null;
     legalNoticesFailed?: boolean;
+    documentVisible?: boolean;
   } = $props();
   const i18n = getI18n();
   const copy = $derived(i18n.text);
+  const actionPanelId = $props.id();
   // Window chrome belongs to this mounted view; outcomes, timing and routine progress
   // come from snapshot. Game.svelte's generation key resets both lifetimes together.
   let guideOpen = $state(false);
   let exitOpen = $state(false);
-  let actionOpen = $state(false);
-  let actionKey = $state('');
+  let helpExpanded = $state(true);
   let minimized = $state(false);
   let settings = $state<'routines' | 'updates' | 'about' | null>(null);
   let idlePrompt = $state(false);
@@ -71,7 +79,58 @@
       .toString()
       .padStart(2, '0')}:${(seconds % 60).toString().padStart(2, '0')}`,
   );
-  const guideId = $derived(activeId ?? nextChallenge(snapshot));
+  const guideId = $derived(nextChallenge(snapshot));
+  const guideRoutine = $derived(pendingRoutines(snapshot)[0] ?? null);
+  const helpLevel = $derived(guidanceLevel(snapshot));
+  const helpTarget = $derived(guidanceTarget(snapshot));
+  const activityVisible = $derived(
+    activeId !== null &&
+      !minimized &&
+      !settings &&
+      !snapshot.locked &&
+      !exitOpen &&
+      documentVisible,
+  );
+  const actionOpen = $derived(activityVisible && helpLevel === 2 && helpExpanded);
+  const family = $derived(
+    activeId
+      ? activityDefinition(activeId).family
+      : snapshot.scene.kind === 'feedback'
+        ? activityDefinition(snapshot.scene.result.id).family
+        : snapshot.scene.kind === 'routines'
+          ? 'protection'
+          : undefined,
+  );
+  const hintKey = $derived(
+    snapshot.scene.kind === 'challenge' && snapshot.scene.step === 'notify' ? 'notify' : activeId,
+  );
+
+  // Visibility comes from the browser boundary; the core alone accounts for elapsed
+  // assistance time. Closing/minimizing an app never consumes its next hint delay.
+  $effect(() => {
+    if (activityIsVisible(snapshot) !== activityVisible)
+      dispatch({ type: 'activity-visible', visible: activityVisible });
+  });
+  $effect(() => {
+    void activeId;
+    void helpLevel;
+    helpExpanded = true;
+  });
+  async function focusChoices() {
+    await tick();
+    document.getElementById(actionPanelId)?.querySelector<HTMLElement>('input, button')?.focus();
+  }
+  function requestHint() {
+    const opensChoices = helpLevel >= 1;
+    helpExpanded = true;
+    dispatch({ type: 'request-hint' });
+    // Only an explicit request moves focus. Automatic help must not interrupt reading.
+    if (opensChoices) void focusChoices();
+  }
+  function toggleChoices() {
+    helpExpanded = !helpExpanded;
+    if (helpExpanded) void focusChoices();
+  }
   // Focus/scroll follow presentation changes. Window identity is deliberately coarser:
   // advancing a challenge step should not reconstruct its local form fields.
   const sceneKey = $derived(
@@ -120,42 +179,22 @@
   );
   const noticeAllowed = $derived(
     snapshot.mode === 'free' &&
-      !actionOpen &&
+      !guideOpen &&
       !settings &&
       !snapshot.locked &&
-      (snapshot.scene.kind === 'desktop' || snapshot.scene.kind === 'challenge'),
+      snapshot.scene.kind === 'desktop',
   );
 
   $effect(() => {
     if (idleReminderVisible(snapshot, config)) idlePrompt = true;
   });
 
-  $effect(() => {
-    const key =
-      snapshot.scene.kind === 'challenge'
-        ? `${snapshot.mode}:${snapshot.scene.id}:${snapshot.scene.step === 'notify' ? 'notify' : 'main'}`
-        : 'none';
-    // Native surfaces lead where they have a natural control. MFA and the reporting
-    // step have none, so their choices are available without opening the drawer first.
-    // Clock-only snapshots should not reopen a panel the player collapsed.
-    if (key !== actionKey) {
-      actionKey = key;
-      actionOpen =
-        snapshot.mode === 'guided' ||
-        (snapshot.scene.kind === 'challenge' && actionDockStartsOpen(snapshot.scene));
-    }
-  });
-  function toggleActions(open: boolean) {
-    actionOpen = open;
-    if (open && snapshot.scene.kind === 'challenge' && snapshot.scene.step === 'explore')
-      dispatch({ type: 'begin-decision' });
-  }
-
   function execute(intent: Intent) {
     if (intent.type === 'logout') {
       exitOpen = true;
       return;
     }
+    guideOpen = false;
     settings = null;
     minimized = false;
     // Restore a minimized app without starting a new core attempt or clearing its draft.
@@ -184,7 +223,10 @@
   }
 </script>
 
-<div class="session-screen wallpaper relative flex min-h-dvh flex-col">
+<div
+  data-active-hint={activityVisible && helpLevel > 0 ? helpTarget : undefined}
+  class="session-screen wallpaper relative flex min-h-dvh flex-col"
+>
   <div class="wallpaper-orbit" aria-hidden="true"></div>
   <a href="#session-main" class="skip-link">{copy.shell.skip}</a>
   <header class="contents">
@@ -241,109 +283,157 @@
         applicationName={branding.applicationName}
       />
     </div>
-    <div
-      class="window-layer"
-      class:with-actions={actionOpen &&
-        activeId !== null &&
-        activeId !== 'spoof' &&
-        activeId !== 'ai' &&
-        !minimized &&
-        !settings}
-    >
-      {#if snapshot.scene.kind !== 'desktop'}
-        <!-- Keep drafts mounted behind settings/minimization, but remove hidden views
-             from pointer and keyboard interaction. tests/e2e/game.spec.ts covers restore. -->
-        {#key windowId}<div
-            class="view-host"
-            hidden={minimized || settings !== null}
-            inert={minimized || settings !== null}
-          >
-            {#snippet currentView()}
-              {#if snapshot.scene.kind === 'intro'}<Intro {snapshot} dispatch={execute} />
-              {:else if snapshot.scene.kind === 'challenge'}<Challenge
-                  {snapshot}
-                  scene={snapshot.scene}
-                  {config}
-                  dispatch={execute}
-                />
-              {:else if snapshot.scene.kind === 'feedback'}<Feedback
-                  {snapshot}
-                  result={snapshot.scene.result}
-                  replay={snapshot.scene.replay}
-                  dispatch={execute}
-                />
-              {:else if snapshot.scene.kind === 'routines'}<Routines
-                  {snapshot}
-                  dispatch={execute}
-                />
-              {:else if snapshot.scene.kind === 'debrief'}<Debrief
-                  {snapshot}
-                  {config}
-                  dispatch={execute}
-                />{/if}
-            {/snippet}
-            {#if activeId === 'mfa'}
-              <section
-                class="device-shell"
-                aria-label={copy.mfa.app}
-                tabindex="-1"
-                data-window-focus
+    <div class="window-layer">
+      {#if activityVisible}
+        <aside class="activity-guidance" aria-label={copy.shell.guide}>
+          {#if helpLevel > 0 && helpExpanded && hintKey}
+            <p role="status" class="guidance-message">
+              <Icon name="light" size={19} />{copy.guidance.hints[hintKey]}
+            </p>
+          {/if}
+          <div class="guidance-controls">
+            {#if helpLevel < 2}
+              <button
+                class="guidance-trigger"
+                aria-controls={actionPanelId}
+                class:offered={helpLevel > 0}
+                onclick={requestHint}
               >
-                <div class="device-controls">
-                  <button
-                    class="icon-button"
-                    aria-label={copy.os.minimize}
-                    onclick={() => (minimized = true)}><Icon name="minus" size={18} /></button
-                  >{#if snapshot.mode === 'free'}<button
-                      class="icon-button"
-                      aria-label={copy.shell.close}
-                      onclick={closeWindow}><Icon name="close" size={18} /></button
-                    >{/if}
-                </div>
-                {@render currentView()}
-              </section>
+                <Icon name="sparkles" size={20} /><span
+                  >{helpLevel === 0 ? copy.guidance.first : copy.guidance.second}</span
+                >
+              </button>
             {:else}
-              <WindowFrame
-                title={windowTitle}
-                icon={activeId ?? 'shield'}
-                large={snapshot.scene.kind !== 'intro'}
-                onMinimize={() => (minimized = true)}
-                onClose={snapshot.mode === 'free' &&
-                (snapshot.scene.kind !== 'debrief' || nextChallenge(snapshot) !== null)
-                  ? closeWindow
-                  : undefined}
-                resetScrollKey={sceneKey}
-                moveLabel={copy.experience.move}
-                moveHint={copy.experience.moveHint}
+              <button
+                class="guidance-trigger offered"
+                aria-expanded={helpExpanded}
+                aria-controls={actionPanelId}
+                onclick={toggleChoices}
               >
-                {@render currentView()}
-              </WindowFrame>
+                <Icon name="light" size={20} />{helpExpanded
+                  ? copy.guidance.close
+                  : copy.guidance.choices}
+              </button>
             {/if}
-          </div>{/key}
+          </div>
+        </aside>
       {/if}
-      {#if settings}<div class="view-host">
-          <WindowFrame
-            title={settings === 'updates'
-              ? copy.routines.updates
-              : settings === 'about'
-                ? copy.about.title
-                : copy.routines.title}
-            icon="monitor"
-            large
-            onMinimize={() => (settings = null)}
-            onClose={() => (settings = null)}
-            resetScrollKey={sceneKey}
-            moveLabel={copy.experience.move}
-            moveHint={copy.experience.moveHint}
-            >{#if settings === 'updates'}<Updates
-                {snapshot}
-                {dispatch}
-              />{:else if settings === 'about'}<About
-                {legalNotices}
-                {legalNoticesFailed}
-              />{:else}<Routines {snapshot} {dispatch} />{/if}</WindowFrame
-          >
-        </div>{/if}
+      <div class="activity-layout" class:with-actions={actionOpen}>
+        {#if snapshot.scene.kind !== 'desktop'}
+          <!-- Keep drafts mounted behind settings/minimization, but remove hidden views
+             from pointer and keyboard interaction. tests/e2e/game.spec.ts covers restore. -->
+          {#key windowId}<div
+              class="view-host"
+              hidden={minimized || settings !== null}
+              inert={minimized || settings !== null}
+            >
+              {#snippet currentView()}
+                {#if snapshot.scene.kind === 'intro'}<Intro {snapshot} dispatch={execute} />
+                {:else if snapshot.scene.kind === 'challenge'}<Challenge
+                    {snapshot}
+                    scene={snapshot.scene}
+                    {config}
+                    dispatch={execute}
+                  />
+                {:else if snapshot.scene.kind === 'feedback'}<Feedback
+                    {snapshot}
+                    result={snapshot.scene.result}
+                    replay={snapshot.scene.replay}
+                    dispatch={execute}
+                  />
+                {:else if snapshot.scene.kind === 'routines'}<Routines
+                    {snapshot}
+                    dispatch={execute}
+                  />
+                {:else if snapshot.scene.kind === 'debrief'}<Debrief
+                    {snapshot}
+                    {config}
+                    dispatch={execute}
+                  />{/if}
+              {/snippet}
+              {#if activeId === 'mfa'}
+                <section
+                  class="device-shell"
+                  aria-label={copy.mfa.app}
+                  tabindex="-1"
+                  data-window-focus
+                >
+                  <div class="device-controls">
+                    <span class="activity-family" data-family="vigilance"
+                      ><Icon name="shield" size={14} />{copy.guidance.families.vigilance}</span
+                    >
+                    <button
+                      class="icon-button"
+                      aria-label={copy.os.minimize}
+                      onclick={() => (minimized = true)}><Icon name="minus" size={18} /></button
+                    >{#if snapshot.mode === 'free'}<button
+                        class="icon-button"
+                        aria-label={copy.shell.close}
+                        onclick={closeWindow}><Icon name="close" size={18} /></button
+                      >{/if}
+                  </div>
+                  {@render currentView()}
+                </section>
+              {:else}
+                <WindowFrame
+                  title={windowTitle}
+                  {family}
+                  icon={activeId ?? 'shield'}
+                  large={snapshot.scene.kind !== 'intro'}
+                  onMinimize={() => (minimized = true)}
+                  onClose={snapshot.mode === 'free' &&
+                  (snapshot.scene.kind !== 'debrief' || nextChallenge(snapshot) !== null)
+                    ? closeWindow
+                    : undefined}
+                  resetScrollKey={sceneKey}
+                  moveLabel={copy.experience.move}
+                  moveHint={copy.experience.moveHint}
+                >
+                  {@render currentView()}
+                </WindowFrame>
+              {/if}
+            </div>{/key}
+        {/if}
+        {#if settings}<div class="view-host">
+            <WindowFrame
+              title={settings === 'updates'
+                ? copy.routines.updates
+                : settings === 'about'
+                  ? copy.about.title
+                  : copy.routines.title}
+              icon="monitor"
+              family={settings === 'about' ? undefined : 'protection'}
+              large
+              onMinimize={() => (settings = null)}
+              onClose={() => (settings = null)}
+              resetScrollKey={sceneKey}
+              moveLabel={copy.experience.move}
+              moveHint={copy.experience.moveHint}
+              >{#if settings === 'updates'}<Updates
+                  {snapshot}
+                  {dispatch}
+                />{:else if settings === 'about'}<About
+                  {legalNotices}
+                  {legalNoticesFailed}
+                />{:else}<Routines {snapshot} {dispatch} />{/if}</WindowFrame
+            >
+          </div>{/if}
+        {#if snapshot.scene.kind === 'challenge'}
+          {#key snapshot.scene.id}<div
+              id={actionPanelId}
+              class="guidance-panel-host"
+              hidden={!actionOpen}
+              inert={!actionOpen}
+            >
+              <ActionDock
+                scene={snapshot.scene}
+                dispatch={execute}
+                open={actionOpen}
+                panelId={actionPanelId}
+              />
+            </div>{/key}
+        {/if}
+      </div>
     </div>
   </main>
   {#if notice && noticeAllowed}
@@ -382,22 +472,21 @@
       {/if}
     </aside>
   {/if}
-  {#if snapshot.scene.kind === 'challenge' && snapshot.scene.id !== 'spoof' && snapshot.scene.id !== 'ai' && !minimized && !settings && !snapshot.locked}
-    {#key snapshot.scene.id}<ActionDock
-        {snapshot}
-        scene={snapshot.scene}
-        stationLabel={config.stationLabel}
-        dispatch={execute}
-        open={actionOpen}
-        onOpenChange={toggleActions}
-      />{/key}
-  {:else if !settings && !snapshot.locked && (snapshot.scene.kind === 'desktop' || snapshot.scene.kind === 'challenge')}
+  {#if !settings && !snapshot.locked && snapshot.scene.kind === 'desktop'}
     <div class="companion-dock fixed top-[72px] right-5 z-30">
       {#key guideId}<Guide
           bind:open={guideOpen}
-          id={guideId}
+          destination={guideId
+            ? i18n.challenges[guideId].app
+            : guideRoutine
+              ? copy.guidance.families.protection
+              : null}
+          remaining={remainingActivities(snapshot)}
           canNavigate={snapshot.mode === 'free'}
-          dispatch={execute}
+          onNavigate={() => {
+            if (guideId) execute({ type: 'open', id: guideId });
+            else openSettings('routines');
+          }}
         />{/key}
     </div>
   {/if}
@@ -412,22 +501,26 @@
         dispatch={execute}
         applicationName={branding.applicationName}
         onSettings={() => openSettings('updates')}
+        onAccount={() => openSettings('routines')}
         onAbout={() => openSettings('about')}
       />
       {#each ['usb', 'mail', 'web'] as name (name)}
         {@const id = name as ChallengeId}
         <button
           class="os-taskbar-app taskbar-shortcut"
-          class:active={activeId === id}
-          disabled={(snapshot.mode === 'guided' && activeId !== id) ||
+          class:active={activeId === id || (id === 'mail' && activeId === 'spoof')}
+          disabled={(snapshot.mode === 'guided' &&
+            activeId !== id &&
+            !(id === 'mail' && activeId === 'spoof')) ||
             ['intro', 'feedback', 'debrief', 'routines'].includes(snapshot.scene.kind)}
-          onclick={() => execute({ type: 'open', id })}
+          onclick={() =>
+            execute({ type: 'open', id: id === 'mail' && activeId === 'spoof' ? 'spoof' : id })}
           aria-label={`${copy.os.openApp} ${copy.desktop[id]}`}
           title={copy.desktop[id]}
           ><span class="app-icon tiny" data-app={id}><Icon name={id} size={20} /></span></button
         >
       {/each}
-      {#if minimized || (activeId && !['usb', 'mail', 'web'].includes(activeId))}<button
+      {#if (minimized && !activeId) || (activeId && !['usb', 'mail', 'spoof', 'web'].includes(activeId))}<button
           class="os-taskbar-app active"
           onclick={() => {
             minimized = false;
@@ -442,6 +535,7 @@
         <button
           class="icon-button"
           type="button"
+          data-hint-target="network"
           onclick={isolateNetwork}
           aria-label={copy.incident.isolateNetwork}
           title={copy.incident.isolateNetwork}><Icon name="wifi" size={17} /></button

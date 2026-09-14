@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest';
-import { preferredLocale } from '../../src/lib/components/i18n/locale';
+import { preferredLocale } from '@shutteros/components/i18n/locale';
 
 it.each([
   [['en-GB', 'fr'], 'en'],

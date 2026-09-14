@@ -5,7 +5,6 @@
  */
 export type GameConfig = {
   sessionDurationMs: number;
-  explorationDurationMs: number;
   idleReminderMs: number;
   eventIntervalMs: number;
   acceptedPasswords: readonly string[];

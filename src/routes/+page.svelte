@@ -1,7 +1,7 @@
 <script lang="ts">
   import { base } from '$app/paths';
   import Application from '$lib/app/Application.svelte';
-  import '$lib/components/theme.css';
+  import '@shutteros/components/theme.css';
   import { fr } from '@shutteros/core/data/fr';
 </script>
 

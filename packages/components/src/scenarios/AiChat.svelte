@@ -48,7 +48,7 @@
       <span class="app-icon" data-app="ai"><Icon name="ai" size={26} /></span>
       <h2 class="mt-4 text-xl font-semibold">{copy.intro}</h2>
       <p class="text-muted mt-2 text-sm leading-relaxed">{copy.task}</p>
-      <fieldset class="mt-6">
+      <fieldset class="mt-6" data-hint-target="tool">
         <legend class="mb-3 text-sm font-semibold">{copy.tools}</legend>
         <div class="ai-tools">
           {#each ['internal', 'commercial'] as value (value)}
@@ -72,7 +72,11 @@
     <div class="ai-conversation">
       <div class="ai-workspace">
         <span class="text-muted text-xs">{copy[`${tool}Note`]}</span>
-        <button class="text-link text-xs" onclick={() => (connected = false)}>{copy.switch}</button>
+        <button
+          data-hint-target="tool"
+          class="text-link text-xs"
+          onclick={() => (connected = false)}>{copy.switch}</button
+        >
       </div>
       <div class="ai-greeting">
         <Icon name="ai" size={22} />

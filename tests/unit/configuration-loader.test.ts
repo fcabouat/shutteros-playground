@@ -55,7 +55,6 @@ describe('loadConfiguration', () => {
         ok: true,
         config: {
           sessionDurationMs: 300_000,
-          explorationDurationMs: 25_000,
           idleReminderMs: 45_000,
           eventIntervalMs: 90_000,
         },

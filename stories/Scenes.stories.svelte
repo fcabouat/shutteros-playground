@@ -27,7 +27,7 @@
 <Story name="USB drive" args={{ initial: challenge('usb') }} />
 <Story name="Incident" args={{ initial: challenge('incident') }} />
 <Story name="Suspicious email" args={{ initial: challenge('mail') }} />
-<Story name="Sender studio" args={{ initial: challenge('spoof') }} />
+<Story name="Impersonated sender" args={{ initial: challenge('spoof') }} />
 <Story name="Fake portal" args={{ initial: challenge('web') }} />
 <Story name="Unexpected MFA" args={{ initial: challenge('mfa') }} />
 <Story name="Infection feedback" args={{ initial: infection }} />

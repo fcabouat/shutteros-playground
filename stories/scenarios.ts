@@ -5,7 +5,6 @@ import type { GameState, Intent, ChallengeId, Scene } from '@shutteros/core/mode
 // Fixed clocks make these view scenarios stable and let their buttons remain playable.
 export const config: GameConfig = {
   sessionDurationMs: 900_000,
-  explorationDurationMs: 25_000,
   idleReminderMs: 45_000,
   eventIntervalMs: 90_000,
   acceptedPasswords: ['Bureau2026', 'password', 'motdepasse'],
@@ -15,8 +14,8 @@ export const config: GameConfig = {
   supportLabel: 'Équipes de sécurité informatique (SSI)',
   supportContact: 'Annuaire interne · contact SSI',
   stationLabel: 'Station blanche',
-  mailLegitimateAddress: 'camille@organisation.example',
-  mailImpersonatorAddress: 'usurpateur@externe.example',
+  mailLegitimateAddress: 'alex.martin@organisation.example',
+  mailImpersonatorAddress: 'planning@services-personnel.danger.com',
 };
 export const login = initialState(0);
 function play(intents: Intent[]): GameState {
@@ -34,8 +33,9 @@ export const infection = play([
 export const debrief = play([
   ...enter,
   { type: 'open', id: 'mail' },
-  { type: 'choose', choiceId: 'verify' },
+  { type: 'choose', choiceId: 'report' },
   { type: 'continue' },
+  { type: 'close' },
   { type: 'debrief' },
 ]);
 

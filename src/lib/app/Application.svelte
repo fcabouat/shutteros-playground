@@ -1,5 +1,5 @@
 <script lang="ts">
-  import Provider from '../components/i18n/Provider.svelte';
+  import Provider from '@shutteros/components/i18n/Provider.svelte';
   import Game from './Game.svelte';
   let {
     configuration,

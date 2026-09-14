@@ -22,7 +22,8 @@ const session = (scene: Extract<GameState, { phase: 'session' }>['scene']): Game
     idleDismissed: false,
   },
   locked: false,
-  pendingIncident: null,
+  activityVisible: true,
+  pausedActivities: {},
 });
 
 describe('knowledge service', () => {
@@ -34,15 +35,21 @@ describe('knowledge service', () => {
           kind: 'challenge',
           id: 'mail',
           startedAt: 0,
-          exploreUntil: 25_000,
-          step: 'explore',
+          step: 'choose',
+          guidance: {
+            requestedLevel: 0,
+            started: true,
+            activeElapsedMs: 0,
+            activeSince: 0,
+            visible: true,
+          },
         }),
         routines: {
           ...session({ kind: 'desktop' }).routines,
           password: 'done',
         },
       }),
-    ).toBe('password');
+    ).toBeNull();
     expect(
       currentKnowledgeId({
         ...session({ kind: 'routines' }),

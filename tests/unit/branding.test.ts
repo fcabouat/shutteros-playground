@@ -34,7 +34,9 @@ describe('private branding preparation', () => {
         resolve(fixture.root, 'scripts/prepare-branding.mjs'),
       ]);
       const generated = await readFile(fixture.output, 'utf8');
-      expect(generated).toContain('applicationName: string');
+      expect(generated).toContain(
+        "import type { Branding } from '@shutteros/components/screens/branding'",
+      );
       expect(generated).toContain('ShutterOS');
       expect(generated).toContain('Example Organisation');
       expect(generated).toContain('data:image/png;base64,iVBORw0KGgo=');
@@ -56,7 +58,9 @@ describe('private branding preparation', () => {
         resolve(fixture.root, 'scripts/prepare-branding.mjs'),
       ]);
       const generated = await readFile(fixture.output, 'utf8');
-      expect(generated).toContain('partnerOrganizationName?: string');
+      expect(generated).toContain(
+        "import type { Branding } from '@shutteros/components/screens/branding'",
+      );
       expect(generated).toContain('Partner organisation');
       expect(generated).toContain('partnerOrganizationLogo');
       expect(generated).toContain('data:image/png;base64,iVBORw0KGgo=');

@@ -1,5 +1,6 @@
-/* Both Vite roots must scan the same application sources, including the portable build. */
-@import 'tailwindcss' source('../../');
+/* Scan the consuming application as well as this package (including linked workspaces). */
+@import 'tailwindcss';
+@source './';
 
 @theme {
   --font-sans: 'Segoe UI', 'Inter', ui-sans-serif, system-ui, sans-serif;
@@ -275,9 +276,14 @@ button:active:not(:disabled) {
   box-shadow: var(--window-shadow);
   border: 1px solid #ffffff60;
 }
-.intro-card,
-.feedback-card {
+.intro-card {
   overflow: hidden;
+}
+.feedback-card > footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  background: var(--surface);
 }
 .intro-visual {
   background: linear-gradient(155deg, #257f89, #123d59);
@@ -760,10 +766,15 @@ button:active:not(:disabled) {
   background: #dfe9f580;
 }
 .companion-trigger {
+  gap: 0.5rem;
+  padding-inline: 0.875rem;
+  font-size: 0.875rem;
+  font-weight: 600;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 47px;
+  width: max-content;
+  white-space: nowrap;
   height: 47px;
   background: #d9eccbdc;
   color: #314f37;
@@ -862,14 +873,6 @@ button:active:not(:disabled) {
   }
 }
 
-.knowledge-option.selected {
-  border-color: var(--accent);
-  background: var(--soft);
-}
-.knowledge-option:disabled:not(.selected) {
-  color: var(--muted);
-}
-
 /* Desktop and window layers occupy the same bounded workspace. */
 .os-workspace {
   height: calc(100dvh - 64px);
@@ -898,6 +901,12 @@ button:active:not(:disabled) {
   position: absolute;
   inset: 56px 20px 18px 138px;
   pointer-events: none;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 10px;
+}
+.window-layer:not(:has(.activity-guidance)) {
+  grid-template-rows: minmax(0, 1fr);
 }
 .view-host {
   display: flex;
@@ -905,6 +914,8 @@ button:active:not(:disabled) {
   justify-content: center;
   width: 100%;
   height: 100%;
+  min-width: 0;
+  min-height: 0;
 }
 .view-host[hidden] {
   display: none;
@@ -998,11 +1009,6 @@ button:active:not(:disabled) {
 .reading-column.wide {
   max-width: 1120px;
 }
-@media (min-width: 1100px) {
-  .window-layer.with-actions {
-    right: 392px;
-  }
-}
 .portal-card {
   max-width: none;
 }
@@ -1016,13 +1022,20 @@ button:active:not(:disabled) {
   padding: 22px;
 }
 .mfa-device {
-  /* Keep a portrait handset even when the translated content is short. */
+  /* Reserve the response buttons inside a portrait handset. Details scroll on
+     short displays instead of pushing the last action behind the taskbar. */
+  display: flex;
+  flex-direction: column;
+  height: clamp(400px, calc(100dvh - 270px), 640px);
+  width: min(320px, calc((100dvh - 270px) * 0.6));
+  min-width: min(240px, 100%);
   aspect-ratio: 3 / 5;
   flex-shrink: 0;
   max-width: 320px;
   padding: 18px 24px;
 }
 .mfa-device .mfa-notch {
+  flex-shrink: 0;
   margin-bottom: 14px;
 }
 .mfa-device .app-icon {
@@ -1098,32 +1111,6 @@ button:active:not(:disabled) {
   .session-controls {
     right: 12px;
   }
-}
-
-.knowledge-option {
-  background: #edf4f8;
-  border-color: #527c90;
-  color: var(--ink);
-}
-.knowledge-option:hover:not(:disabled) {
-  background: #dfedf3;
-  border-color: var(--accent);
-}
-.answer-indicator {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  flex-shrink: 0;
-  border: 2px solid #527c90;
-  border-radius: 50%;
-  background: white;
-}
-.knowledge-option.selected .answer-indicator {
-  color: white;
-  background: var(--accent);
-  border-color: var(--accent);
 }
 
 /* Organisation identity and the OS wallpaper mark remain separate. */
@@ -1279,5 +1266,154 @@ button:active:not(:disabled) {
   .joint-organizations .organization-logo {
     max-width: 48px;
     max-height: 40px;
+  }
+}
+
+/* Guidance has its own row and column inside the window bounds. Even maximized or
+   dragged windows cannot cover it, and it never masks application controls. */
+.activity-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
+  min-height: 0;
+  gap: 16px;
+}
+.activity-layout.with-actions {
+  grid-template-columns: minmax(0, 1fr) 352px;
+}
+.activity-guidance {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+  min-width: 0;
+  min-height: 44px;
+  position: relative;
+  z-index: 40;
+  pointer-events: auto;
+}
+.guidance-message {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: #eef5e9;
+  color: #294638;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+.guidance-message svg {
+  flex-shrink: 0;
+}
+.guidance-controls {
+  flex-shrink: 0;
+}
+.guidance-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid #bfd4b5;
+  border-radius: 12px;
+  background: #dfedd7;
+  color: #294638;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+.guidance-trigger.offered {
+  box-shadow: 0 0 0 3px #d6f6bc55;
+}
+[data-active-hint='eject'] [data-hint-target='eject'],
+[data-active-hint='network'] [data-hint-target='network'],
+[data-active-hint='report'] [data-hint-target='report'],
+[data-active-hint='bookmark'] [data-hint-target='bookmark'],
+[data-active-hint='deny-report'] [data-hint-target='deny-report'],
+[data-active-hint='tool'] [data-hint-target='tool'] {
+  outline: 3px solid #edba3e !important;
+  outline-offset: 3px;
+  box-shadow: 0 0 0 6px #ffe09355 !important;
+}
+.window-titlebar[data-family='protection'] {
+  background: #e6f1eb;
+}
+.window-titlebar[data-family='vigilance'] {
+  background: #faf1de;
+}
+.activity-family {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #5f451e;
+  background: #faf1de;
+}
+.activity-family[data-family='protection'] {
+  color: #26503b;
+  background: #e6f1eb;
+}
+.device-controls {
+  align-items: center;
+  gap: 6px;
+}
+@media (max-width: 1099px) {
+  .activity-layout.with-actions {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(100px, 1fr) minmax(140px, 0.8fr);
+    gap: 10px;
+  }
+  .guidance-message {
+    font-size: 0.8rem;
+  }
+}
+@media (max-width: 639px) {
+  .activity-guidance {
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .guidance-message {
+    width: 100%;
+  }
+  .window-titlebar {
+    flex-wrap: wrap;
+  }
+  .activity-family {
+    font-size: 0.7rem;
+  }
+}
+
+.guidance-panel-host {
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+}
+.guidance-panel-host[hidden] {
+  display: none;
+}
+@media (max-width: 1099px) and (max-height: 520px) {
+  /* A shallow landscape viewport cannot hold two independently bounded panes.
+     Scroll their stack as one region so every native and guided control is reachable. */
+  .activity-layout.with-actions {
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    pointer-events: auto;
+  }
+  .activity-layout.with-actions > .view-host {
+    flex: none;
+    height: auto;
+  }
+  .activity-layout.with-actions .os-window {
+    max-height: none;
+    height: auto;
+  }
+  .activity-layout.with-actions > .guidance-panel-host {
+    flex: none;
+    height: auto;
   }
 }

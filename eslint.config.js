@@ -94,11 +94,19 @@ export default ts.config(
     },
   },
   {
-    files: ['src/lib/components/**/*.{ts,svelte}'],
+    files: ['packages/components/src/**/*.{ts,svelte}'],
     rules: {
       'no-restricted-imports': [
         'error',
-        { patterns: ['$app/*', '**/infrastructure/**', '**/app/**', '**/contract/**'] },
+        {
+          patterns: [
+            '$app/*',
+            '**/infrastructure/**',
+            '**/app/**',
+            '**/contract/**',
+            '**/branding.generated',
+          ],
+        },
       ],
     },
   },

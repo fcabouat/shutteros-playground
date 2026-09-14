@@ -97,4 +97,13 @@ test('API and Storybook artifacts load as runnable pages', async ({ request, pag
   await expect((await request.get('storybook/index.html')).status()).toBe(200);
   await page.goto('storybook/index.html');
   await expect(page.locator('#root')).not.toBeEmpty();
+  // A rendered manager alone does not prove that the independently built Svelte
+  // stories resolve their workspace package and establish the locale context.
+  await page.goto('storybook/iframe.html?id=game-scenes--login&viewMode=story');
+  await expect(page.getByRole('textbox', { name: 'Mot de passe', exact: true })).toBeVisible();
+  await page.goto('storybook/iframe.html?id=game-scenes--impersonated-sender&viewMode=story');
+  await expect(page.locator('[data-challenge="spoof"]')).toBeVisible();
+  await expect(page.locator('.mail-list-message')).toHaveCount(2);
+  await page.goto('storybook/iframe.html?id=game-scenes--personal-recap&viewMode=story');
+  await expect(page.locator('.debrief-list')).toBeVisible();
 });

@@ -48,26 +48,31 @@ async function openNext(page: Page, id: string, decision = true) {
   await page.getByRole('button', { name: 'Démarrer', exact: true }).click();
   const menu = page.locator('.start-menu');
   await expect(menu).toBeVisible();
-  await menu.locator(`.start-app:has([data-app="${id}"])`).click();
+  const launcherId = id === 'spoof' ? 'mail' : id;
+  await menu.locator(`.start-app:has([data-app="${launcherId}"])`).click();
+  if (id === 'spoof') await page.locator('.mail-list-message').nth(1).click();
   await expect(page.locator(`[data-challenge="${id}"]`)).toBeVisible();
   if (decision) await beginDecision(page, id);
 }
 
 async function beginDecision(page: Page, id: string) {
-  const challenge = page.locator(`[data-challenge="${id}"]`);
-  if (id !== 'spoof' && (await challenge.getAttribute('data-step')) === 'explore') {
-    const panel = page.locator('.action-dock-panel');
-    if (await panel.isVisible()) return;
-    const trigger = page.getByRole('button', { name: 'Que faire ?', exact: true });
-    if (await trigger.isVisible()) await trigger.click();
+  const panel = page.locator('.action-dock-panel');
+  for (let request = 0; request < 2 && !(await panel.isVisible()); request += 1) {
+    await page.locator('.activity-guidance .guidance-trigger').click();
   }
+  await expect(panel, `answer choices for ${id}`).toBeVisible();
+}
+
+async function chooseFromDock(page: Page, choiceId: string) {
+  await page.locator(`.action-dock-panel [data-choice="${choiceId}"]`).click();
 }
 
 async function sendSafeAiPrompt(page: Page) {
-  await expect(page.locator('[data-challenge="ai"]')).toBeVisible();
-  await page.getByRole('button', { name: fr.ai.connect, exact: true }).click();
-  await page.getByRole('radio', { name: fr.ai.generic, exact: true }).check();
-  await page.getByRole('button', { name: fr.ai.send, exact: true }).click();
+  const chat = page.locator('.ai-chat');
+  await expect(chat).toBeVisible();
+  await chat.getByRole('button', { name: fr.ai.connect, exact: true }).click();
+  await chat.getByRole('radio', { name: fr.ai.generic, exact: true }).check();
+  await chat.getByRole('button', { name: fr.ai.send, exact: true }).click();
 }
 
 async function advance(page: Page) {
@@ -88,28 +93,19 @@ test('guided completion sweeps remaining situations without local timers', async
   await page.getByRole('button', { name: 'Terminer l’expérience', exact: true }).first().click();
   await expect(page.locator('[data-challenge="usb"][data-step="choose"]')).toBeVisible();
   await expect(page.locator('.ambient-notice')).toHaveCount(0);
-  await page.getByRole('button', { name: 'Passer par la station blanche', exact: false }).click();
+  await chooseFromDock(page, 'station');
   await advanceGuided(page);
-  await page.getByRole('button', { name: 'Couper la connexion réseau', exact: false }).click();
-  await page
-    .getByRole('button', { name: 'Les équipes de sécurité informatique', exact: false })
-    .click();
+  await chooseFromDock(page, 'isolate');
+  await page.getByRole('button', { name: fr.incident.reportAction, exact: true }).click();
   await advanceGuided(page);
-  await page.getByRole('button', { name: 'Contacter les RH via l’annuaire', exact: false }).click();
+  await chooseFromDock(page, 'report');
   await advanceGuided(page);
-  await expect(page.locator('[data-challenge="spoof"][data-step="explore"]')).toBeVisible();
-  await page.getByRole('button', { name: 'Envoyer dans la simulation' }).click();
-  await expect(
-    page.getByRole('button', { name: 'J’ai compris : je vérifie l’identité' }),
-  ).toHaveCount(0);
-  await page.getByRole('button', { name: fr.spoof.inspectNext, exact: true }).click();
-  await expect(page.getByTestId('received-address')).toHaveText(config.mailLegitimateAddress);
-  await expect(page.locator('[data-challenge="spoof"]')).toBeVisible();
-  await page.getByRole('button', { name: 'J’ai compris : je vérifie l’identité' }).click();
+  await expect(page.locator('[data-challenge="spoof"][data-step="choose"]')).toBeVisible();
+  await chooseFromDock(page, 'report');
   await advanceGuided(page);
-  await page.getByRole('button', { name: 'Revenir à mon favori connu', exact: false }).click();
+  await chooseFromDock(page, 'known-address');
   await advanceGuided(page);
-  await page.getByRole('button', { name: 'Refuser et signaler', exact: false }).click();
+  await chooseFromDock(page, 'deny-report');
   await advanceGuided(page);
   await sendSafeAiPrompt(page);
   await advanceGuided(page);
@@ -128,8 +124,38 @@ test('guided completion sweeps remaining situations without local timers', async
   await expectNoAxeViolations(page);
   await page.getByRole('button', { name: 'Reprendre la simulation' }).click();
   await page.getByRole('button', { name: 'Voir mon bilan maintenant' }).click();
-  await expect(page.getByText('6 bons réflexes sur 6 situations explorées')).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Un coup de pouce', exact: true })).toHaveCount(0);
+  await expect(page.getByText('7 bons réflexes sur 7 situations explorées')).toBeVisible();
+  for (const viewport of [
+    { width: 1280, height: 720 },
+    { width: 390, height: 844 },
+  ]) {
+    await page.setViewportSize(viewport);
+    const list = page.locator('.debrief-list');
+    await expect(list).toBeVisible();
+    expect(await list.evaluate((element) => element.scrollHeight > element.clientHeight)).toBe(
+      true,
+    );
+    const before = await page
+      .getByRole('button', { name: fr.shell.resume, exact: true })
+      .boundingBox();
+    expect(before!.y + before!.height).toBeLessThan(viewport.height - 45);
+    await list.evaluate((element) => {
+      element.scrollTop = element.scrollHeight;
+    });
+    await expect(list).toContainText(fr.guidance.families.protection);
+    const after = await page
+      .getByRole('button', { name: fr.shell.resume, exact: true })
+      .boundingBox();
+    expect(after!.y).toBe(before!.y);
+    expect(
+      await page
+        .locator('.window-body')
+        .evaluate((element) => element.scrollHeight <= element.clientHeight + 1),
+    ).toBe(true);
+    await page.screenshot({ path: `test-results/previews/recap-${viewport.width}.png` });
+  }
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await expect(page.getByRole('button', { name: fr.guide.prompt, exact: true })).toHaveCount(0);
   await expect(page.locator('.guide-dialog')).toHaveCount(0);
   await expectNoAxeViolations(page);
   await page.getByRole('button', { name: fr.shell.resume, exact: true }).click();
@@ -183,70 +209,71 @@ for (const delivery of ['http', 'file'] as const) {
       await page.screenshot({ path: 'test-results/previews/desktop-portable.png', fullPage: true });
 
     await openNext(page, 'usb');
-    await page.getByRole('button', { name: 'Passer par la station blanche', exact: false }).click();
+    await chooseFromDock(page, 'station');
     await advance(page);
 
     await openNext(page, 'incident');
-    await page.getByRole('button', { name: 'Couper la connexion réseau', exact: false }).click();
-    await expect(
-      page.getByRole('heading', { name: 'Le poste est isolé. Qui prévenez-vous ?' }),
-    ).toBeVisible();
-    await page
-      .getByRole('button', { name: 'Les équipes de sécurité informatique', exact: false })
-      .click();
+    await chooseFromDock(page, 'isolate');
+    await expect(page.getByRole('heading', { name: fr.incident.contained })).toBeVisible();
+    await page.getByRole('button', { name: fr.incident.reportAction, exact: true }).click();
     await answerKnowledge(page, 'incident', 1, 'Exact.');
     await advance(page);
 
     await openNext(page, 'mail');
-    await page.getByRole('button', { name: 'Mon compte' }).click();
-    await page
-      .getByRole('button', { name: 'Créer un secret unique avec le gestionnaire approuvé' })
-      .click();
-    await page.getByText('Tester ce réflexe').click();
-    await answerKnowledge(page, 'password', 0, 'Exact.');
-    await page.getByRole('button', { name: 'Retour aux messages' }).click();
     await page.getByRole('button', { name: 'Voir l’adresse complète' }).click();
-    await expect(page.getByText('rh@services-personnel.example', { exact: true })).toBeVisible();
-    await page
-      .getByRole('button', { name: 'Contacter les RH via l’annuaire', exact: false })
-      .click();
+    await expect(page.getByText(config.mailImpersonatorAddress, { exact: true })).toBeVisible();
+    await chooseFromDock(page, 'report');
     await advance(page);
 
-    await openNext(page, 'spoof');
-    await page.getByLabel('De', { exact: true }).selectOption('impostor');
-    await page.getByLabel('Nom affiché', { exact: true }).fill('La direction');
-    await page.getByRole('button', { name: 'Envoyer dans la simulation' }).click();
-    await page.getByRole('button', { name: 'Déplier l’expéditeur' }).click();
-    await expect(page.getByTestId('received-address')).toHaveText(config.mailImpersonatorAddress);
-    await page.getByRole('button', { name: 'Modifier et réessayer' }).click();
-    await page.getByLabel('De', { exact: true }).selectOption('legitimate');
-    await page.getByRole('button', { name: 'Envoyer dans la simulation' }).click();
-    await page.getByRole('button', { name: 'Déplier l’expéditeur' }).click();
-    await expect(page.getByTestId('received-address')).toHaveText(config.mailLegitimateAddress);
-    await page.getByRole('button', { name: 'J’ai compris : je vérifie l’identité' }).click();
+    await expect(page.locator('[data-challenge="spoof"]')).toBeVisible();
+    await beginDecision(page, 'spoof');
+    await page.getByRole('button', { name: fr.mail.details, exact: true }).click();
+    await expect(page.getByText(config.mailLegitimateAddress, { exact: true })).toBeVisible();
+    await chooseFromDock(page, 'report');
     await advance(page);
 
     await openNext(page, 'web');
-    await page.getByRole('button', { name: 'Examiner cette adresse' }).click();
-    await expect(page.getByText(fr.web.inspector, { exact: true })).toBeVisible();
-    await page.getByRole('button', { name: 'Revenir à mon favori connu', exact: false }).click();
+    await expect(page.getByRole('textbox', { name: fr.web.addressBar })).toHaveValue(fr.web.url);
+    await chooseFromDock(page, 'known-address');
     await advance(page);
 
     await openNext(page, 'mfa');
-    await page.getByRole('button', { name: 'Refuser et signaler', exact: false }).click();
+    await chooseFromDock(page, 'deny-report');
     await answerKnowledge(page, 'mfa', 1, 'Exact.');
     await advance(page);
     await openNext(page, 'ai', false);
     await sendSafeAiPrompt(page);
-    await page.getByRole('button', { name: 'Découvrir mon bilan' }).click();
-    await expect(page.getByText('6 bons réflexes sur 6 situations explorées')).toBeVisible();
+    await advance(page);
+    await page
+      .locator('.window-titlebar')
+      .getByRole('button', { name: fr.shell.close, exact: true })
+      .click();
+    await page.locator('.companion-trigger').click();
+    await expect(page.getByRole('dialog')).toContainText(fr.guide.remainingOne);
+    await expect(page.getByRole('dialog')).toContainText(fr.guidance.families.protection);
+    await page.getByRole('button', { name: fr.guide.next, exact: true }).click();
+    await expect(page.locator('[data-routine]')).toHaveCount(3);
+    await page
+      .locator('.window-titlebar')
+      .getByRole('button', { name: fr.shell.close, exact: true })
+      .click();
+    await page.getByRole('button', { name: fr.experience.finish, exact: true }).first().click();
+    await expect(
+      page.getByRole('button', { name: fr.experience.review, exact: true }),
+    ).toBeDisabled();
+    await page.locator('[data-routine="password"] button').first().click();
+    await page.locator('[data-routine="update"] button').first().click();
+    await page.locator('[data-routine="lock"] button').first().click();
+    await page.getByRole('button', { name: fr.routines.unlock, exact: true }).click();
+    await page.getByRole('button', { name: fr.experience.review, exact: true }).click();
+    await expect(page.getByText('7 bons réflexes sur 7 situations explorées')).toBeVisible();
     await page.getByRole('button', { name: fr.shell.resume, exact: true }).click();
     await page.locator('.desktop-icon:has([data-app="usb"])').dblclick();
     await page.locator('#usb-file-0').dblclick();
     await expect(page.locator('.feedback-card[data-outcome="risky"]')).toBeVisible();
     await expect(page.getByText(fr.feedback.replay, { exact: true })).toBeVisible();
     await page.getByRole('button', { name: fr.feedback.finish, exact: true }).click();
-    await expect(page.getByText('6 bons réflexes sur 6 situations explorées')).toBeVisible();
+    await expect(page.getByText('7 bons réflexes sur 7 situations explorées')).toBeVisible();
     await expect(
       page.locator('li').filter({ hasText: fr.desktop.usb }).locator('[data-outcome="safe"]'),
     ).toBeVisible();
@@ -268,7 +295,7 @@ test('the desktop USB opens an explorer before running a file triggers the incid
   await page.goto('./');
   await enter(page);
   await page.getByRole('button', { name: 'Clé USB trouvée', exact: true }).dblclick();
-  await expect(page.locator('[data-challenge="usb"][data-step="explore"]')).toBeVisible();
+  await expect(page.locator('[data-challenge="usb"][data-step="choose"]')).toBeVisible();
   await expect(page.locator('.feedback-card, .action-dock-panel')).toHaveCount(0);
   await page.locator('.usb-file').click();
   await expect(page.locator('[data-challenge="usb"]')).toBeVisible();
@@ -303,26 +330,32 @@ test('login reveals its hint only after three failures and still accepts PASSWOR
   await signIn(page);
 });
 
-test('an optional wrong password check does not block the mail situation', async ({ page }) => {
+test('replying to the suspicious mail is risky and shows the same read-only answer matrix', async ({
+  page,
+}) => {
   await page.goto('./');
   await enter(page);
-  await openNext(page, 'mail');
-  await page.getByRole('button', { name: 'Mon compte' }).click();
-  await page
-    .getByRole('button', { name: 'Créer un secret unique avec le gestionnaire approuvé' })
-    .click();
-  await page.getByText('Tester ce réflexe').click();
-  await answerKnowledge(page, 'password', 1, 'À retenir.');
-  await page.getByRole('button', { name: 'Retour aux messages' }).click();
-  await page.getByRole('button', { name: 'Contacter les RH via l’annuaire', exact: false }).click();
-  await expect(page.locator('.feedback-card')).toBeVisible();
+  await openNext(page, 'mail', false);
+  await page.getByRole('button', { name: fr.mail.reply, exact: true }).click();
+  await expect(page.locator('.feedback-card[data-outcome="risky"]')).toBeVisible();
+  const review = page.locator('.decision-review[data-activity="mail"]');
+  await expect(review.locator('[data-choice="reply"]')).toHaveAttribute(
+    'data-outcome',
+    'incorrect',
+  );
+  await expect(review.locator('[data-choice="reply"]')).toContainText(
+    `${fr.feedback.incorrect} — ${fr.feedback.selected}`,
+  );
+  await expect(review.locator('[data-choice="report"]')).toContainText(
+    `${fr.feedback.correct} — ${fr.feedback.alternative}`,
+  );
 });
 
 test('hard deadline resets an open modal and all transient fields', async ({ page }) => {
   await page.clock.install();
   await page.goto('./');
   await enter(page);
-  await page.getByRole('button', { name: 'Un coup de pouce', exact: true }).first().click();
+  await page.getByRole('button', { name: fr.guide.prompt, exact: true }).first().click();
   await expect(page.getByRole('dialog')).toBeVisible();
   await page.clock.fastForward(sessionDurationMs + 100);
   await expect(page.getByLabel('Mot de passe', { exact: true })).toBeVisible();
@@ -367,16 +400,16 @@ test('keyboard guide, language switching, and mobile reflow', async ({ page }) =
   await page.getByLabel('Password', { exact: true }).fill('password');
   await page.getByLabel('Password', { exact: true }).press('Enter');
   await expect(page.getByRole('heading', { name: en.intro.title })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'A hint', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Need a hand?', exact: true })).toHaveCount(0);
   await page.getByRole('button', { name: 'Explore the desk', exact: true }).click();
-  await page.getByRole('button', { name: 'A hint', exact: true }).click();
+  await page.getByRole('button', { name: 'Need a hand?', exact: true }).click();
   await expect(page.getByRole('dialog')).toHaveAttribute('lang', 'en');
   await page.keyboard.press('Escape');
   await page.getByRole('button', { name: 'Start', exact: true }).click();
   await expect(page.locator('.start-menu')).toHaveAttribute('lang', 'en');
   await page.keyboard.press('Escape');
   await page.getByRole('button', { name: 'FR', exact: true }).click();
-  const guide = page.getByRole('button', { name: 'Un coup de pouce', exact: true }).first();
+  const guide = page.getByRole('button', { name: fr.guide.prompt, exact: true }).first();
   await guide.focus();
   await page.keyboard.press('Enter');
   await expect(page.getByRole('dialog')).toBeVisible();
@@ -391,12 +424,13 @@ test('keyboard guide, language switching, and mobile reflow', async ({ page }) =
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
 
-test('dragged spoof composer survives minimizing and restoring its window', async ({ page }) => {
+test('inspected spoof receiver survives minimizing and restoring its window', async ({ page }) => {
   await page.goto('./');
   await enter(page);
-  await openNext(page, 'spoof');
-  const displayName = page.getByLabel('Nom affiché', { exact: true });
-  await displayName.fill('La direction');
+  await openNext(page, 'spoof', false);
+  await page.getByRole('button', { name: fr.mail.details, exact: true }).click();
+  const address = page.getByText(config.mailLegitimateAddress, { exact: true });
+  await expect(address).toBeVisible();
   const frame = page.locator('.os-window');
   const before = await frame.boundingBox();
   const handle = page.getByRole('button', { name: 'Déplacer la fenêtre' });
@@ -411,7 +445,17 @@ test('dragged spoof composer survives minimizing and restoring its window', asyn
   await page.getByRole('button', { name: 'Réduire la fenêtre', exact: true }).click();
   await expect(page.locator('#session-main')).toBeVisible();
   await page.locator('.os-taskbar-app.active').click();
-  await expect(displayName).toHaveValue('La direction');
+  await expect(address).toBeVisible();
+  await page.getByRole('button', { name: fr.spoof.comply, exact: true }).click();
+  await expect(page.locator('.feedback-card[data-outcome="risky"]')).toBeVisible();
+  const review = page.locator('.decision-review[data-activity="spoof"]');
+  await expect(review.locator('[data-choice="comply"]')).toContainText(
+    `${fr.feedback.incorrect} — ${fr.feedback.selected}`,
+  );
+  await page.getByRole('button', { name: 'Démarrer', exact: true }).click();
+  await expect(page.locator('.start-menu .start-app:has([data-app="mail"])')).toBeDisabled();
+  await page.keyboard.press('Escape');
+  await advance(page);
   await page.getByRole('button', { name: 'Démarrer', exact: true }).click();
   await expect(page.locator('.start-menu .start-app:has([data-app="mail"])')).toBeEnabled();
 });
@@ -432,9 +476,7 @@ test('a minimized incident stays actionable after the former local duration', as
   await expect(page.locator('[data-challenge="incident"][data-step="notify"]')).toBeVisible();
   await expect(page.locator('.action-dock [role="timer"]')).toHaveCount(0);
   await expect(page.locator('.feedback-card')).toHaveCount(0);
-  await page
-    .getByRole('button', { name: 'Les équipes de sécurité informatique', exact: false })
-    .click();
+  await page.getByRole('button', { name: fr.incident.reportAction, exact: true }).click();
   await expect(page.locator('.feedback-card')).toBeVisible();
 });
 
@@ -462,30 +504,28 @@ test('accessibility scan covers login, desktop, scenario and guide', async ({ pa
   await expectNoAxeViolations(page);
   await enter(page);
   await expectNoAxeViolations(page);
+  await page.getByRole('button', { name: fr.guide.prompt, exact: true }).first().click();
+  await expectNoAxeViolations(page);
+  await page.keyboard.press('Escape');
   await openNext(page, 'usb');
   await expectNoAxeViolations(page);
   await page.getByRole('button', { name: 'Réduire la fenêtre', exact: true }).click();
-  await page.getByRole('button', { name: 'Un coup de pouce', exact: true }).first().click();
   await expectNoAxeViolations(page);
 });
 
-test('accessibility scan covers the mail knowledge check', async ({ page }) => {
+test('accessibility scan covers mail inspection and its decision feedback', async ({ page }) => {
   await page.goto('./');
   await signIn(page);
   await expectNoAxeViolations(page);
   await page.getByRole('button', { name: 'Explorer le bureau' }).click();
-  await openNext(page, 'mail');
-  await page.getByRole('button', { name: 'Mon compte' }).click();
-  await page
-    .getByRole('button', { name: 'Créer un secret unique avec le gestionnaire approuvé' })
-    .click();
-  await page.getByText('Tester ce réflexe').click();
+  await openNext(page, 'mail', false);
+  await page.getByRole('button', { name: fr.mail.details, exact: true }).click();
   await expectNoAxeViolations(page);
-  await answerKnowledge(page, 'password', 0, 'Exact.');
+  await page.getByRole('button', { name: fr.mail.reply, exact: true }).click();
   await expectNoAxeViolations(page);
 });
 
-test('native browser actions precede the drawer and MFA choices are immediately available', async ({
+test('native browser and MFA actions remain available before the optional answer panel', async ({
   page,
 }) => {
   await page.setViewportSize({ width: 1280, height: 720 });
@@ -502,29 +542,51 @@ test('native browser actions precede the drawer and MFA choices are immediately 
     page.getByRole('button', { name: `${fr.web.bookmark} · ${fr.web.knownDomain}`, exact: true }),
   ).toBeVisible();
   await page.screenshot({ path: 'test-results/previews/browser.png' });
-  await page.getByRole('button', { name: 'Que faire ?', exact: true }).click();
+  await beginDecision(page, 'web');
   await expect(page.locator('.action-dock-panel')).toBeVisible();
   await expect(page.getByLabel('Adresse fictive du site')).toBeInViewport({ ratio: 1 });
   const bounds = await page.locator('.os-window').boundingBox();
   const panel = await page.locator('.action-dock-panel').boundingBox();
   expect(bounds!.x + bounds!.width).toBeLessThan(panel!.x);
   await page.screenshot({ path: 'test-results/previews/browser-actions.png' });
-  await page.getByRole('button', { name: 'Replier les actions du jeu' }).click();
+  await page.getByRole('button', { name: fr.guidance.close, exact: true }).click();
   await expect(page.locator('.action-dock-panel')).toHaveCount(0);
-  await openNext(page, 'mfa');
+  await openNext(page, 'mfa', false);
   await expect(page.locator('.device-shell')).toBeVisible();
   await expect(page.getByText(fr.mfa.subtitle, { exact: true })).toBeVisible();
   await expect(page.locator('.os-window')).toHaveCount(0);
   const phone = await page.locator('.mfa-device').boundingBox();
   expect(phone!.height / phone!.width).toBeGreaterThanOrEqual(1.6);
-  await expect(page.locator('.mfa-device')).toBeInViewport({ ratio: 1 });
-  await expect(page.locator('.action-dock-panel')).toBeVisible();
+  await expect(page.locator('.mfa-device').getByRole('button').last()).toBeInViewport({ ratio: 1 });
+  await expect(page.locator('.action-dock-panel')).toHaveCount(0);
+  await expect(page.locator('.mfa-device').getByRole('button')).toHaveCount(3);
+  await beginDecision(page, 'mfa');
   await expect(page.locator('.action-dock-panel .choice-button')).toHaveCount(3);
   await page.screenshot({ path: 'test-results/previews/phone.png' });
   await expectNoAxeViolations(page);
 });
 
-test('incident network control isolates before opening the reporting choices', async ({ page }) => {
+test('the AI answer panel selects a tool and one of its five full prompts', async ({ page }) => {
+  await page.goto('./');
+  await enter(page);
+  await openNext(page, 'ai', false);
+  await beginDecision(page, 'ai');
+  const panel = page.locator('.action-dock-panel');
+  await panel.getByRole('radio', { name: fr.ai.commercial, exact: false }).check();
+  await panel.locator('[data-choice="commercial-generic"] input').check();
+  await panel.getByRole('button', { name: fr.ai.send, exact: true }).click();
+
+  const review = page.locator('.decision-review[data-activity="ai"]');
+  await expect(review.locator('[data-choice]')).toHaveCount(5);
+  await expect(review).toContainText(fr.ai.commercial);
+  await expect(review.locator('[data-choice="commercial-generic"]')).toContainText(
+    `${fr.feedback.correct} — ${fr.feedback.selected}`,
+  );
+});
+
+test('incident network control isolates before showing equivalent reporting actions', async ({
+  page,
+}) => {
   await page.goto('./');
   await enter(page);
   await openNext(page, 'incident', false);
@@ -535,9 +597,18 @@ test('incident network control isolates before opening the reporting choices', a
   await expect(
     page.getByText('Bravo, le poste est isolé. Quelle action faites-vous maintenant ?'),
   ).toBeVisible();
+  await expect(page.locator('.decision-review[data-activity="incident"]')).toBeVisible();
+  await expect(page.locator('.action-dock-panel')).toHaveCount(0);
+  await expect(page.locator('.guidance-message')).toHaveCount(0);
+  await beginDecision(page, 'incident');
   await expect(page.locator('.action-dock-panel')).toBeVisible();
   await expect(
-    page.getByRole('button', { name: 'Les équipes de sécurité informatique' }),
+    page
+      .locator('.action-dock-panel')
+      .getByRole('button', { name: 'Les équipes de sécurité informatique', exact: false }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('button', { name: fr.incident.reportAction, exact: true }),
   ).toBeVisible();
 });
 
@@ -550,9 +621,9 @@ test('mail keeps inspection available and can report natively to configured supp
   await expect(page.locator('.action-dock-panel')).toHaveCount(0);
 
   await page.getByRole('button', { name: 'Voir l’adresse complète' }).click();
-  await expect(page.getByText('Adresse réelle')).toBeVisible();
-  await expect(page.locator('.mail-report-action')).toContainText(config.supportLabel);
-  await page.getByRole('button', { name: 'Transmettre au support SSI', exact: true }).click();
+  await expect(page.getByText(fr.mail.actualAddress, { exact: true })).toBeVisible();
+  await expect(page.locator('[data-challenge="mail"]')).toContainText(config.supportLabel);
+  await page.getByRole('button', { name: fr.mail.reportToSupport, exact: true }).click();
   await expect(page.locator('.feedback-card')).toContainText(fr.mail.reported);
 });
 
@@ -570,7 +641,8 @@ test('left Start menu opens updates and keeps their status for the session', asy
   expect(startBounds!.y).toBeGreaterThan(640);
   expect(organization!.x).toBeLessThan(60);
   expect(organization!.y).toBeLessThan(60);
-  expect(guide!.x).toBeGreaterThan(1150);
+  expect(guide!.x + guide!.width).toBeGreaterThan(1240);
+  expect(guide!.x + guide!.width).toBeLessThanOrEqual(1280);
   expect(guide!.y).toBeLessThan(130);
   expect(Math.abs(watermark!.x + watermark!.width / 2 - 640)).toBeLessThan(30);
   await expect(page.locator('.os-taskbar')).not.toContainText('Exploration libre');
@@ -604,22 +676,23 @@ test('left Start menu opens updates and keeps their status for the session', asy
   ).toBeVisible();
 });
 
-test('leaving asks for confirmation, preserves a cancelled draft, and cannot stop expiry', async ({
+test('leaving asks for confirmation, preserves an inspected message, and cannot stop expiry', async ({
   page,
 }) => {
   await page.clock.install();
   await page.goto('./');
   await enter(page);
-  await openNext(page, 'spoof');
-  const name = page.getByLabel('Nom affiché');
-  await name.fill('Camille — brouillon en cours');
+  await openNext(page, 'spoof', false);
+  await page.getByRole('button', { name: fr.mail.details, exact: true }).click();
+  const address = page.getByText(config.mailLegitimateAddress, { exact: true });
+  await expect(address).toBeVisible();
   await page.getByRole('button', { name: 'Quitter la session', exact: true }).click();
   const dialog = page.getByRole('dialog', { name: 'Quitter cette partie ?' });
   await expect(dialog).toBeVisible();
   await expect(page.getByRole('button', { name: 'Continuer à jouer' })).toBeFocused();
   await expectNoAxeViolations(page);
   await page.getByRole('button', { name: 'Continuer à jouer' }).click();
-  await expect(name).toHaveValue('Camille — brouillon en cours');
+  await expect(address).toBeVisible();
   await page.getByRole('button', { name: 'Démarrer', exact: true }).click();
   await page
     .locator('.start-menu')
@@ -628,7 +701,7 @@ test('leaving asks for confirmation, preserves a cancelled draft, and cannot sto
   await expect(dialog).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(dialog).toHaveCount(0);
-  await expect(name).toHaveValue('Camille — brouillon en cours');
+  await expect(address).toBeVisible();
   await page.getByRole('button', { name: 'Quitter la session', exact: true }).click();
   await page.clock.fastForward(sessionDurationMs + 100);
   await expect(page.getByLabel('Mot de passe', { exact: true })).toBeVisible();
@@ -642,13 +715,13 @@ test('application launchers do not advertise unavailable navigation during feedb
   await page.goto('./');
   await signIn(page);
   await page.getByRole('button', { name: 'Démarrer', exact: true }).click();
-  await expect(page.locator('.start-menu .start-app')).toHaveCount(7);
+  await expect(page.locator('.start-menu .start-app')).toHaveCount(6);
   for (const app of await page.locator('.start-menu .start-app').all())
     await expect(app).toBeDisabled();
   await page.keyboard.press('Escape');
   await page.getByRole('button', { name: 'Explorer le bureau' }).click();
   await openNext(page, 'usb');
-  await page.getByRole('button', { name: 'Passer par la station blanche', exact: false }).click();
+  await chooseFromDock(page, 'station');
   await page.getByRole('button', { name: 'Démarrer', exact: true }).click();
   for (const app of await page.locator('.start-menu .start-app').all())
     await expect(app).toBeDisabled();
@@ -672,17 +745,14 @@ for (const viewport of [
     for (const icon of await page.locator('.desktop-icon').all()) {
       await expect(icon).toBeInViewport({ ratio: 1 });
     }
-    for (const id of ['usb', 'incident', 'mail', 'web', 'mfa']) {
+    for (const id of ['usb', 'incident', 'mail', 'spoof', 'web', 'mfa']) {
       await openNext(page, id, false);
       if (id === 'mfa') {
         const phone = await page.locator('.mfa-device').boundingBox();
         expect(phone!.height / phone!.width).toBeGreaterThanOrEqual(1.6);
       }
       const panel = page.locator('.action-dock-panel');
-      if (id !== 'mfa') {
-        await page.getByRole('button', { name: 'Que faire ?', exact: true }).click();
-      }
-      await expect(panel).toBeVisible();
+      await beginDecision(page, id);
       const bounds = await panel.boundingBox();
       expect(bounds!.x).toBeGreaterThanOrEqual(0);
       expect(bounds!.y).toBeGreaterThanOrEqual(0);
@@ -696,21 +766,9 @@ for (const viewport of [
       await expect(lastChoice).toBeInViewport({ ratio: 0.99 });
       expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(viewport.width);
       await expectNoAxeViolations(page);
-      await page.getByRole('button', { name: 'Replier les actions du jeu' }).click();
-      await expect(page.getByRole('button', { name: 'Que faire ?', exact: true })).toBeFocused();
+      await page.getByRole('button', { name: fr.guidance.close, exact: true }).click();
+      await expect(panel).toHaveCount(0);
     }
-    await openNext(page, 'spoof');
-    await page.getByRole('button', { name: 'Envoyer dans la simulation' }).focus();
-    await page.keyboard.press('Enter');
-    const inspectSender = page.getByRole('button', { name: fr.spoof.inspectNext, exact: true });
-    await inspectSender.focus();
-    await expect(inspectSender).toBeInViewport({ ratio: 0.99 });
-    await page.keyboard.press('Enter');
-    await expect(page.getByTestId('received-address')).toBeVisible();
-    const acknowledgeSender = page.getByRole('button', { name: fr.spoof.understood, exact: true });
-    await acknowledgeSender.focus();
-    await expect(acknowledgeSender).toBeInViewport({ ratio: 0.99 });
-    await expectNoAxeViolations(page);
     await openNext(page, 'ai', false);
     await page.getByRole('button', { name: fr.ai.connect, exact: true }).click();
     await page.getByRole('radio', { name: fr.ai.confidential, exact: true }).check();
@@ -723,7 +781,7 @@ for (const viewport of [
   });
 }
 
-test('missing notices do not block play and About preserves the current draft', async ({
+test('missing notices do not block play and About preserves the inspected message', async ({
   page,
 }) => {
   await page.route('**/THIRD-PARTY-NOTICES.txt', (route) =>
@@ -731,8 +789,10 @@ test('missing notices do not block play and About preserves the current draft', 
   );
   await page.goto('./');
   await enter(page);
-  await openNext(page, 'spoof');
-  await page.getByLabel('Nom affiché').fill('Camille — en cours');
+  await openNext(page, 'spoof', false);
+  await page.getByRole('button', { name: fr.mail.details, exact: true }).click();
+  const address = page.getByText(config.mailLegitimateAddress, { exact: true });
+  await expect(address).toBeVisible();
   await page.getByRole('button', { name: 'Démarrer', exact: true }).click();
   await page.getByRole('button', { name: 'À propos de ShutterOS', exact: true }).click();
   await page.getByText('Licences tierces et mentions', { exact: true }).click();
@@ -743,7 +803,7 @@ test('missing notices do not block play and About preserves the current draft', 
   ).toBeVisible();
   await expectNoAxeViolations(page);
   await page.getByRole('button', { name: 'Fermer', exact: true }).click();
-  await expect(page.getByLabel('Nom affiché')).toHaveValue('Camille — en cours');
+  await expect(address).toBeVisible();
 });
 
 test('local portrait SVG keeps its ratio and organisation text stays escaped', async ({ page }) => {
@@ -863,15 +923,12 @@ test('ejecting the USB drive completes its safe path without opening the quiz', 
   await enter(page);
   await openNext(page, 'usb', false);
   await expect(page.locator('.action-dock-panel')).toHaveCount(0);
-  await page
-    .locator('.usb-browser')
-    .getByRole('button', { name: 'Éjecter la clé', exact: true })
-    .click();
+  await page.locator('.usb-browser .file-sidebar-eject').click();
   await expect(page.locator('.feedback-card')).toContainText(fr.usb.ejected);
   await expect(page.locator('[data-challenge="incident"]')).toHaveCount(0);
 });
 
-test('benign USB items open local previews without recording an infection', async ({ page }) => {
+test('the USB readme opens locally without recording an infection', async ({ page }) => {
   await page.goto('./');
   await enter(page);
   await openNext(page, 'usb', false);
@@ -879,18 +936,15 @@ test('benign USB items open local previews without recording an infection', asyn
   const drive = page.locator('.usb-browser');
   // The executable extension is a clue for screen-reader users too.
   await expect(drive.getByRole('button', { name: fr.usb.filename, exact: true })).toBeVisible();
-  await drive.getByRole('button', { name: fr.usb.otherFile }).dblclick();
-  await expect(drive.getByText(fr.usb.archivePreview)).toBeVisible();
-  await expect(page.locator('[data-challenge="usb"]')).toBeVisible();
-  await expect(page.locator('.feedback-card')).toHaveCount(0);
-
   const readme = drive.getByRole('button', { name: fr.usb.readme });
   await readme.focus();
   await page.keyboard.press('Enter');
   await expect(drive.getByText(fr.usb.readmePreview)).toBeVisible();
+  await expect(page.getByRole('dialog', { name: fr.usb.readme, exact: true })).toBeFocused();
+  await page.keyboard.press('Escape');
   await expect(readme).toBeFocused();
   await expect(page.locator('.feedback-card')).toHaveCount(0);
-  await drive.getByRole('button', { name: fr.usb.eject, exact: true }).click();
+  await drive.locator('.file-sidebar-eject').click();
   await expect(page.locator('.feedback-card[data-outcome="safe"]')).toBeVisible();
   await expect(page.locator('.feedback-card')).toContainText(fr.usb.ejected);
   await advance(page);
