@@ -9,6 +9,11 @@ command -v git-flow >/dev/null 2>&1 || git flow version >/dev/null 2>&1 || {
 }
 root=$(git rev-parse --show-toplevel)
 cd "$root"
+# git-flow 1.12.3 suggests "master" by default; name both branches explicitly and make
+# sure a local main exists (a fresh clone of develop only tracks origin/main).
+git rev-parse -q --verify main >/dev/null || git branch --track main origin/main
+git config gitflow.branch.master main
+git config gitflow.branch.develop develop
 git flow init -d -f -t v >/dev/null
 git config gitflow.path.hooks "$root/.gitflow/hooks"
 # Features always merge with a merge commit, as in nvie's model.
