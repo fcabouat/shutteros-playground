@@ -1,4 +1,4 @@
-name: Verify and publish
+name: CI and recovery
 
 on:
   push:

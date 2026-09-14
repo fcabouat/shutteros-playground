@@ -7,7 +7,7 @@ The source is a personal MIT project. The public demo uses the generic ShutterOS
 1. Use a GitHub repository with Actions enabled, `develop` as its default integration branch, and `main` for releases and Pages. Forks can use the same workflow; the deployment path is derived from the repository name.
 2. Run the [release verification](verification.md) from a clean checkout. Check that the source excludes organisation assets, generated branding, `.env` files, `dist/`, and local browser reports.
 3. In **Settings → Pages → Build and deployment**, select **GitHub Actions** as the source. Add the repository Actions variable **`PAGES_ENABLED` = `true`** under **Settings → Secrets and variables → Actions → Variables**.
-4. Run **Verify and publish** manually on `main`, or push a commit to it. The deployment job runs only after verification succeeds, only on `main`, and only when the variable is enabled. Pull requests never deploy.
+4. Run **CI and recovery** manually on `main`, or push a commit to it. The deployment job runs only after verification succeeds, only on `main`, and only when the variable is enabled. Pull requests never deploy.
 5. In **Settings → Environments → github-pages**, restrict deployment branches to `main`.
 6. Inspect the Actions run and open the URL reported by the `github-pages` deployment. Verify login, one situation, language switching, logout, and the browser console on that URL.
 
@@ -56,7 +56,7 @@ pnpm release patch
 # or: pnpm release minor
 ```
 
-The command fast-forwards your local branch if necessary, starts GitHub Actions, and exits. You can close the terminal immediately. You can also use **Actions → Verify and publish → Run workflow**, choose **develop**, enable **prepare_release**, and choose **release_type**. There is no need to wait for the preceding develop CI run: the release workflow verifies the requested commit itself.
+The command fast-forwards your local branch if necessary, starts GitHub Actions, and exits. You can close the terminal immediately. You can also use **Actions → Release → Run workflow**, choose **develop**, and select the version bump. The Release workflow only acknowledges the request; follow the linked **CI and recovery** runs for delivery status. There is no need to wait for the preceding develop CI run: the release workflow verifies the requested commit itself.
 
 The requested type is a minimum: stronger pending Changesets take precedence. With no argument, `pnpm release` uses only the pending Changesets; without any, it creates no release. Explicit patch/minor/major requests also work without a prewritten note.
 
@@ -87,7 +87,7 @@ The built-in Actions token needs no stored personal token. Each bot merge explic
 
 Run `pnpm release` again from develop to resume preparation or an open delivery/return PR. If develop advanced during initial verification, rerun to include and verify its new head. For a transient job failure, rerun the failed job; for a moved PR base, start a new run so the proposed merge is tested again. The internal **release_pr** input identifies that PR when dispatching on its `release/X.Y.Z` branch.
 
-To resume an interrupted publication, run **Verify and publish** on current `main` with **resume_release** enabled. It reuses completed stages and requires the version tag, if present, to identify that exact main commit. An already-tagged version with changed content needs a new release. Rerunning an old job retains its old workflow code.
+To resume an interrupted publication, run **CI and recovery** on current `main` with **resume_release** enabled. It reuses completed stages and requires the version tag, if present, to identify that exact main commit. An already-tagged version with changed content needs a new release. Rerunning an old job retains its old workflow code.
 
 Check **verification, CodeQL, Pages, tag/release creation, and the return PR separately**. A green `verify` is not proof that delivery finished. Pages and release publication are independent because kiosk use does not require Pages. Actions summaries provide the publication and PR links.
 
