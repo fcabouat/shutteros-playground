@@ -34,11 +34,9 @@ if (local !== remote) {
 run('gh', [
   'workflow',
   'run',
-  'ci.yml',
+  'release.yml',
   '--ref',
   'develop',
-  '-f',
-  'prepare_release=true',
   '-f',
   `release_type=${releaseType}`,
 ]);
@@ -50,5 +48,5 @@ const repository = /^[^/]+\/[^/]+$/.test(origin) ? origin : process.env.GITHUB_R
 if (!/^[^/]+\/[^/]+$/.test(repository ?? ''))
   fail('Could not determine the origin GitHub repository.');
 console.log(
-  `Release preparation dispatched: https://github.com/${repository}/actions/workflows/ci.yml`,
+  `Release preparation dispatched: https://github.com/${repository}/actions/workflows/release.yml`,
 );

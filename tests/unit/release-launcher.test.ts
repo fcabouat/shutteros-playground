@@ -79,11 +79,9 @@ if (a[0]==='auth' && process.env.FAIL_AUTH) process.exit(1); fs.appendFileSync(f
 
 test('dispatches from clean develop without changing tags', () => {
   const f = fixture();
-  expect(f.run()).toContain('/actions/workflows/ci.yml');
+  expect(f.run()).toContain('/actions/workflows/release.yml');
   expect(f.git('tag')).toBe('fixture-tag');
-  expect(f.calls()).toContain(
-    'workflow run ci.yml --ref develop -f prepare_release=true -f release_type=auto',
-  );
+  expect(f.calls()).toContain('workflow run release.yml --ref develop -f release_type=auto');
 });
 
 test.each(['patch', 'minor', 'major'])('passes explicit %s release type to CI', (releaseType) => {
