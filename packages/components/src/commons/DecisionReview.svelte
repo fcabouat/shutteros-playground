@@ -2,6 +2,7 @@
   import {
     challengeChoiceIds,
     choiceOutcome,
+    type AiPrompt,
     type ChallengeId,
     type DecisionStep,
   } from '@shutteros/core/model/game';
@@ -45,14 +46,21 @@
   );
 
   function choiceLabel(choiceId: string): string {
-    const catalogChoice = catalogChoices.find((choice) => choice.id === choiceId);
-    if (catalogChoice) return catalogChoice.label;
     if (id === 'ai') {
-      const promptId = choiceId.slice(choiceId.indexOf('-') + 1) as
-        'routine' | 'routineAnonymised' | 'confidential' | 'confidentialAnonymised' | 'generic';
-      return copy.ai[promptId];
+      const promptId = choiceId.slice(choiceId.indexOf('-') + 1) as AiPrompt;
+      return copy.ai.review[promptId];
     }
-    return choiceId;
+    return catalogChoices.find((choice) => choice.id === choiceId)?.label ?? choiceId;
+  }
+
+  function otherToolNote(choiceId: string): string | null {
+    if (id !== 'ai') return null;
+    const otherTool = selectedAiTool === 'internal' ? 'commercial' : 'internal';
+    const promptId = choiceId.slice(choiceId.indexOf('-') + 1);
+    const alternative = choiceOutcome('ai', step, `${otherTool}-${promptId}`);
+    return alternative !== choiceOutcome('ai', step, choiceId)
+      ? copy.ai.otherTool[otherTool]
+      : null;
   }
 </script>
 
@@ -68,6 +76,7 @@
     {#each choiceIds as choiceId (choiceId)}
       {@const outcome = choiceOutcome(id, step, choiceId)}
       {@const selected = choiceId === selectedChoiceId}
+      {@const toolNote = otherToolNote(choiceId)}
       {@const correct = outcome === 'safe'}
       <li
         class="decision-review-choice"
@@ -79,7 +88,10 @@
         <span class="decision-review-icon">
           <Icon name={correct ? 'check' : 'close'} size={17} />
         </span>
-        <span class="decision-review-label">{choiceLabel(choiceId)}</span>
+        <span class="decision-review-label">
+          {choiceLabel(choiceId)}
+          {#if toolNote}<span class="decision-review-tool-note">{toolNote}</span>{/if}
+        </span>
         <span class="decision-review-status">
           {selected
             ? `${correct ? copy.feedback.correct : copy.feedback.incorrect} — ${copy.feedback.selected}`
@@ -168,6 +180,13 @@
     font-size: 0.875rem;
     font-weight: 650;
     line-height: 1.3;
+  }
+
+  .decision-review-tool-note {
+    display: block;
+    margin-top: 0.3rem;
+    font-weight: 400;
+    font-size: 0.8125rem;
   }
 
   .decision-review-status {

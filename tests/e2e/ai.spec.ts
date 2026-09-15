@@ -50,6 +50,12 @@ for (const locale of ['fr', 'en'] as const) {
           exact: true,
         }),
       ).toBeVisible();
+      const review = page.locator('.decision-review[data-activity="ai"]');
+      for (const label of Object.values(copy.ai.review)) await expect(review).toContainText(label);
+      await expect(review.locator('[data-choice="commercial-routine"]')).toContainText(
+        copy.ai.otherTool.internal,
+      );
+      await expect(review.locator('.decision-review-tool-note')).toHaveCount(1);
       expect(outgoing).toEqual([]);
       await page.getByRole('button', { name: copy.shell.logout, exact: true }).click();
       await page.getByRole('button', { name: copy.shell.exitConfirm, exact: true }).click();
@@ -70,6 +76,13 @@ for (const locale of ['fr', 'en'] as const) {
           exact: true,
         }),
       ).toBeVisible();
+
+      await expect(review.locator('[data-choice="internal-routine"]')).toContainText(
+        copy.ai.otherTool.commercial,
+      );
+      await expect(review.locator('.decision-review-tool-note')).toHaveCount(1);
+      expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+      await page.screenshot({ path: `test-results/previews/ai-review-${locale}-${delivery}.png` });
 
       await page.getByRole('button', { name: copy.feedback.continue, exact: true }).click();
       await openAiFromDesktop(page);
