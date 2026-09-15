@@ -83,15 +83,23 @@ describe('game runtime regressions', () => {
 
   it('clears all session information on logout and expiry', () => {
     const opened = apply(desktop(), { type: 'open', id: 'usb' }, 2);
-    const loggedOut = apply(opened, { type: 'logout' }, 3);
+    const readmeOpened = apply(opened, { type: 'open-usb-readme' }, 3);
+    const loggedOut = apply(readmeOpened, { type: 'logout' }, 4);
     expect(loggedOut).toMatchObject({
       phase: 'login',
       generation: 1,
-      now: 3,
+      now: 4,
       reason: 'logout',
       failedAttempts: 0,
     });
     expect(loggedOut).not.toHaveProperty('results');
+    const freshUsb = apply(
+      apply(apply(loggedOut, { type: 'login', password: 'accès' }, 5), { type: 'continue' }, 5),
+      { type: 'open', id: 'usb' },
+      6,
+    );
+    expect(freshUsb).toMatchObject({ scene: { kind: 'challenge' } });
+    expect(freshUsb).not.toHaveProperty('scene.openedReadme');
     expect(apply(opened, { type: 'choose', choiceId: 'eject' }, 60_000)).toMatchObject({
       phase: 'login',
       reason: 'expired',
@@ -126,6 +134,20 @@ describe('game runtime regressions', () => {
     expect(apply(feedback, { type: 'continue' }, 3)).toMatchObject({
       scene: { kind: 'challenge', id: 'incident', step: 'choose' },
     });
+  });
+
+  it('accepts README opening only for the active, unlocked USB challenge', () => {
+    const inactive = apply(desktop(), { type: 'open-usb-readme' }, 1);
+    expect(inactive).toMatchObject({ scene: { kind: 'desktop' } });
+
+    const usb = apply(desktop(), { type: 'open', id: 'usb' }, 1);
+    const locked = apply(usb, { type: 'practice-lock' }, 2);
+    const ignored = apply(locked, { type: 'open-usb-readme' }, 3);
+    expect(ignored).toMatchObject({
+      locked: true,
+      scene: { kind: 'challenge', id: 'usb' },
+    });
+    expect(ignored).not.toHaveProperty('scene.openedReadme');
   });
 
   it('rejects unknown, inherited, and malformed action identifiers', () => {

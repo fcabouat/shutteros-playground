@@ -9,6 +9,9 @@ export type AiPrompt =
 
 export type Outcome = 'safe' | 'risky';
 
+/** A safe final choice can still carry a caution about an earlier risk. */
+export type ResultAssessment = Outcome | 'caution';
+
 export type DecisionStep = 'choose' | 'notify';
 
 /** Fixed journey order shared by the runtime and read-only UI projections. */
@@ -69,6 +72,8 @@ export type ChallengeResult = {
   id: ChallengeId;
   outcome: Outcome;
   choiceId: string;
+  /** USB README viewing is recorded without changing the binary decision outcome. */
+  openedReadme?: true;
   /** Choice that advanced a preceding stage, currently used for incident isolation. */
   priorChoiceId?: string;
 };
@@ -83,6 +88,8 @@ export type Scene =
       startedAt: number;
       step: DecisionStep;
       priorChoiceId?: string;
+      /** A non-terminal USB action; retained while the activity is paused. */
+      openedReadme?: true;
       guidance: GuidanceClock;
     }
   // Replay feedback describes the latest attempt; results still owns the first one.
@@ -94,8 +101,8 @@ export type Scene =
  * Session-owned data. Clock values are absolute milliseconds on the injected clock's
  * timeline; the core does not read a system clock or serialize this state.
  *
- * `generation` identifies a reset boundary. Game.svelte keys its component subtree
- * with it so local drafts and open dialogs are discarded along with domain state.
+ * `generation` distinguishes successive session cycles, including resets that return
+ * to the same phase. Consumers can invalidate session-scoped data when it changes.
  */
 export type GameState =
   | {
@@ -145,7 +152,10 @@ export type Intent =
   | { type: 'continue' }
   | { type: 'open'; id: ChallengeId }
   | { type: 'finish-experience' }
+  | { type: 'explore-freely' }
   | { type: 'request-hint' }
+  | { type: 'request-choices' }
+  | { type: 'open-usb-readme' }
   | { type: 'choose'; choiceId: string }
   | { type: 'send-ai'; tool: AiTool; prompt: AiPrompt }
   | { type: 'close' }

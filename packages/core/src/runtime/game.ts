@@ -76,8 +76,14 @@ export function transition(
       return openChallenge(timed, intent.id);
     case 'finish-experience':
       return finishExperience(timed);
+    case 'explore-freely':
+      return timed.mode === 'free' ? timed : { ...timed, mode: 'free' };
     case 'request-hint':
       return requestHint(timed);
+    case 'request-choices':
+      return requestHint(timed, 2);
+    case 'open-usb-readme':
+      return openUsbReadme(timed);
     case 'send-ai':
       return timed.scene.kind === 'challenge' &&
         timed.scene.id === 'ai' &&
@@ -180,7 +186,10 @@ function transitionLogin(
     case 'continue':
     case 'open':
     case 'finish-experience':
+    case 'explore-freely':
     case 'request-hint':
+    case 'request-choices':
+    case 'open-usb-readme':
     case 'choose':
     case 'send-ai':
     case 'close':
@@ -300,11 +309,14 @@ function completeGuided(state: Extract<GameState, { phase: 'session' }>): GameSt
   return { ...state, scene: routinesComplete(state) ? { kind: 'debrief' } : { kind: 'routines' } };
 }
 
-function requestHint(state: Extract<GameState, { phase: 'session' }>): GameState {
+function requestHint(
+  state: Extract<GameState, { phase: 'session' }>,
+  target?: GuidanceLevel,
+): GameState {
   if (state.scene.kind !== 'challenge') return state;
   const currentLevel = elapsedGuidanceLevel(state.scene.guidance, state.now);
   if (currentLevel === 2) return state;
-  const requestedLevel = (currentLevel + 1) as GuidanceLevel;
+  const requestedLevel = target ?? ((currentLevel + 1) as GuidanceLevel);
   return {
     ...state,
     scene: {
@@ -317,6 +329,13 @@ function requestHint(state: Extract<GameState, { phase: 'session' }>): GameState
       },
     },
   };
+}
+
+/** Record the risk without completing the exercise or triggering a simulated infection. */
+function openUsbReadme(state: Extract<GameState, { phase: 'session' }>): GameState {
+  const scene = state.scene;
+  if (scene.kind !== 'challenge' || scene.id !== 'usb' || scene.openedReadme) return state;
+  return { ...state, scene: { ...scene, openedReadme: true } };
 }
 
 function choose(state: Extract<GameState, { phase: 'session' }>, choiceId: string): GameState {
@@ -350,6 +369,7 @@ function choose(state: Extract<GameState, { phase: 'session' }>, choiceId: strin
     id: scene.id,
     outcome,
     choiceId,
+    ...(scene.openedReadme ? { openedReadme: true as const } : {}),
     ...(scene.priorChoiceId === undefined ? {} : { priorChoiceId: scene.priorChoiceId }),
   });
 }
@@ -429,7 +449,10 @@ function transitionLocked(
     case 'continue':
     case 'open':
     case 'finish-experience':
+    case 'explore-freely':
     case 'request-hint':
+    case 'request-choices':
+    case 'open-usb-readme':
     case 'send-ai':
     case 'choose':
     case 'close':

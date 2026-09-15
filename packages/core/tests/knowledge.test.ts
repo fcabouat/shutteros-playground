@@ -1,4 +1,8 @@
 import { describe, expect, it } from 'vitest';
+import { challenges } from '../src/data/challenges';
+import { englishChallenges } from '../src/data/challenges.en';
+import { fr } from '../src/data/fr';
+import { en } from '../src/data/en';
 import type { GameState } from '../src/model/game';
 import { currentKnowledgeId, knowledgeAnswer } from '../src/services/knowledge';
 
@@ -88,4 +92,19 @@ describe('knowledge service', () => {
     expect(knowledgeAnswer('mfa', 'toString')).toBeNull();
     expect(knowledgeAnswer('mfa', null as never)).toBeNull();
   });
+});
+
+it('keeps editorial highlights inside their translated lessons', () => {
+  for (const catalog of [challenges, englishChallenges]) {
+    for (const lesson of Object.values(catalog)) {
+      expect(lesson.lessonEmphasis.length).toBeGreaterThan(0);
+      expect(lesson.lesson).toContain(lesson.lessonEmphasis);
+    }
+  }
+  for (const copy of [fr, en]) {
+    expect(copy.intro.principle).toContain(copy.intro.principleEmphasis);
+    for (const id of ['password', 'update'] as const) {
+      expect(copy.routines[`${id}Lesson`]).toContain(copy.routines[`${id}Emphasis`]);
+    }
+  }
 });
