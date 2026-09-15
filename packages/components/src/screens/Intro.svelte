@@ -2,6 +2,7 @@
   import { getI18n } from '../i18n/context';
   import type { Intent, GameState } from '@shutteros/core/model/game';
   import Icon from '../commons/Icon.svelte';
+  import EmphasizedText from '../commons/EmphasizedText.svelte';
   let {
     snapshot,
     dispatch,
@@ -18,7 +19,9 @@
     <p class="text-muted mt-3 text-sm leading-relaxed">
       {snapshot.loginCategory === 'weak' ? copy.intro.guessedDescription : copy.intro.description}
     </p>
-    <p class="mt-4 text-sm leading-relaxed">{copy.intro.principle}</p>
+    <p class="mt-4 text-sm leading-relaxed">
+      <EmphasizedText text={copy.intro.principle} emphasis={copy.intro.principleEmphasis} />
+    </p>
     <button class="button button-primary mt-5" onclick={() => dispatch({ type: 'continue' })}
       >{copy.intro.start}<Icon name="arrow" size={18} /></button
     >

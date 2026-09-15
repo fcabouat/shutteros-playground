@@ -93,13 +93,10 @@ button:active:not(:disabled) {
 }
 
 .wallpaper {
-  background: radial-gradient(
-    ellipse at 76% 22%,
-    #236e8f 0,
-    #153a63 31%,
-    #092645 61%,
-    #071a30 100%
-  );
+  background:
+    radial-gradient(ellipse at 78% 8%, #3287a0 0, #1e5a7d 24%, transparent 52%),
+    radial-gradient(ellipse at 8% 104%, #135176 0, transparent 58%),
+    linear-gradient(145deg, #123b60 0%, #0a294a 48%, #061b32 100%);
   color: #fff;
   isolation: isolate;
   overflow: clip;
@@ -108,27 +105,23 @@ button:active:not(:disabled) {
   position: absolute;
   z-index: -1;
   pointer-events: none;
-  top: 8%;
-  right: -4%;
-  width: min(80vw, 1280px);
-  height: min(80vw, 1280px);
-  border-radius: 50%;
-  transform: rotate(-29deg);
+  inset: -15%;
+  transform: rotate(-4deg);
   background:
     radial-gradient(
-      ellipse at 43% 47%,
-      transparent 31%,
-      #52acc318 31.2%,
-      #51a1c126 35%,
-      #438bab05 38%,
-      transparent 40%,
-      #46a3c11c 41%,
-      #71c9d030 47%,
-      #1c58822b 49%,
-      #0e2e5300 52%
+      ellipse at 84% 32%,
+      transparent 0 32%,
+      #67c1ce18 33%,
+      #4fa9bd22 39%,
+      transparent 48%
     ),
-    conic-gradient(from 90deg at 47% 54%, transparent 55%, #68bac626 75%, transparent 90%);
-  filter: blur(1px);
+    radial-gradient(
+      ellipse at 72% 64%,
+      transparent 0 38%,
+      #2b789c20 42%,
+      #7ed0d81a 49%,
+      transparent 58%
+    );
 }
 .brand-word {
   font-size: 1.55rem;
@@ -280,10 +273,20 @@ button:active:not(:disabled) {
   overflow: hidden;
 }
 .feedback-card > footer {
-  position: sticky;
-  bottom: 0;
-  z-index: 1;
   background: var(--surface);
+}
+/* Scroll the lesson, while keeping its continuation action in a separate row. */
+.window-body:has(> .feedback-card) {
+  display: flex;
+  overflow: hidden;
+}
+.feedback-card {
+  flex: 1;
+  min-height: 0;
+}
+.feedback-content {
+  min-height: 0;
+  overflow-y: auto;
 }
 .intro-visual {
   background: linear-gradient(155deg, #257f89, #123d59);
@@ -640,10 +643,6 @@ button:active:not(:disabled) {
 .language-switch button:hover {
   background: #ffffff1c;
 }
-.os-workspace {
-  min-height: calc(100dvh - 64px);
-  margin-bottom: 64px;
-}
 .desktop-watermark {
   color: #c9e7ef4d;
 }
@@ -657,13 +656,41 @@ button:active:not(:disabled) {
   background: #d7effa12;
   border-color: #e5f4ff28;
 }
+.os-topbar,
 .os-taskbar {
-  color: #253e51;
+  color: #192b3b;
   border-color: #d8e8f355;
-  background: #e6eff4ee;
-  backdrop-filter: blur(24px);
+  background: #e6eff4;
   min-height: 64px;
   box-shadow: 0 -1px 12px #071d3410;
+}
+/* Filter only the two shallow, stationary bars. Keep a solid fallback and avoid
+   animated filters or permanent layer promotion on kiosk graphics hardware. */
+@supports (backdrop-filter: blur(13px)) {
+  .os-topbar,
+  .os-taskbar {
+    background: #e6eff499;
+    backdrop-filter: blur(13px) saturate(115%);
+  }
+}
+@media (prefers-reduced-transparency: reduce),
+  (prefers-reduced-motion: reduce),
+  (forced-colors: active) {
+  .os-topbar,
+  .os-taskbar {
+    background: #e6eff4;
+    backdrop-filter: none;
+  }
+}
+.taskbar-windows {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  overflow-x: auto;
+}
+.taskbar-windows > * {
+  flex-shrink: 0;
 }
 .os-taskbar .language-switch {
   border-color: #53798b30;
@@ -785,7 +812,6 @@ button:active:not(:disabled) {
 }
 .companion-trigger:hover {
   background: #e2f7d2;
-  transform: translateY(-2px);
 }
 
 .window-control {
@@ -828,7 +854,7 @@ button:active:not(:disabled) {
   .os-taskbar-app {
     width: 36px;
   }
-  .taskbar-shortcut {
+  .taskbar-shortcut:not(.active) {
     display: none;
   }
   .os-workspace {
@@ -849,10 +875,8 @@ button:active:not(:disabled) {
   }
 
   .wallpaper-orbit {
-    top: 25%;
-    right: -10%;
-    width: 100vw;
-    height: 100vw;
+    inset: -10%;
+    transform: rotate(-2deg);
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -874,18 +898,29 @@ button:active:not(:disabled) {
 }
 
 /* Desktop and window layers occupy the same bounded workspace. */
+.session-screen {
+  height: 100dvh;
+}
 .os-workspace {
-  height: calc(100dvh - 64px);
+  margin-bottom: 64px;
   min-height: 0;
   padding: 0;
-  flex: none;
+  flex: 1;
 }
 .desktop-plane {
   position: absolute;
-  inset: 56px 18px 12px;
+  inset: 12px 18px;
 }
 .desktop-canvas {
   height: 100%;
+}
+.wallpaper-curtain {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
 }
 .desktop-icons {
   grid-template-rows: repeat(6, min-content);
@@ -899,14 +934,11 @@ button:active:not(:disabled) {
 }
 .window-layer {
   position: absolute;
-  inset: 56px 20px 18px 138px;
+  inset: 12px 20px 18px 138px;
   pointer-events: none;
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
-  gap: 10px;
-}
-.window-layer:not(:has(.activity-guidance)) {
   grid-template-rows: minmax(0, 1fr);
+  gap: 10px;
 }
 .view-host {
   display: flex;
@@ -926,12 +958,71 @@ button:active:not(:disabled) {
   overflow: hidden;
   pointer-events: auto;
 }
-.os-window.large {
-  width: min(100%, 1380px);
+/* Main applications open with room to read, independently of their content or
+   the floating hint. Inline dimensions still preserve deliberate resizing. */
+.window-layer .os-window:not(.device-window):not(.maximized) {
+  width: min(100%, 960px);
+}
+.window-layer .os-window[data-sizing='workspace']:not(.device-window):not(.maximized) {
+  width: min(100%, 1120px);
+  height: min(90%, 760px);
 }
 .os-window.maximized {
   width: 100%;
   height: 100%;
+  border-radius: 0;
+}
+/* A short welcome can breathe vertically; long lessons still scroll from the top. */
+.window-layer .os-window .intro-card {
+  min-height: 100%;
+  display: flex;
+  align-items: center;
+}
+/* Make room for choices without changing the window's maximized state.
+   Explicit user resizing still takes precedence through the frame's inline width. */
+.window-layer .os-window.with-choices:not(.device-window):not(.maximized) {
+  width: min(100%, 1280px);
+}
+.window-layer .os-window.with-choices.device-window:not(.maximized) {
+  width: min(100%, 800px);
+  background: var(--paper, white);
+}
+.application-canvas {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+.application-canvas > * {
+  flex: 1;
+}
+.window-panes {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.window-panes.with-sidebar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 352px;
+}
+.window-panes > .window-body {
+  min-width: 0;
+}
+.window-titlebar[hidden] {
+  display: none;
+}
+.device-window:not(.maximized) {
+  width: auto;
+  max-width: 100%;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.device-window .window-body {
+  display: grid;
+  place-items: center;
+}
+.device-window.maximized .device-controls {
+  display: none;
 }
 .window-title-handle {
   touch-action: none;
@@ -1107,10 +1198,6 @@ button:active:not(:disabled) {
     border-left: 0;
     padding-left: 0;
   }
-
-  .session-controls {
-    right: 12px;
-  }
 }
 
 /* Organisation identity and the OS wallpaper mark remain separate. */
@@ -1137,31 +1224,35 @@ button:active:not(:disabled) {
   letter-spacing: 0.06em;
 }
 .desktop-watermark {
-  left: 50%;
-  top: 50%;
-  right: auto;
-  bottom: auto;
-  transform: translate(-50%, -50%);
-  color: #c9e7ef26;
+  left: auto;
+  top: auto;
+  right: 26px;
+  bottom: 24px;
+  color: #ecfbffb8;
+  filter: drop-shadow(0 2px 8px #03142780);
 }
 .desktop-watermark > div {
-  flex-direction: column;
-  gap: 12px;
+  gap: 8px;
 }
 .desktop-watermark span {
   color: inherit;
 }
 .desktop-watermark .brand-symbol {
-  width: 128px;
-  height: 128px;
+  width: 42px;
+  height: 42px;
   background: transparent;
+  color: #d8f8ab;
 }
 .desktop-watermark .brand-symbol svg {
-  width: 128px;
-  height: 128px;
+  width: 38px;
+  height: 38px;
 }
 .desktop-watermark .brand-word {
-  font-size: 40px;
+  font-size: 1.2rem;
+  letter-spacing: -0.035em;
+}
+.desktop-watermark .brand-period {
+  color: #c2f29a;
 }
 
 @media (max-height: 640px) {
@@ -1177,14 +1268,28 @@ button:active:not(:disabled) {
   }
 }
 @media (max-width: 760px) {
-  .desktop-organization {
-    top: 64px;
-  }
   .desktop-organization .organization-brand {
     max-width: 180px;
   }
-  .desktop-plane {
-    top: 118px;
+  .desktop-watermark {
+    right: 10px;
+    bottom: 8px;
+  }
+  .desktop-watermark .brand-symbol {
+    width: 34px;
+    height: 34px;
+  }
+  .desktop-watermark .brand-symbol svg {
+    width: 30px;
+    height: 30px;
+  }
+  .desktop-watermark .brand-word {
+    font-size: 1rem;
+  }
+}
+@media (max-width: 760px) and (max-height: 520px) {
+  .desktop-watermark {
+    display: none;
   }
 }
 
@@ -1250,13 +1355,9 @@ button:active:not(:disabled) {
   max-width: min(96px, 12vw);
 }
 .desktop-organization {
-  max-width: calc(100vw - 420px);
+  min-width: 0;
 }
 @media (max-width: 760px) {
-  .desktop-organization {
-    width: calc(100vw - 40px);
-    max-width: none;
-  }
   .joint-organizations {
     gap: 12px;
   }
@@ -1269,17 +1370,14 @@ button:active:not(:disabled) {
   }
 }
 
-/* Guidance has its own row and column inside the window bounds. Even maximized or
-   dragged windows cannot cover it, and it never masks application controls. */
+/* The activity has one frame; auxiliary documents and hints float independently. */
 .activity-layout {
+  grid-row: 1;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   min-width: 0;
   min-height: 0;
   gap: 16px;
-}
-.activity-layout.with-actions {
-  grid-template-columns: minmax(0, 1fr) 352px;
 }
 .activity-guidance {
   display: flex;
@@ -1292,22 +1390,17 @@ button:active:not(:disabled) {
   z-index: 40;
   pointer-events: auto;
 }
-.guidance-message {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 14px;
-  border-radius: 10px;
+.hint-window-layer .window-body {
   background: #eef5e9;
   color: #294638;
+}
+.hint-content {
+  position: relative;
+  overflow: hidden;
+  margin: 0;
+  padding: 18px;
   font-size: 0.875rem;
   line-height: 1.5;
-}
-.guidance-message svg {
-  flex-shrink: 0;
-}
-.guidance-controls {
-  flex-shrink: 0;
 }
 .guidance-trigger {
   display: inline-flex;
@@ -1326,11 +1419,48 @@ button:active:not(:disabled) {
 .guidance-trigger.offered {
   box-shadow: 0 0 0 3px #d6f6bc55;
 }
+/* A short invitation after waiting, followed by a static ring. Animate only the
+   icon, never the click target or a blurred surface; reduced motion keeps the ring. */
+.help-cue {
+  display: inline-flex;
+  flex: none;
+}
+.help-attention {
+  outline: 2px solid #b97b1b;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 5px #ffdc7b55;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .help-attention .help-cue {
+    animation: help-cue-bounce 700ms ease-out 3;
+  }
+}
+@keyframes help-cue-bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  35% {
+    transform: translateY(-5px);
+  }
+  65% {
+    transform: translateY(1px);
+  }
+}
+/* Leave room for the underline inside truncated labels. */
+[data-hint-target='drive-label'] {
+  padding-bottom: 4px;
+}
+[data-active-hint='personal-destination'] [data-hint-target='personal-destination'],
+[data-active-hint='eject'] [data-hint-target='drive-label'] {
+  text-decoration: underline;
+  text-decoration-color: #c48117;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
+}
 [data-active-hint='eject'] [data-hint-target='eject'],
-[data-active-hint='network'] [data-hint-target='network'],
-[data-active-hint='report'] [data-hint-target='report'],
-[data-active-hint='bookmark'] [data-hint-target='bookmark'],
-[data-active-hint='deny-report'] [data-hint-target='deny-report'],
+[data-active-hint='network-status'] [data-hint-target='network-status'],
+[data-active-hint='sender-details'] [data-hint-target='sender-details'],
 [data-active-hint='tool'] [data-hint-target='tool'] {
   outline: 3px solid #edba3e !important;
   outline-offset: 3px;
@@ -1362,13 +1492,10 @@ button:active:not(:disabled) {
   gap: 6px;
 }
 @media (max-width: 1099px) {
-  .activity-layout.with-actions {
+  .window-panes.with-sidebar {
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: minmax(100px, 1fr) minmax(140px, 0.8fr);
-    gap: 10px;
-  }
-  .guidance-message {
-    font-size: 0.8rem;
+    gap: 0;
   }
 }
 @media (max-width: 639px) {
@@ -1376,9 +1503,7 @@ button:active:not(:disabled) {
     gap: 8px;
     flex-wrap: wrap;
   }
-  .guidance-message {
-    width: 100%;
-  }
+
   .window-titlebar {
     flex-wrap: wrap;
   }
@@ -1398,22 +1523,253 @@ button:active:not(:disabled) {
 @media (max-width: 1099px) and (max-height: 520px) {
   /* A shallow landscape viewport cannot hold two independently bounded panes.
      Scroll their stack as one region so every native and guided control is reachable. */
-  .activity-layout.with-actions {
+  .window-panes.with-sidebar {
     display: flex;
     flex-direction: column;
     overflow-y: auto;
     pointer-events: auto;
   }
-  .activity-layout.with-actions > .view-host {
+  .window-panes.with-sidebar > .window-body {
+    flex: none;
+    overflow: visible;
+  }
+  .window-panes.with-sidebar > .guidance-panel-host {
     flex: none;
     height: auto;
   }
-  .activity-layout.with-actions .os-window {
-    max-height: none;
+}
+
+/* Maximized windows use the whole desktop, including the icon column. Hidden
+   windows must not change the bounds of the application currently in front. */
+.window-layer:has(.view-host:not([hidden]) > .os-window.maximized) {
+  inset: 0;
+}
+.window-layer:has(.view-host:not([hidden]) > .os-window.maximized) .activity-layout {
+  gap: 0;
+}
+
+/* Stable slots for progress, hints and choices across both exploration modes. */
+.os-topbar {
+  --shell-gap: 12px;
+  height: 64px;
+  flex: none;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--shell-gap);
+  padding: 8px 20px;
+  position: relative;
+  z-index: 50;
+  border-bottom: 1px solid #c4d3dd;
+}
+.os-topbar .organization-group {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, max-content);
+  justify-content: start;
+  width: auto;
+  gap: var(--shell-gap);
+}
+.os-topbar .organization-brand {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--shell-gap);
+  max-width: none;
+}
+.os-topbar .organization-logo {
+  max-height: 44px;
+}
+.os-topbar .organization-placeholder {
+  color: inherit;
+  border-color: #8da5b5;
+}
+.os-topbar .organization-brand .text-white\/65 {
+  color: inherit;
+}
+.session-controls {
+  display: grid;
+  grid-template-columns: minmax(540px, 640px) minmax(160px, 200px) auto;
+  align-items: center;
+  gap: var(--shell-gap);
+}
+.session-help {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, 0.9fr);
+  align-items: center;
+  gap: 8px;
+}
+.session-help,
+.session-help .primary-help-slot,
+.session-finish {
+  min-width: 0;
+}
+.session-finish button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  width: 100%;
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+.session-help .companion-trigger,
+.session-help .guidance-trigger {
+  width: 100%;
+  min-height: 44px;
+  height: 44px;
+  white-space: nowrap;
+  border-radius: 10px;
+}
+.session-help .activity-guidance {
+  width: 100%;
+}
+.os-topbar .finish-experience,
+.os-topbar .session-timer {
+  color: #253e51;
+  background: #ffffff50;
+  border: 1px solid #b8cbd8;
+}
+@media (max-width: 1299px) {
+  .os-topbar {
     height: auto;
+    min-height: 116px;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: 44px auto;
+    align-items: stretch;
+    row-gap: 6px;
   }
-  .activity-layout.with-actions > .guidance-panel-host {
-    flex: none;
-    height: auto;
+  .os-topbar .desktop-organization {
+    height: 44px;
   }
+  .session-controls {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  }
+  .session-help .companion-trigger,
+  .session-help .guidance-trigger {
+    font-size: 0.75rem;
+    padding: 6px 8px;
+    height: 48px;
+    min-height: 48px;
+    white-space: normal;
+  }
+  .session-finish button {
+    padding: 6px;
+    white-space: normal;
+  }
+}
+@media (max-width: 699px) {
+  .os-topbar {
+    padding-inline: 12px;
+  }
+  .session-controls {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .session-help {
+    grid-column: 1 / -1;
+  }
+}
+
+/* One editorial highlight and spacing rhythm across lessons and answer reviews. */
+.learning-highlight {
+  background: #d1edb4;
+  color: #203a2c;
+  padding: 0.08em 0.15em;
+  border-radius: 2px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+.learning-context {
+  display: grid;
+  gap: 20px;
+}
+.learning-context > .decision-review {
+  margin-top: 0;
+}
+.feedback-heading {
+  display: grid;
+  gap: 12px;
+}
+.learning-takeaway {
+  margin-block: 20px;
+}
+.knowledge-explanation > svg {
+  flex: none;
+  margin-top: 2px;
+}
+.guidance-trigger:disabled {
+  background: #d4dce1;
+  border-color: #b8c5cd;
+  color: #52616b;
+  opacity: 1;
+  cursor: default;
+  box-shadow: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .hint-content {
+    animation: hint-appear 180ms ease-out both;
+  }
+  .hint-content::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(110deg, transparent 25%, #ffffffb3 50%, transparent 75%);
+    animation: hint-shine 900ms ease-out 180ms both;
+  }
+}
+@keyframes hint-appear {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes hint-shine {
+  from {
+    transform: translateX(-110%);
+  }
+  to {
+    transform: translateX(110%);
+  }
+}
+
+/* A single, bounded repaint on the highlighted surface: no overlay, extra layer,
+   perpetual animation or change to the target's geometry. */
+@media (prefers-reduced-motion: no-preference) and (forced-colors: none) {
+  .learning-highlight,
+  [data-active-hint='eject'] :is([data-hint-target='eject'], [data-hint-target='drive-label']),
+  [data-active-hint='network-status'] [data-hint-target='network-status'],
+  [data-active-hint='sender-details'] [data-hint-target='sender-details'],
+  [data-active-hint='tool'] [data-hint-target='tool'] {
+    background-image: linear-gradient(110deg, transparent 35%, #ffffff99 50%, transparent 65%);
+    background-size: 250% 100%;
+    background-repeat: no-repeat;
+    animation: cue-shine 900ms ease-out 180ms both;
+  }
+}
+@keyframes cue-shine {
+  from {
+    background-position: 150% 0;
+  }
+  to {
+    background-position: -50% 0;
+  }
+}
+
+.progress-slot {
+  min-width: 0;
+}
+.progress-slot .companion-trigger {
+  font-size: 0.75rem;
+  padding-inline: 8px;
+}
+.progress-slot .companion-trigger:disabled {
+  opacity: 1;
+  cursor: default;
+  background: transparent;
+  box-shadow: none;
 }

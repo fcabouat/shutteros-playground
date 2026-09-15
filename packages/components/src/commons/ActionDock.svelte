@@ -28,8 +28,8 @@
   let aiPrompt = $state<AiPrompt | null>(null);
 </script>
 
-{#if open}
-  <div class="action-dock">
+<div id={panelId} class="action-dock" hidden={!open}>
+  {#if open}
     <!-- svelte-ignore a11y_no_noninteractive_tabindex (keyboard users must be able to scroll this bounded region) -->
     <div
       id={`${panelId}-content`}
@@ -97,11 +97,6 @@
               class="choice-button"
               type="button"
               data-choice={choice.id}
-              data-hint-target={scene.id === 'incident' &&
-              scene.step === 'notify' &&
-              choice.id === 'notify'
-                ? 'report'
-                : choice.id}
               onclick={() => dispatch({ type: 'choose', choiceId: choice.id })}
             >
               <span class="choice-index">{index + 1}</span>
@@ -114,8 +109,8 @@
         </div>
       {/if}
     </div>
-  </div>
-{/if}
+  {/if}
+</div>
 
 <style>
   .action-dock {
@@ -131,12 +126,18 @@
     min-height: 0;
     max-height: 100%;
     overflow: auto;
-    border: 1px solid var(--line);
-    border-radius: 12px;
+    border: 0;
+    border-inline-start: 1px solid var(--line);
     background: #f7f7f5;
     color: var(--ink);
-    box-shadow: 0 18px 46px #17233045;
     padding: 1rem;
+  }
+
+  @media (max-width: 1099px) {
+    .action-dock-panel {
+      border-inline-start: 0;
+      border-top: 1px solid var(--line);
+    }
   }
 
   .action-dock-question {

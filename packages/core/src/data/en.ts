@@ -4,7 +4,9 @@ export const en: Catalog = {
   product: 'ShutterOS',
   organizationPlaceholder: 'Your organization',
   experience: {
-    finish: 'Finish the experience',
+    free: 'Free exploration',
+    freeHint: 'Choose activities yourself. Your progress is kept.',
+    finish: 'Guided journey',
     next: 'Next reflex',
     finishHint:
       'A short guided route covers only what remains. The current hourglass keeps running.',
@@ -25,6 +27,7 @@ export const en: Catalog = {
       'Your usual account centre requests a new password. An unexpected email asks for one? Find the known portal yourself instead of following its link.',
     passwordAction: 'Create a unique secret with the approved manager',
     passwordDone: 'Simulated password renewal completed.',
+    passwordEmphasis: 'Use a long, unique secret for each account',
     passwordLesson:
       'Use a long, unique secret for each account and keep work and personal passwords separate. Follow your organisation’s policy; after a leak or suspected compromise, report it immediately and follow its procedure.',
     update: 'A security update is ready',
@@ -33,6 +36,7 @@ export const en: Catalog = {
     updateAction: 'Accept the update scheduled by IT',
     updateReady: 'Ready to install through your usual IT tools.',
     updateDone: 'Update scheduled in the simulation.',
+    updateEmphasis: 'Updates fix vulnerabilities.',
     updateLesson:
       'Updates fix vulnerabilities. Use the organisation’s familiar tools; a website pop-up offering a patch is not a trusted source.',
     lock: 'Taking a break? Lock your session.',
@@ -68,6 +72,8 @@ export const en: Catalog = {
     openApp: 'Open',
     restore: 'Resume the current situation',
     minimize: 'Minimise window',
+    resize: 'Resize window',
+    resizeHint: 'Drag an edge or corner, or use the arrow keys.',
     maximize: 'Maximise window',
     restoreSize: 'Restore window size',
   },
@@ -108,7 +114,7 @@ export const en: Catalog = {
     nextPlayer: 'Next player',
     guide: 'A hint',
     close: 'Close',
-    finish: 'Finish the experience',
+    finish: 'Guided journey',
     resume: 'Back to the desk',
     connected: 'Network connected',
     isolated: 'Network isolated',
@@ -120,6 +126,7 @@ export const en: Catalog = {
     description: 'The password was in plain sight. The first weakness needed no technical skill.',
     guessedDescription:
       'The weak phrase accepted here could also have been guessed: short or predictable secrets are easy to try.',
+    principleEmphasis: 'Keep it in an approved password manager.',
     principle:
       'A long, unique password for every account: never the same at work and at home. Keep it in an approved password manager.',
     start: 'Explore the desk',
@@ -266,7 +273,7 @@ export const en: Catalog = {
     completed: (n: number) => `${n} situation${n === 1 ? '' : 's'} explored`,
     done: 'Explored',
     replay: 'Replay for practice',
-    doubleClick: 'Double-click to open · Enter on the keyboard',
+    openHint: 'Click to open · Enter on the keyboard',
     usb: 'Found USB drive',
     mail: 'Mail',
     spoof: 'Mail · unusual request',
@@ -275,6 +282,8 @@ export const en: Catalog = {
     incident: 'Security centre',
   },
   guide: {
+    counterOne: '1 activity left',
+    counterMany: '{count} activities left',
     prompt: 'Need a hand?',
     name: 'A little help',
     remainingOne: 'One activity left to explore.',
@@ -291,8 +300,9 @@ export const en: Catalog = {
     hideHint: 'Hide hint',
   },
   guidance: {
-    first: 'Need a first hint?',
-    second: 'Need another hint?',
+    minimize: 'Minimise hint',
+    restore: 'Show hint again',
+    first: 'Need a hint?',
     choices: 'View choices',
     close: 'Collapse choices',
     families: {
@@ -312,6 +322,8 @@ export const en: Catalog = {
   },
   feedback: {
     safe: 'Good habit.',
+    caution: 'Risk taken, then a good response.',
+    simulatedIncident: 'Simulated incident.',
     risky: 'A trap, and a lesson.',
     continue: 'Continue exploring',
     incident: 'Respond to the incident',
@@ -342,14 +354,23 @@ export const en: Catalog = {
     kind: 'Application',
     otherFile: 'Team_photos.zip',
     readme: 'READ-ME.txt',
-    openFile: 'Open selected item',
-    readmePreview:
-      'Phew, this text file is harmless in this simulation. That does not guarantee that the other files or the drive are safe.',
+    readmePreview: 'Meeting documents\n\nPhotos and working documents.',
+    readmeAdvisoryTitle: 'Risk taken',
+    readmeAdvisory:
+      'Opening this file was already risky. Seeing nothing suspicious does not prove the workstation is safe: a file can exploit a flaw in the software that reads it, and a “.txt” extension does not guarantee safety.',
     editorMenu: 'File   Edit   View',
     closePreview: 'Close preview',
+    ejectShort: 'Eject',
+    openFile: 'Open',
     eject: 'Eject the drive',
     ejected:
       'You ejected the drive without running the disguised program. Hand it to the designated inspection process: ejecting a device that was already connected does not guarantee the workstation’s safety.',
+    ejectedAfterReadme:
+      'Ejecting the drive and handing it to the designated inspection process is the right response. But you had already opened an unchecked file: nothing unusual on screen guarantees that the workstation is safe. Report what happened through the designated process.',
+    recoveredAfterReadme:
+      'You then took a protective action: that is a good response. But you had already opened an unchecked file. The absence of suspicious signs does not guarantee that the workstation is safe. Report what happened through the designated process.',
+    cautionSummary:
+      'You took a protective action after opening an unchecked file. No visible incident occurred in the simulation.',
     warning: 'The drive has not been checked.',
     reminder: 'A file name can hide its true nature.',
   },
@@ -400,6 +421,7 @@ export const en: Catalog = {
   spoof: {
     to: 'To: Camille Martin',
     subject: 'Send the project file before 11:00',
+    hintPhrase: 'to my personal address',
     body: 'I am travelling and cannot access the internal share. Send the working file to my personal address so I can review it before the meeting.',
     sender: 'Alex Martin · Project management',
     date: '10:06',
@@ -451,13 +473,15 @@ export const en: Catalog = {
     eyebrow: 'YOUR RECAP',
     title: 'Small habits make a difference.',
     description: 'You do not need to be an expert to make an attacker’s job harder.',
-    safeCount: (safe: number, total: number) =>
-      `${safe} good habit${safe === 1 ? '' : 's'} out of ${total} situation${total === 1 ? '' : 's'} explored`,
+    safeCount: (safe: number, caution: number, total: number) =>
+      `${safe} good habit${safe === 1 ? '' : 's'}${caution > 0 ? `, ${caution} risk${caution === 1 ? '' : 's'} followed by ${caution === 1 ? 'a good response' : 'good responses'}` : ''} out of ${total} situation${total === 1 ? '' : 's'} explored`,
     notGrade: 'A starting point, not a grade.',
     password: 'Protect access',
     passwordNote: 'A visible secret is no longer a secret.',
     discovered: 'Discovered',
     safe: 'Good habit',
+    caution: 'Risk taken, then a good response',
+    incident: 'Simulated incident',
     risky: 'Remember',
     notSeen: 'To explore',
     three: 'THREE HABITS TO TAKE WITH YOU',

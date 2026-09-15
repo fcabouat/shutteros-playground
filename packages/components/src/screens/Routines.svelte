@@ -4,6 +4,7 @@
   import { getI18n } from '../i18n/context';
   import KnowledgeCheck from '../commons/KnowledgeCheck.svelte';
   import Icon from '../commons/Icon.svelte';
+  import EmphasizedText from '../commons/EmphasizedText.svelte';
   let {
     snapshot,
     dispatch,
@@ -34,7 +35,11 @@
           <p class="text-muted mt-3 grow text-sm leading-relaxed">{copy.routines[`${id}Body`]}</p>
           {#if done}<p class="lesson-box mt-4 rounded-lg p-3 text-sm" role="status">
               <strong>{copy.routines[`${id}Done`]}</strong>{#if id !== 'lock'}<span
-                  class="mt-2 block leading-relaxed">{copy.routines[`${id}Lesson`]}</span
+                  class="mt-2 block leading-relaxed"
+                  ><EmphasizedText
+                    text={copy.routines[`${id}Lesson`]}
+                    emphasis={copy.routines[`${id}Emphasis`]}
+                  /></span
                 >{/if}
             </p>
           {:else}<button

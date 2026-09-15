@@ -3,11 +3,13 @@
   import ArrowUpRight from '@lucide/svelte/icons/arrow-up-right';
   import BotMessageSquare from '@lucide/svelte/icons/bot-message-square';
   import Check from '@lucide/svelte/icons/check';
+  import SquareCheck from '@lucide/svelte/icons/square-check';
   import ChevronDown from '@lucide/svelte/icons/chevron-down';
   import ChevronLeft from '@lucide/svelte/icons/chevron-left';
   import ChevronRight from '@lucide/svelte/icons/chevron-right';
   import CircleHelp from '@lucide/svelte/icons/circle-help';
   import Clock3 from '@lucide/svelte/icons/clock-3';
+  import Eject from '@lucide/svelte/icons/eject';
   import Eye from '@lucide/svelte/icons/eye';
   import EyeOff from '@lucide/svelte/icons/eye-off';
   import File from '@lucide/svelte/icons/file';
@@ -42,11 +44,13 @@
     arrow: ArrowRight,
     external: ArrowUpRight,
     check: Check,
+    checkbox: SquareCheck,
     down: ChevronDown,
     back: ChevronLeft,
     next: ChevronRight,
     help: CircleHelp,
     clock: Clock3,
+    eject: Eject,
     eye: Eye,
     eyeOff: EyeOff,
     file: File,
