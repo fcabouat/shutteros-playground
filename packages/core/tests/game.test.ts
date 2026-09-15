@@ -18,14 +18,15 @@ import {
   remainingActivities,
   experienceComplete,
   assessedCount,
+  cautionCount,
   guidanceLevel,
-  guidanceTarget,
   incidentIsolated,
   idleReminderVisible,
   loginHelpStarted,
   loginHintVisible,
   nextAmbientEvent,
   safeCount,
+  resultAssessment,
 } from '../src/projections/game';
 import { initialState, transition } from '../src/runtime/game';
 
@@ -104,11 +105,9 @@ describe('contextual guidance', () => {
   it('advances discovery, hint, and choices at exact active-time boundaries', () => {
     const opened = apply(desktop(), { type: 'open', id: 'usb' }, 10);
     expect(guidanceLevel(opened)).toBe(0);
-    expect(guidanceTarget(opened)).toBeNull();
     expect(guidanceLevel(apply(opened, { type: 'tick' }, 10 + guidanceDelayMs - 1))).toBe(0);
     const hinted = apply(opened, { type: 'tick' }, 10 + guidanceDelayMs);
     expect(guidanceLevel(hinted)).toBe(1);
-    expect(guidanceTarget(hinted)).toBe('eject');
     expect(guidanceLevel(apply(hinted, { type: 'tick' }, 10 + guidanceDelayMs * 2 - 1))).toBe(1);
     expect(guidanceLevel(apply(hinted, { type: 'tick' }, 10 + guidanceDelayMs * 2))).toBe(2);
   });
@@ -117,10 +116,18 @@ describe('contextual guidance', () => {
     const opened = apply(desktop(), { type: 'open', id: 'mail' }, 0);
     const first = apply(opened, { type: 'request-hint' }, 10);
     expect(guidanceLevel(first)).toBe(1);
-    expect(guidanceTarget(first)).toBe('report');
     expect(guidanceLevel(apply(first, { type: 'tick' }, 10 + guidanceDelayMs - 1))).toBe(1);
     expect(guidanceLevel(apply(first, { type: 'tick' }, 10 + guidanceDelayMs))).toBe(2);
     expect(guidanceLevel(apply(first, { type: 'request-hint' }, 11))).toBe(2);
+  });
+
+  it('can request the questionnaire explicitly without submitting an answer', () => {
+    const opened = apply(desktop(), { type: 'open', id: 'usb' }, 0);
+    const choices = apply(opened, { type: 'request-choices' }, 1);
+    expect(guidanceLevel(choices)).toBe(2);
+    if (opened.phase !== 'session' || choices.phase !== 'session') throw new Error();
+    expect(choices.results).toEqual(opened.results);
+    expect(apply(choices, { type: 'request-choices' }, 1)).toEqual(choices);
   });
 
   it('keeps stage identity while revealing both manual help levels', () => {
@@ -187,6 +194,19 @@ describe('contextual guidance', () => {
     state = apply(state, { type: 'resume-lock' }, 500_000);
     expect(guidanceLevel(apply(state, { type: 'tick' }, 559_999))).toBe(0);
     expect(guidanceLevel(apply(state, { type: 'tick' }, 560_000))).toBe(1);
+  });
+
+  it('returns to free exploration without resetting an in-progress incident', () => {
+    let state = apply(desktop(), { type: 'open', id: 'incident' }, 1);
+    state = apply(state, { type: 'choose', choiceId: 'isolate' }, 2);
+    const guided = apply(state, { type: 'finish-experience' }, 3);
+    const free = apply(guided, { type: 'explore-freely' }, 4);
+    expect(free).toEqual({ ...guided, mode: 'free', now: 4 });
+    expect(free).toMatchObject({ scene: { id: 'incident', step: 'notify' } });
+    const other = apply(free, { type: 'open', id: 'usb' }, 5);
+    expect(other).toMatchObject({ mode: 'free', scene: { id: 'usb' } });
+    const resumed = apply(other, { type: 'open', id: 'incident' }, 6);
+    expect(resumed).toMatchObject({ scene: { id: 'incident', step: 'notify' } });
   });
 
   it('opens every guided stage with choices available', () => {
@@ -257,12 +277,10 @@ describe('activity definitions and outcomes', () => {
     });
     expect(incidentIsolated(state)).toBe(true);
     expect(guidanceLevel(state)).toBe(0);
-    expect(guidanceTarget(state)).toBeNull();
     state = apply(state, { type: 'open', id: 'mail' }, 12);
     expect(incidentIsolated(state)).toBe(true);
     state = apply(state, { type: 'open', id: 'incident' }, 13);
     expect(state).toMatchObject({ scene: { step: 'notify', priorChoiceId: 'isolate' } });
-    expect(guidanceTarget(state)).toBeNull();
     state = apply(state, { type: 'choose', choiceId: 'notify' }, 14);
     expect(state).toMatchObject({
       scene: {
@@ -294,6 +312,58 @@ describe('activity definitions and outcomes', () => {
     expect(assessedCount(state)).toBe(1);
     expect(safeCount(state)).toBe(1);
   });
+
+  it.each(['eject', 'station', 'report'] as const)(
+    'assesses %s after the USB README as caution without infection',
+    (choiceId) => {
+      let state = apply(desktop(), { type: 'open', id: 'usb' }, 1);
+      state = apply(state, { type: 'open-usb-readme' }, 2);
+      expect(state).toMatchObject({
+        results: [],
+        usbInfected: false,
+        scene: { kind: 'challenge', id: 'usb', openedReadme: true },
+      });
+
+      state = apply(state, { type: 'close' }, 3);
+      state = apply(state, { type: 'open', id: 'usb' }, 4);
+      expect(state).toMatchObject({ scene: { kind: 'challenge', openedReadme: true } });
+
+      state = apply(state, { type: 'choose', choiceId }, 5);
+      if (state.phase !== 'session' || state.scene.kind !== 'feedback') throw new Error();
+      expect(state.scene.result).toMatchObject({ outcome: 'safe', openedReadme: true });
+      expect(resultAssessment(state.scene.result)).toBe('caution');
+      expect(state.usbInfected).toBe(false);
+      expect(safeCount(state)).toBe(0);
+      expect(cautionCount(state)).toBe(1);
+    },
+  );
+
+  it('keeps the first USB caution result immutable when a replay is safe', () => {
+    let state = apply(desktop(), { type: 'open', id: 'usb' }, 1);
+    state = apply(state, { type: 'open-usb-readme' }, 2);
+    state = apply(state, { type: 'choose', choiceId: 'eject' }, 3);
+    const first = state.phase === 'session' ? state.results : [];
+    state = apply(apply(state, { type: 'continue' }, 4), { type: 'open', id: 'usb' }, 5);
+    state = apply(state, { type: 'choose', choiceId: 'eject' }, 6);
+    expect(state).toMatchObject({
+      results: first,
+      scene: { kind: 'feedback', replay: true, result: { outcome: 'safe' } },
+    });
+    expect(cautionCount(state)).toBe(1);
+    expect(safeCount(state)).toBe(0);
+  });
+
+  it.each(['open', 'archive'] as const)(
+    'keeps %s red after the USB README is opened',
+    (choiceId) => {
+      let state = apply(desktop(), { type: 'open', id: 'usb' }, 1);
+      state = apply(state, { type: 'open-usb-readme' }, 2);
+      state = apply(state, { type: 'choose', choiceId }, 3);
+      if (state.phase !== 'session' || state.scene.kind !== 'feedback') throw new Error();
+      expect(resultAssessment(state.scene.result)).toBe('risky');
+      expect(state.usbInfected).toBe(true);
+    },
+  );
 
   it.each([
     ['internal', 'routine', 'safe'],
