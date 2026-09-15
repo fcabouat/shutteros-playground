@@ -1,43 +1,37 @@
 # Architecture overview
 
-ShutterOS is a static Svelte application with a separate TypeScript core. The core decides what happens in the game; the browser supplies time, configuration and player actions. Session data stays in memory, with no backend or saved scores.
+ShutterOS is a static application with a deterministic TypeScript game core and a Svelte interface. It has no backend. Session progress lives in memory and is discarded when the session ends.
 
-## Code organisation
+## Responsibilities
 
-| Location                 | Owns                                                                        |
-| ------------------------ | --------------------------------------------------------------------------- |
-| `packages/core`          | Game state, decisions, progression and derived view data.                   |
-| `src/lib/contract`       | Validation of the external configuration JSON.                              |
-| `src/lib/infrastructure` | Browser clock, configuration loading and mapping, images and legal notices. |
-| `packages/components`    | Svelte rendering, input drafts, window layout and focus.                    |
-| `src/lib/app`            | Connecting the core to the browser and managing their lifetimes.            |
+| Layer                    | Responsibility                                                                 |
+| ------------------------ | ------------------------------------------------------------------------------ |
+| `packages/core`          | Game state, permitted actions, outcomes, progression and semantic projections. |
+| `packages/components`    | Screens, input drafts, window geometry, focus and visual guidance.             |
+| `src/lib/contract`       | Decode and validate external configuration.                                    |
+| `src/lib/infrastructure` | Browser time, configuration loading, branding assets and legal notices.        |
+| `src/lib/app`            | Connect the game to browser services and manage their lifetimes.               |
 
-A player action follows **component → app runtime → core transition → updated state → component**. Components emit intents; the core returns the next state. For example, disconnecting the simulated network moves the incident to its reporting step. Moving or minimising its window is handled by the view, which reports whether the activity is visible so assistance time can pause.
+Dependencies point toward the core. It compiles without DOM types or runtime dependencies. Components emit typed intents; they do not assign results. ESLint and [boundary tests](../tests/unit/boundaries.test.ts) enforce import boundaries.
 
-The core compiles without DOM types or external dependencies. The Svelte components compile independently of the SvelteKit application and depend only on the core and their UI libraries. ESLint restricts imports between layers, and [boundary tests](../tests/unit/boundaries.test.ts) check these restrictions. Configuration passes through a strict decoder before reaching the core; invalid settings produce an error screen.
+The typed text catalogue currently groups scenario copy and interface labels in `core/data`; configuration likewise carries both game settings and branding. These shared data contracts do not give the transition engine access to browser services.
 
-## Session behaviour
+## State and interaction
 
-There is one deadline, set at login. Before handling an action, the runtime reads the current time and the core checks whether the session has expired. A click after the deadline therefore resets the session, even if a background tab delayed the clock callback. Periodic callbacks refresh the display and trigger expiry when nobody interacts. There are no per-scenario countdowns.
+A player action follows **view → app runtime → core transition → state → view**. The runtime supplies time explicitly, so transitions are reproducible without a browser. Native application actions and questionnaire choices use the same commands and outcome rules, defined in the [activity matrix](../packages/core/src/data/activities.ts).
 
-Guided finish continues an unfinished situation, then covers the remaining ones using the same deadline. Replays show new consequences without replacing the first recorded result. Each unfinished activity retains its decision step and assistance level across navigation; the incident’s isolation step therefore survives a return to the desktop. See the [transition code](../packages/core/src/runtime/game.ts) and [game-rule tests](../packages/core/tests/game.test.ts).
+The core owns the session deadline, assistance progression and recorded outcomes. Window movement, resizing, visual hint targets and keyboard focus remain presentation state. Minimising an activity reports its visibility to the core so assistance time pauses without extending the session deadline.
 
-Minimising preserves a window’s draft. Logout and expiry create a new session generation: Svelte remounts the session views, clearing drafts and dialogs as well as game progress. Language is owned outside that reset boundary, so the player’s language choice survives. Browser resources are created after mount and disposed when the application is replaced or unmounted.
+## Invariants
 
-## Activity matrix and assistance
+- Every action is checked against the session deadline, including after browser timers have been delayed.
+- Navigation preserves unfinished decisions. Replays never replace the first recorded result.
+- An action's outcome and its assessment are distinct: a safe USB action after opening the unchecked text file receives a caution assessment.
+- Session reset remounts the views to clear drafts and dialogs. Language preference survives outside that boundary.
+- External configuration is validated before entering the game; invalid input produces an error screen.
 
-[`data/activities.ts`](../packages/core/src/data/activities.ts) defines each activity’s family, actions, outcomes, next step and first hint target. Both native application controls and guided choices send the same intents. Tests enumerate this matrix and check progression; translations supply presentation copy rather than duplicating the rules.
+## Delivery
 
-Assistance is progressive: one hint identifies a control, the next opens the choices. Players may request either without waiting. Otherwise, each level is offered after two minutes of visible activity without progression; repeated clicks do not postpone it. Hidden or minimised activities pause this assistance clock. Guided completion opens the choices immediately. These delays never shorten the session or mark an answer wrong.
+The same application is built as a static site and as a standalone HTML file. The public product site adds the demo, guides, generated API reference and Storybook; this documentation tooling is separate from the game runtime.
 
-The login hint appears after three failed attempts or two minutes after first input. An untouched login screen can wait indefinitely. Notifications for account, update and lock routines are shown only on the free desktop. Guidance occupies its own workspace row and, when expanded, a bounded column beside the window.
-
-The remaining-activity count includes the seven scenarios and one workstation-protection activity. Its three steps (password, updates and locking) must all be completed before the normal completion flow reaches the recap. Desktop guidance can open this activity without waiting for notifications.
-
-The desktop guide only names a destination; it does not reveal or consume activity hints. In free exploration, each new decision step starts with fresh assistance time. Continuing either mail opens the other unfinished message. The recap keeps its heading and actions visible while its activity list scrolls independently.
-
-## Distribution
-
-`pnpm build` produces the static game in `dist/` and a standalone file in `dist/portable/shutteros.html`. The static game loads its configuration at startup; the standalone edition embeds it during the build.
-
-`pnpm build:site` assembles the public product site in `dist/site/`, including a demo built for `/demo/`, translated guides, the generated core API and Storybook. Documentation generation is separate from the game runtime. See [publication](publishing.md) for base paths and artifacts, [verification](verification.md) for checks, and [kiosk setup](kiosk.md) for host responsibilities.
+See [verification](verification.md) for checks, [publication](publishing.md) for artifacts and hosting, and [kiosk setup](kiosk.md) for deployment responsibilities.
