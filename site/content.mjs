@@ -14,14 +14,14 @@ export const content = {
     download: 'Télécharger la version autonome',
     note: 'Sans inscription. Données fictives. Aucun message réellement envoyé.',
     stats: [
-      ['5–15 min', 'à votre rythme'],
+      ['5–15 min', 'une courte session'],
       ['8 activités', 'à explorer'],
       ['FR / EN', 'au choix'],
       ['MIT', 'libre et personnalisable'],
     ],
     preview: 'Un terrain d’essai qui ressemble au quotidien.',
     previewText:
-      'Un bureau, des fenêtres, des messages. Les indices sont dans les applications ; les explications viennent après vos choix.',
+      'Un bureau, des fenêtres, des messages. Observez les détails dans les applications ; les explications viennent après vos choix.',
     imageAlt:
       'Le bureau simulé de ShutterOS avec ses applications, son assistant et sa barre des tâches.',
     situationsTitle: 'Des petits gestes. De vrais sujets.',
@@ -38,7 +38,7 @@ export const content = {
     steps: [
       [
         'Explorez librement',
-        'Ouvrez les applications, inspectez les détails et essayez vos idées. L’assistant donne un coup de pouce quand vous le demandez.',
+        'Ouvrez les applications, inspectez les détails et essayez vos idées. Repérez les activités restantes et demandez un indice, puis des choix si besoin.',
       ],
       [
         'Terminez à votre rythme',
@@ -76,11 +76,7 @@ export const content = {
         'Types et fonctions du cœur TypeScript, générés depuis le code. En anglais.',
         'api/index.html',
       ],
-      [
-        'Storybook',
-        'Les composants et les scènes du jeu, consultables séparément.',
-        'storybook/index.html',
-      ],
+      ['Storybook', 'Les scènes du jeu, consultables séparément.', 'storybook/index.html'],
     ],
     source: 'Voir le code sur GitHub',
     release: 'Consulter les releases',
@@ -108,14 +104,14 @@ export const content = {
     download: 'Download the standalone edition',
     note: 'No sign-up. Fictional data. No messages actually sent.',
     stats: [
-      ['5–15 min', 'at your own pace'],
+      ['5–15 min', 'a short session'],
       ['8 activities', 'to explore'],
       ['FR / EN', 'your choice'],
       ['MIT', 'open and customisable'],
     ],
     preview: 'A practice space that feels like everyday work.',
     previewText:
-      'A desktop, windows and messages. Look for clues inside the applications; explanations follow your choices.',
+      'A desktop, windows and messages. Observe the details inside the applications; explanations follow your choices.',
     imageAlt: 'The simulated ShutterOS desktop with its applications, assistant and taskbar.',
     situationsTitle: 'Small actions. Real issues.',
     situations: [
@@ -131,7 +127,7 @@ export const content = {
     steps: [
       [
         'Explore freely',
-        'Open applications, inspect the details and try your ideas. The assistant offers a nudge when you ask.',
+        'Open applications, inspect the details and try your ideas. See what remains to explore, ask for a hint, then open the choices if needed.',
       ],
       [
         'Finish at your own pace',
@@ -161,11 +157,7 @@ export const content = {
         'Core TypeScript types and functions, generated from the source.',
         'api/index.html',
       ],
-      [
-        'Storybook',
-        'Explore the game’s components and scenes individually.',
-        'storybook/index.html',
-      ],
+      ['Storybook', 'Explore the game’s scenes individually.', 'storybook/index.html'],
     ],
     source: 'View the source on GitHub',
     release: 'Browse releases',
