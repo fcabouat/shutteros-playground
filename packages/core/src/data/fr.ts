@@ -140,26 +140,26 @@ export const fr = {
     policy: 'Charte IA de cet exercice',
     policyIntro: 'Pour cette simulation, l’organisation a défini ces règles :',
     policyRules: [
-      'L’outil interne autorise la préparation de documents pour les projets courants, en limitant les données personnelles à celles nécessaires au travail.',
-      'Les constats et plans d’action relatifs à la sécurité du site sont hors du périmètre autorisé de ces deux outils.',
-      'L’IA commerciale autorise les trames générales et les notes de projets courants non confidentiels après anonymisation. Les données nominatives restent dans l’outil interne.',
+      'L’organisation autorise la préparation de documents pour les projets courants dans l’outil interne, en limitant les données personnelles à celles nécessaires au travail.',
+      'Les documents à diffusion restreinte ou à haut niveau de confidentialité sont hors du périmètre autorisé de ces deux outils.',
+      'L’organisation ne bloque pas les IA commerciales, mais demande une grande prudence : aucune donnée nominative ou sensible, ni de détails permettant de reconnaître une personne, l’organisation ou un projet, même non confidentiel. Retirer les noms ne suffit pas toujours.',
     ],
     choosePrompt: 'Préparer le message',
     routine: 'Rédiger le compte rendu',
     routineAnonymised: 'Organiser les décisions',
     confidential: 'Résumer les échanges',
     confidentialAnonymised: 'Faire une synthèse',
-    generic: 'Préparer un document',
+    generic: 'Préparer la démarche',
     routinePrompt:
-      'Rédige le compte rendu de la réunion sur le parking : Camille Exemple propose de déplacer les bacs à fleurs pour libérer trois places. Alex Démo consultera les collègues mardi et vérifiera le marquage au sol.',
+      'Rédige le compte rendu de la préparation du repas de fin d’année du service : Camille Exemple compare les propositions de menus. Alex Démo recueille les inscriptions et coordonne les tâches de préparation.',
     routineAnonymisedPrompt:
-      'Organise les décisions de la réunion sur le parking : déplacer les bacs à fleurs pour libérer trois places. Pour mardi, prévoir une consultation des collègues et une vérification du marquage au sol.',
+      'Organise les décisions pour le repas de fin d’année d’un service : comparer les propositions de menus, recueillir les inscriptions et répartir les tâches de préparation.',
     confidentialPrompt:
       '[Sécurité] Résume les échanges de la réunion : Camille Exemple signale qu’au bâtiment C, des badges d’anciens prestataires sont encore actifs. Alex Démo prévoit leur révocation vendredi.',
     confidentialAnonymisedPrompt:
       '[Sécurité] Fais une synthèse de ces points : au bâtiment C, des badges d’anciens prestataires sont encore actifs. Leur révocation est prévue vendredi.',
     genericPrompt:
-      'Propose une trame de compte rendu avec objectifs, décisions et actions à suivre. Utilise uniquement des rubriques vides, sans inventer de faits.',
+      'Propose une méthode générale pour animer une réunion de travail et suivre les décisions : quelles étapes prévoir, comment répartir les responsabilités et vérifier l’avancement ? Ne t’appuie sur aucun cas réel.',
     preview: 'Message prêt à envoyer',
     empty: 'Choisissez une version du message pour la relire avant l’envoi.',
     send: 'Envoyer le message',
@@ -175,17 +175,17 @@ export const fr = {
       'internal-confidentialAnonymised':
         'Vous avez retiré les noms, mais les accès encore actifs et la date de correction restent confidentiels. L’outil interne n’est pas autorisé pour ces informations dans l’exercice. Anonymiser ne lève pas cette restriction.',
       'internal-generic':
-        'Vous avez demandé une trame générale à l’outil interne. Cet usage est autorisé. Complétez-la avec les informations utiles dans le cadre prévu par votre organisation et relisez le résultat.',
+        'Vous avez demandé une méthode générale à l’outil interne, sans partager de notes de travail. Cet usage est autorisé par la charte de l’exercice. Vérifiez les conseils et adaptez-les à vos besoins dans vos outils de travail.',
       'commercial-routine':
-        'Le projet de parking est courant, mais ce message contient des noms. La charte de l’exercice réserve cette version à l’outil interne. Pour le service commercial, utilisez la version anonymisée du projet ou demandez une trame générale.',
+        'L’organisation d’un repas de fin d’année est un sujet courant, mais ce message contient des noms. La charte de l’exercice réserve cette version à l’outil interne. Pour un service commercial, préparez une version sans détails reconnaissables ou demandez une méthode générale.',
       'commercial-routineAnonymised':
-        'Cette version du projet de parking est autorisée par la charte de l’exercice : elle ne contient pas de noms ni d’informations confidentielles. Pour vos vrais documents, vérifiez l’anonymisation et l’usage autorisé : le contexte peut encore permettre de reconnaître une personne. Relisez aussi le résultat.',
+        'Ces notes sur un repas de fin d’année sont autorisées par la charte de l’exercice : elles ne contiennent ni noms, ni informations sensibles, ni détails permettant de reconnaître le service. Pour vos vrais documents, retirer les noms seuls ne suffit pas : une personne, l’organisation ou le projet pourraient encore être reconnus. Vérifiez ce risque et relisez le résultat.',
       'commercial-confidential':
         'Ces noms, constats sur les accès et dates de correction auraient été transmis au service commercial. Ces informations sur la sécurité du site sont hors du périmètre autorisé par la charte. Suivez le circuit prévu pour ce document.',
       'commercial-confidentialAnonymised':
         'Retirer les noms ne protège pas le constat sur les badges ni le calendrier de correction. Ces informations restent confidentielles et ne doivent pas sortir vers ce service. Anonymiser ne rend pas un document librement partageable.',
       'commercial-generic':
-        'Vous avez demandé une trame générale au service commercial, sans transmettre de noms ni de notes internes. Cet usage est autorisé dans l’exercice. Complétez-la dans vos outils de travail et vérifiez le résultat.',
+        'Vous avez demandé une méthode générale au service commercial, sans transmettre de noms ni de notes internes. Cet usage est autorisé par la charte de l’exercice. Vérifiez les conseils et adaptez-les à vos besoins dans vos outils de travail.',
     },
   },
   education: {
@@ -302,14 +302,14 @@ export const fr = {
       protection: 'Protéger mon poste',
     },
     hints: {
-      usb: 'Éjecter la clé',
-      incident: 'Couper la connexion réseau',
-      notify: 'Alerter le contact SSI connu',
-      mail: 'Transmettre le message aux équipes SSI',
-      spoof: 'Transmettre la demande aux équipes SSI',
-      web: 'Revenir au favori connu',
-      mfa: 'Refuser et signaler la demande',
-      ai: 'Choisir l’outil et les données autorisés',
+      usb: 'Regardez les commandes du lecteur',
+      incident: 'Par où l’infection pourrait-elle se propager ?',
+      notify: 'Quel contact connaissiez-vous avant de voir cette alerte ?',
+      mail: 'Que révèlent l’adresse complète et le type de pièce jointe ? Comment traiter ce mail ?',
+      spoof: 'Cette demande correspond-elle à vos habitudes de travail ? Comment traiter ce mail ?',
+      web: 'Comment retrouver ce service par un chemin que vous connaissez déjà ?',
+      mfa: 'Avez-vous vous-même lancé cette connexion ?',
+      ai: 'Que permet la charte pour cet outil et ces données ?',
     },
   },
   feedback: {

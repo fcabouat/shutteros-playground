@@ -138,26 +138,26 @@ export const en: Catalog = {
     policy: 'AI policy for this exercise',
     policyIntro: 'For this simulation, the organisation has set these rules:',
     policyRules: [
-      'The internal tool permits drafting documents for routine projects, limiting personal data to what is necessary for the work.',
-      'Findings and action plans concerning site security are outside the approved scope of both tools.',
-      'The commercial AI service permits general templates and anonymised notes for routine, non-confidential projects. Named data stays in the internal tool.',
+      'The organisation permits drafting documents for routine projects in the internal tool, limiting personal data to what is necessary for the work.',
+      'Documents with restricted distribution or a high level of confidentiality are outside the approved scope of both tools.',
+      'The organisation does not block commercial AI services, but calls for great care: no named or sensitive data, and no details that could identify a person, the organisation or a project, even a non-confidential one. Removing names is not always enough.',
     ],
     choosePrompt: 'Prepare the message',
     routine: 'Write the minutes',
     routineAnonymised: 'Organise the decisions',
     confidential: 'Summarise the discussion',
     confidentialAnonymised: 'Produce a summary',
-    generic: 'Prepare a document',
+    generic: 'Plan an approach',
     routinePrompt:
-      'Write minutes for the car park meeting: Alex Example suggests moving the planters to free up three spaces. Sam Demo will consult colleagues on Tuesday and check the ground markings.',
+      'Write minutes for the team’s end-of-year meal planning: Alex Example compares menu proposals. Sam Demo collects registrations and coordinates the preparation tasks.',
     routineAnonymisedPrompt:
-      'Organise the decisions from the car park meeting: move the planters to free up three spaces. For Tuesday, plan a consultation with colleagues and a check of the ground markings.',
+      'Organise the decisions for a team’s end-of-year meal: compare menu proposals, collect registrations and divide up the preparation tasks.',
     confidentialPrompt:
       '[Security] Summarise the meeting discussion: Alex Example reports that former contractors’ access badges are still active in Building C. Sam Demo plans to revoke them on Friday.',
     confidentialAnonymisedPrompt:
       '[Security] Produce a summary of these points: former contractors’ access badges are still active in Building C. Revocation is planned for Friday.',
     genericPrompt:
-      'Suggest a meeting minutes template with objectives, decisions and follow-up actions. Use empty sections only, without inventing facts.',
+      'Suggest a general method for running a work meeting and following up on decisions: what steps should be planned, how should responsibilities be shared and progress checked? Do not draw on a real case.',
     preview: 'Message ready to send',
     empty: 'Choose a message version to review before sending.',
     send: 'Send message',
@@ -173,17 +173,17 @@ export const en: Catalog = {
       'internal-confidentialAnonymised':
         'You removed the names, but the active access badges and remediation date remain confidential. The internal tool is not approved for this information in the exercise. Anonymisation does not lift that restriction.',
       'internal-generic':
-        'You requested a general template from the internal tool. This use is permitted. Fill it in with useful information within your organisation’s approved scope and review the result.',
+        'You requested a general method from the internal tool without sharing work notes. This use is permitted by the exercise policy. Check the advice and adapt it to your needs in your work tools.',
       'commercial-routine':
-        'The car park project is routine, but this message contains names. The exercise policy reserves this version for the internal tool. For the commercial service, use the anonymised project version or request a general template.',
+        'Planning an end-of-year meal is a routine subject, but this message contains names. The exercise policy reserves this version for the internal tool. For a commercial service, prepare a version without recognisable details or request a general method.',
       'commercial-routineAnonymised':
-        'This version of the car park project is permitted by the exercise policy: it contains no names or confidential information. For real documents, check anonymisation and the approved use: context may still identify someone. Review the result too.',
+        'These end-of-year meal notes are permitted by the exercise policy: they contain no names, sensitive information or details identifying the team. For real documents, removing names alone is not enough: a person, the organisation or the project could still be recognised. Check that risk and review the result.',
       'commercial-confidential':
         'These names, access findings and remediation dates would have been shared with the commercial service. This site security information is outside the scope approved by the policy. Follow the designated process for this document.',
       'commercial-confidentialAnonymised':
         'Removing names does not protect the badge finding or the remediation schedule. This information remains confidential and must not be shared with this service. Anonymisation does not make a document freely shareable.',
       'commercial-generic':
-        'You requested a general template from the commercial service without sharing names or internal notes. This use is permitted in the exercise. Fill it in using your work tools and check the result.',
+        'You requested a general method from the commercial service without sharing names or internal notes. This use is permitted by the exercise policy. Check the advice and adapt it to your needs in your work tools.',
     },
   },
   education: {
@@ -300,14 +300,14 @@ export const en: Catalog = {
       protection: 'Protect my workstation',
     },
     hints: {
-      usb: 'Eject the drive',
-      incident: 'Disconnect the network',
-      notify: 'Alert the known security contact',
-      mail: 'Forward the message to the security team',
-      spoof: 'Forward the request to the security team',
-      web: 'Return to the known bookmark',
-      mfa: 'Deny and report the request',
-      ai: 'Choose approved data and a suitable tool',
+      usb: 'Look at the drive controls',
+      incident: 'How could the infection spread?',
+      notify: 'Which contact did you know before seeing this alert?',
+      mail: 'What do the full address and attachment type reveal? How should you handle this email?',
+      spoof: 'Does this request fit your usual way of working? How should you handle this email?',
+      web: 'How could you reach this service using a familiar route?',
+      mfa: 'Did you start this sign-in yourself?',
+      ai: 'What does the policy allow for this tool and this information?',
     },
   },
   feedback: {
