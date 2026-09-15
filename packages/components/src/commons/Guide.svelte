@@ -10,18 +10,30 @@
     canNavigate,
     remaining,
     onNavigate,
+    attention = false,
   }: {
     open?: boolean;
     destination: string | null;
     canNavigate: boolean;
     remaining: number;
     onNavigate: () => void;
+    attention?: boolean;
   } = $props();
 </script>
 
 <Dialog.Root bind:open>
-  <Dialog.Trigger class="companion-trigger" aria-label={copy.guide.prompt} title={copy.guide.prompt}
-    ><Icon name="sparkles" size={23} /><span>{copy.guide.prompt}</span></Dialog.Trigger
+  <Dialog.Trigger
+    class={`companion-trigger${attention ? ' help-attention' : ''}`}
+    data-attention={attention ? 'desktop' : undefined}
+    disabled={!canNavigate}
+    title={copy.guide.prompt}
+    >{#key attention}<span class="help-cue" aria-hidden="true"
+        ><Icon name="sparkles" size={23} /></span
+      >{/key}<span
+      >{remaining === 1
+        ? copy.guide.counterOne
+        : copy.guide.counterMany.replace('{count}', String(remaining))}</span
+    ></Dialog.Trigger
   >
   <Dialog.Portal>
     <Dialog.Overlay class="dialog-overlay" />

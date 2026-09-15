@@ -4,8 +4,10 @@
   import {
     challengeOrder,
     safeCount,
+    cautionCount,
     assessedCount,
     pendingRoutines,
+    resultAssessment,
   } from '@shutteros/core/projections/game';
   import { getI18n } from '../i18n/context';
   const i18n = getI18n();
@@ -38,7 +40,11 @@
     <div class="debrief-columns reading-column wide grid gap-5 lg:grid-cols-[1.15fr_1fr]">
       <div class="debrief-results">
         <p class="mb-1 text-base font-semibold">
-          {copy.debrief.safeCount(safeCount(snapshot), assessedCount(snapshot))}
+          {copy.debrief.safeCount(
+            safeCount(snapshot),
+            cautionCount(snapshot),
+            assessedCount(snapshot),
+          )}
         </p>
         <p class="text-muted mb-5 text-xs">{copy.debrief.notGrade}</p>
         <!-- svelte-ignore a11y_no_noninteractive_tabindex (This scroll region needs keyboard focus for arrow and Page Down navigation.) -->
@@ -57,16 +63,36 @@
           </li>
           {#each challengeOrder as id (id)}
             {@const result = snapshot.results.find((r) => r.id === id)}
+            {@const assessment = result ? resultAssessment(result) : 'unseen'}
             <li class="flex items-center gap-3 py-3">
               <span class="result-icon"><Icon name={id} size={18} /></span>
               <div class="min-w-0 flex-1">
                 <p class="text-sm font-medium">{copy.desktop[id]}</p>
                 <p class="text-muted mt-0.5 text-xs leading-relaxed">
-                  {challenges[id].shortLesson}
+                  {id === 'usb' && assessment === 'caution'
+                    ? copy.usb.cautionSummary
+                    : challenges[id].shortLesson}
                 </p>
               </div>
-              <span class="result-status" data-outcome={result?.outcome ?? 'unseen'}
-                >{result ? copy.debrief[result.outcome] : copy.debrief.notSeen}</span
+              <span
+                class="result-status"
+                class:simulated-incident={id === 'usb' && assessment === 'risky'}
+                data-outcome={assessment}
+                >{#if assessment === 'caution'}<Icon
+                    name="incident"
+                    size={13}
+                  />{:else if id === 'usb' && assessment === 'risky'}<Icon
+                    name="incident"
+                    size={13}
+                  />{/if}{result
+                  ? id === 'usb' && assessment === 'risky'
+                    ? copy.debrief.incident
+                    : assessment === 'caution'
+                      ? copy.debrief.caution
+                      : assessment === 'safe'
+                        ? copy.debrief.safe
+                        : copy.debrief.risky
+                  : copy.debrief.notSeen}</span
               >
             </li>
           {/each}
@@ -180,6 +206,20 @@
   }
   .debrief-list {
     flex: 1;
+  }
+  .result-status[data-outcome='caution'],
+  .result-status.simulated-incident {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+  .result-status[data-outcome='caution'] {
+    background: var(--warning-soft);
+    color: var(--warning);
+  }
+  .result-status.simulated-incident {
+    background: #fde8e7;
+    color: #a32924;
   }
   .debrief-list::-webkit-scrollbar,
   .debrief-takeaways::-webkit-scrollbar {

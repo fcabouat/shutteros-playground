@@ -2,7 +2,9 @@ export const fr = {
   product: 'ShutterOS',
   organizationPlaceholder: 'Votre organisation',
   experience: {
-    finish: 'Terminer l’expérience',
+    free: 'Parcours libre',
+    freeHint: 'Choisissez vous-même les activités. Votre progression est conservée.',
+    finish: 'Parcours guidé',
     next: 'Passer au réflexe suivant',
     finishHint:
       'Un parcours court reprend seulement ce qu’il reste à découvrir. Le sablier actuel continue.',
@@ -24,6 +26,7 @@ export const fr = {
       'Le centre de compte habituel demande un nouveau mot de passe. Une demande dans un mail inattendu ? Retrouvez vous-même le portail connu, sans suivre son lien.',
     passwordAction: 'Créer un secret unique avec le gestionnaire approuvé',
     passwordDone: 'Renouvellement simulé effectué.',
+    passwordEmphasis: 'Un secret long et unique par compte',
     passwordLesson:
       'Un secret long et unique par compte, différent au travail et à la maison. Suivez la politique de votre organisation ; en cas de fuite ou de doute, signalez-le immédiatement et suivez sa procédure.',
     update: 'Une mise à jour de sécurité est prête',
@@ -32,6 +35,7 @@ export const fr = {
     updateAction: 'Accepter la mise à jour prévue par le Service Informatique',
     updateReady: 'Prête à être installée via les outils habituels du Service Informatique.',
     updateDone: 'Mise à jour planifiée dans la simulation.',
+    updateEmphasis: 'Les mises à jour corrigent des failles.',
     updateLesson:
       'Les mises à jour corrigent des failles. Utilisez les outils habituels de l’organisation ; un pop-up web qui propose un correctif n’est pas une source fiable.',
     lock: 'Une pause ? Pensez à verrouiller.',
@@ -67,6 +71,8 @@ export const fr = {
     openApp: 'Ouvrir',
     restore: 'Reprendre la situation en cours',
     minimize: 'Réduire la fenêtre',
+    resize: 'Redimensionner la fenêtre',
+    resizeHint: 'Faites glisser un bord ou un coin, ou utilisez les flèches du clavier.',
     maximize: 'Agrandir la fenêtre',
     restoreSize: 'Restaurer la taille',
   },
@@ -109,7 +115,7 @@ export const fr = {
     nextPlayer: 'Passer au joueur suivant',
     guide: 'Un coup de pouce',
     close: 'Fermer',
-    finish: 'Terminer l’expérience',
+    finish: 'Parcours guidé',
     resume: 'Retour au bureau',
     connected: 'Réseau connecté',
     isolated: 'Réseau isolé',
@@ -122,6 +128,7 @@ export const fr = {
       'Le mot de passe était à portée de regard. La première faille ne demandait aucune compétence technique.',
     guessedDescription:
       'La phrase faible acceptée ici pouvait aussi être devinée : les secrets courts ou prévisibles se testent facilement.',
+    principleEmphasis: 'Gardez-le dans un gestionnaire approuvé.',
     principle:
       'Un mot de passe long et unique par compte : jamais le même au travail et à la maison. Gardez-le dans un gestionnaire approuvé.',
     start: 'Explorer le bureau',
@@ -140,26 +147,39 @@ export const fr = {
     policy: 'Charte IA de cet exercice',
     policyIntro: 'Pour cette simulation, l’organisation a défini ces règles :',
     policyRules: [
-      'L’outil interne autorise la préparation de documents pour les projets courants, en limitant les données personnelles à celles nécessaires au travail.',
-      'Les constats et plans d’action relatifs à la sécurité du site sont hors du périmètre autorisé de ces deux outils.',
-      'L’IA commerciale autorise les trames générales et les notes de projets courants non confidentiels après anonymisation. Les données nominatives restent dans l’outil interne.',
+      'L’organisation autorise la préparation de documents pour les projets courants dans l’outil interne, en limitant les données personnelles à celles nécessaires au travail.',
+      'Les documents à diffusion restreinte ou à haut niveau de confidentialité sont hors du périmètre autorisé de ces deux outils.',
+      'L’organisation ne bloque pas les IA commerciales, mais demande une grande prudence : aucune donnée nominative ou sensible, ni de détails permettant de reconnaître une personne, l’organisation ou un projet, même non confidentiel. Retirer les noms ne suffit pas toujours.',
     ],
     choosePrompt: 'Préparer le message',
     routine: 'Rédiger le compte rendu',
     routineAnonymised: 'Organiser les décisions',
     confidential: 'Résumer les échanges',
     confidentialAnonymised: 'Faire une synthèse',
-    generic: 'Préparer un document',
+    generic: 'Préparer la démarche',
+    review: {
+      routine: 'Rédiger le compte rendu du repas de fin d’année, avec les noms',
+      routineAnonymised:
+        'Organiser les décisions du repas de fin d’année, sans noms ni détails reconnaissables',
+      confidential: 'Résumer les échanges de la réunion de sécurité, avec les noms',
+      confidentialAnonymised:
+        'Faire une synthèse de la réunion de sécurité, sans les noms mais avec les détails sensibles',
+      generic: 'Préparer une méthode générale de réunion, sans cas réel',
+    },
+    otherTool: {
+      internal: 'Autorisé dans l’outil interne.',
+      commercial: 'Pas autorisé dans l’outil commercial.',
+    },
     routinePrompt:
-      'Rédige le compte rendu de la réunion sur le parking : Camille Exemple propose de déplacer les bacs à fleurs pour libérer trois places. Alex Démo consultera les collègues mardi et vérifiera le marquage au sol.',
+      'Rédige le compte rendu de la préparation du repas de fin d’année du service : Camille Exemple compare les propositions de menus. Alex Démo recueille les inscriptions et coordonne les tâches de préparation.',
     routineAnonymisedPrompt:
-      'Organise les décisions de la réunion sur le parking : déplacer les bacs à fleurs pour libérer trois places. Pour mardi, prévoir une consultation des collègues et une vérification du marquage au sol.',
+      'Organise les décisions pour le repas de fin d’année d’un service : comparer les propositions de menus, recueillir les inscriptions et répartir les tâches de préparation.',
     confidentialPrompt:
       '[Sécurité] Résume les échanges de la réunion : Camille Exemple signale qu’au bâtiment C, des badges d’anciens prestataires sont encore actifs. Alex Démo prévoit leur révocation vendredi.',
     confidentialAnonymisedPrompt:
       '[Sécurité] Fais une synthèse de ces points : au bâtiment C, des badges d’anciens prestataires sont encore actifs. Leur révocation est prévue vendredi.',
     genericPrompt:
-      'Propose une trame de compte rendu avec objectifs, décisions et actions à suivre. Utilise uniquement des rubriques vides, sans inventer de faits.',
+      'Propose une méthode générale pour animer une réunion de travail et suivre les décisions : quelles étapes prévoir, comment répartir les responsabilités et vérifier l’avancement ? Ne t’appuie sur aucun cas réel.',
     preview: 'Message prêt à envoyer',
     empty: 'Choisissez une version du message pour la relire avant l’envoi.',
     send: 'Envoyer le message',
@@ -175,17 +195,17 @@ export const fr = {
       'internal-confidentialAnonymised':
         'Vous avez retiré les noms, mais les accès encore actifs et la date de correction restent confidentiels. L’outil interne n’est pas autorisé pour ces informations dans l’exercice. Anonymiser ne lève pas cette restriction.',
       'internal-generic':
-        'Vous avez demandé une trame générale à l’outil interne. Cet usage est autorisé. Complétez-la avec les informations utiles dans le cadre prévu par votre organisation et relisez le résultat.',
+        'Vous avez demandé une méthode générale à l’outil interne, sans partager de notes de travail. Cet usage est autorisé par la charte de l’exercice. Vérifiez les conseils et adaptez-les à vos besoins dans vos outils de travail.',
       'commercial-routine':
-        'Le projet de parking est courant, mais ce message contient des noms. La charte de l’exercice réserve cette version à l’outil interne. Pour le service commercial, utilisez la version anonymisée du projet ou demandez une trame générale.',
+        'L’organisation d’un repas de fin d’année est un sujet courant, mais ce message contient des noms. La charte de l’exercice réserve cette version à l’outil interne. Pour un service commercial, préparez une version sans détails reconnaissables ou demandez une méthode générale.',
       'commercial-routineAnonymised':
-        'Cette version du projet de parking est autorisée par la charte de l’exercice : elle ne contient pas de noms ni d’informations confidentielles. Pour vos vrais documents, vérifiez l’anonymisation et l’usage autorisé : le contexte peut encore permettre de reconnaître une personne. Relisez aussi le résultat.',
+        'Ces notes sur un repas de fin d’année sont autorisées par la charte de l’exercice : elles ne contiennent ni noms, ni informations sensibles, ni détails permettant de reconnaître le service. Pour vos vrais documents, retirer les noms seuls ne suffit pas : une personne, l’organisation ou le projet pourraient encore être reconnus. Vérifiez ce risque et relisez le résultat.',
       'commercial-confidential':
         'Ces noms, constats sur les accès et dates de correction auraient été transmis au service commercial. Ces informations sur la sécurité du site sont hors du périmètre autorisé par la charte. Suivez le circuit prévu pour ce document.',
       'commercial-confidentialAnonymised':
         'Retirer les noms ne protège pas le constat sur les badges ni le calendrier de correction. Ces informations restent confidentielles et ne doivent pas sortir vers ce service. Anonymiser ne rend pas un document librement partageable.',
       'commercial-generic':
-        'Vous avez demandé une trame générale au service commercial, sans transmettre de noms ni de notes internes. Cet usage est autorisé dans l’exercice. Complétez-la dans vos outils de travail et vérifiez le résultat.',
+        'Vous avez demandé une méthode générale au service commercial, sans transmettre de noms ni de notes internes. Cet usage est autorisé par la charte de l’exercice. Vérifiez les conseils et adaptez-les à vos besoins dans vos outils de travail.',
     },
   },
   education: {
@@ -268,7 +288,7 @@ export const fr = {
     completed: (n: number) => `${n} situation${n > 1 ? 's' : ''} explorée${n > 1 ? 's' : ''}`,
     done: 'Exploré',
     replay: 'Rejouer pour s’entraîner',
-    doubleClick: 'Double-cliquez pour ouvrir · Entrée au clavier',
+    openHint: 'Cliquez pour ouvrir · Entrée au clavier',
     usb: 'Clé USB trouvée',
     mail: 'Messagerie',
     spoof: 'Messagerie · demande inhabituelle',
@@ -277,6 +297,8 @@ export const fr = {
     incident: 'Centre de sécurité',
   },
   guide: {
+    counterOne: '1 activité restante',
+    counterMany: '{count} activités restantes',
     prompt: 'Un coup de pouce ?',
     name: 'Le petit coup de pouce',
     remainingOne: 'Il reste une activité à découvrir.',
@@ -293,8 +315,9 @@ export const fr = {
     hideHint: 'Masquer l’indice',
   },
   guidance: {
-    first: 'Un premier indice ?',
-    second: 'Besoin d’un autre indice ?',
+    minimize: 'Réduire l’indice',
+    restore: 'Revoir l’indice',
+    first: 'Un indice ?',
     choices: 'Voir les choix',
     close: 'Réduire les choix',
     families: {
@@ -302,18 +325,20 @@ export const fr = {
       protection: 'Protéger mon poste',
     },
     hints: {
-      usb: 'Éjecter la clé',
-      incident: 'Couper la connexion réseau',
-      notify: 'Alerter le contact SSI connu',
-      mail: 'Transmettre le message aux équipes SSI',
-      spoof: 'Transmettre la demande aux équipes SSI',
-      web: 'Revenir au favori connu',
-      mfa: 'Refuser et signaler la demande',
-      ai: 'Choisir l’outil et les données autorisés',
+      usb: 'Regardez les commandes du lecteur',
+      incident: 'Par où l’infection pourrait-elle se propager ?',
+      notify: 'Quel contact connaissiez-vous avant de voir cette alerte ?',
+      mail: 'Que révèlent l’adresse complète et le type de pièce jointe ? Comment traiter ce mail ?',
+      spoof: 'Cette demande correspond-elle à vos habitudes de travail ? Comment traiter ce mail ?',
+      web: 'Comment retrouver ce service par un chemin que vous connaissez déjà ?',
+      mfa: 'Avez-vous vous-même lancé cette connexion ?',
+      ai: 'Que permet la charte pour cet outil et ces données ?',
     },
   },
   feedback: {
     safe: 'Le bon réflexe.',
+    caution: 'Prise de risque, puis bonne réaction.',
+    simulatedIncident: 'Incident simulé.',
     risky: 'Un piège, et un déclic.',
     continue: 'Continuer l’exploration',
     incident: 'Réagir à l’incident',
@@ -344,14 +369,23 @@ export const fr = {
     kind: 'Application',
     otherFile: 'Photos_équipe.zip',
     readme: 'LISEZ-MOI.txt',
-    openFile: 'Ouvrir l’élément sélectionné',
-    readmePreview:
-      'Ouf, ce fichier texte est inoffensif dans cette simulation. Cela ne garantit pas que les autres fichiers ou la clé sont sûrs.',
+    readmePreview: 'Documents de la réunion\n\nPhotos et documents de travail.',
+    readmeAdvisoryTitle: 'Prise de risque',
+    readmeAdvisory:
+      'Ouvrir ce fichier était déjà risqué. Rien de suspect à l’écran ne prouve que le poste est sain : un fichier peut exploiter une faille du logiciel qui le lit, et l’extension « .txt » ne garantit pas sa sécurité.',
     editorMenu: 'Fichier   Édition   Affichage',
     closePreview: 'Fermer l’aperçu',
+    ejectShort: 'Éjecter',
+    openFile: 'Ouvrir',
     eject: 'Éjecter la clé',
     ejected:
       'Vous avez éjecté la clé sans exécuter le programme piégé. Confiez-la au circuit de contrôle prévu : éjecter un support déjà branché ne garantit pas la sécurité du poste.',
+    ejectedAfterReadme:
+      'Éjecter la clé et la confier au circuit de contrôle est la bonne réaction. Mais vous aviez déjà ouvert un fichier non contrôlé : rien d’inhabituel à l’écran ne garantit que le poste est sain. Signalez ce qui s’est passé selon la procédure prévue.',
+    recoveredAfterReadme:
+      'Vous avez ensuite choisi une mesure de protection : c’est une bonne réaction. Mais vous aviez déjà ouvert un fichier non contrôlé. L’absence de signe suspect ne garantit pas que le poste est sain. Signalez ce qui s’est passé selon la procédure prévue.',
+    cautionSummary:
+      'Vous avez pris une mesure de protection après avoir ouvert un fichier non contrôlé. Aucun incident visible n’est survenu dans la simulation.',
     warning: 'La clé n’a pas été contrôlée.',
     reminder: 'Le nom d’un fichier peut masquer sa vraie nature.',
   },
@@ -402,6 +436,7 @@ export const fr = {
   spoof: {
     to: 'À : Camille Martin',
     subject: 'Envoi du dossier projet avant 11 h',
+    hintPhrase: 'à mon adresse personnelle',
     body: 'Je suis en déplacement et je n’accède pas au partage interne. Envoie-moi le dossier de travail à mon adresse personnelle pour que je le relise avant la réunion.',
     sender: 'Alex Martin · Direction de projet',
     date: '10:06',
@@ -453,13 +488,15 @@ export const fr = {
     eyebrow: 'VOTRE BILAN',
     title: 'Les petits réflexes font la différence.',
     description: 'Vous n’avez pas besoin d’être expert pour compliquer la vie d’un attaquant.',
-    safeCount: (safe: number, total: number) =>
-      `${safe} bon${safe > 1 ? 's' : ''} réflexe${safe > 1 ? 's' : ''} sur ${total} situation${total > 1 ? 's' : ''} explorée${total > 1 ? 's' : ''}`,
+    safeCount: (safe: number, caution: number, total: number) =>
+      `${safe} bon${safe > 1 ? 's' : ''} réflexe${safe > 1 ? 's' : ''}${caution > 0 ? `, ${caution} prise${caution > 1 ? 's' : ''} de risque puis bonne${caution > 1 ? 's' : ''} réaction${caution > 1 ? 's' : ''}` : ''} sur ${total} situation${total > 1 ? 's' : ''} explorée${total > 1 ? 's' : ''}`,
     notGrade: 'Un point de départ, pas une note.',
     password: 'Protéger l’accès',
     passwordNote: 'Un secret visible n’est plus un secret.',
     discovered: 'Découvert',
     safe: 'Bon réflexe',
+    caution: 'Prise de risque, puis bonne réaction',
+    incident: 'Incident simulé',
     risky: 'À retenir',
     notSeen: 'À explorer',
     three: 'TROIS HABITUDES À EMPORTER',

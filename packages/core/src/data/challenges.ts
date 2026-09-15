@@ -20,6 +20,7 @@ interface ChallengeContent<Id extends ChallengeId = ChallengeId> {
   choices: readonly Choice<Id>[];
   feedback: Record<Outcome, string>;
   lesson: string;
+  lessonEmphasis: string;
   shortLesson: string;
 }
 
@@ -32,7 +33,7 @@ export const challenges: Challenges = {
     tagline: 'Projet courant ou document confidentiel : choisissez le bon cadre.',
     question: 'Que pouvez-vous confier à cet outil ?',
     hints: [
-      'L’assistant IA peut aider sur un projet concret. Comparez les notes de parking et de sécurité, puis consultez la charte de l’exercice.',
+      'L’assistant IA peut aider sur un projet concret. Comparez les notes de préparation d’un repas et de sécurité, puis consultez la charte de l’exercice.',
       'Les noms ne sont pas le seul indice : regardez aussi ce que les notes révèlent sur l’organisation et ce que la charte permet.',
     ],
     choices: [],
@@ -41,6 +42,7 @@ export const challenges: Challenges = {
       risky:
         'Le choix de l’outil et celui des données doivent tous deux respecter les règles de votre organisation.',
     },
+    lessonEmphasis: 'retirer les noms ne suffit pas',
     lesson:
       'Des noms peuvent être utiles et autorisés dans l’outil interne pour un projet courant. Un document confidentiel demande un autre cadre : retirer les noms ne suffit pas, notamment avant un envoi à une IA commerciale. Vérifiez toujours la sensibilité des informations, la politique de votre organisation et sa charte IA.',
     shortLesson: 'Outil autorisé, données nécessaires, charte respectée.',
@@ -63,7 +65,7 @@ export const challenges: Challenges = {
       {
         id: 'archive',
         label: 'Ouvrir l’archive de photos',
-        detail: 'Le fichier ZIP paraît moins suspect que le programme déguisé.',
+        detail: 'Je veux consulter les photos qui se trouvent dans l’archive.',
       },
       {
         id: 'eject',
@@ -86,6 +88,7 @@ export const challenges: Challenges = {
       risky:
         'La curiosité a déclenché l’infection simulée. La clé aurait dû passer par le contrôle prévu avant toute utilisation.',
     },
+    lessonEmphasis: 'Ne branchez pas un support inconnu sur votre poste.',
     lesson:
       'Ne branchez pas un support inconnu sur votre poste. Confiez-le au support ou à la station de décontamination prévue (station blanche) : un poste dédié et isolé. Une analyse réduit le risque, sans garantir l’innocuité.',
     shortLesson: 'Un support inconnu passe d’abord par la procédure de contrôle.',
@@ -121,6 +124,7 @@ export const challenges: Challenges = {
       risky:
         'Attendre, redémarrer ou effacer des traces peut compliquer la prise en charge. La priorité est d’isoler le réseau, puis d’alerter.',
     },
+    lessonEmphasis: 'Isolez le poste du réseau',
     lesson:
       'Isolez le poste du réseau, puis contactez rapidement les équipes de sécurité informatique par un canal connu. Évitez de redémarrer, d’éteindre ou de supprimer des fichiers sans leurs consignes.',
     shortLesson:
@@ -157,6 +161,7 @@ export const challenges: Challenges = {
       risky:
         'Ouvrir la pièce jointe ou répondre reste dans le scénario préparé par l’expéditeur. Un imposteur peut confirmer sa propre histoire.',
     },
+    lessonEmphasis: 'Vérifiez l’adresse complète et la cohérence de la demande',
     lesson:
       'Un message plausible peut contenir une pièce jointe dangereuse. Vérifiez l’adresse complète et la cohérence de la demande, puis transmettez les messages suspects aux équipes de sécurité informatique par le canal prévu. Si vous devez confirmer, utilisez un contact connu indépendant du message.',
     shortLesson: 'Examiner l’adresse et la demande. Signaler sans ouvrir ni répondre.',
@@ -193,6 +198,7 @@ export const challenges: Challenges = {
       risky:
         'Une adresse familière ne rend pas la demande sûre. Une réponse peut parvenir au même imposteur ou au compte déjà compromis.',
     },
+    lessonEmphasis: 'l’identité visible ne suffit pas',
     lesson:
       'Le nom affiché peut être copié, une adresse peut être usurpée et une boîte mail réelle peut aussi être compromise. Les systèmes de messagerie disposent de contrôles, mais l’identité visible ne suffit pas à valider une demande inhabituelle. Signalez-la par le canal prévu et vérifiez avec un contact connu indépendant du message.',
     shortLesson: 'Même une boîte connue peut être compromise. Signaler la demande inhabituelle.',
@@ -224,6 +230,7 @@ export const challenges: Challenges = {
       risky:
         'Le portail aurait pu récupérer vos identifiants. Son apparence et sa connexion chiffrée ne prouvent pas son identité.',
     },
+    lessonEmphasis: 'Comparez son adresse et utilisez votre favori habituel.',
     lesson:
       'Le cadenas indique que les échanges avec ce site sont protégés, même si le site est frauduleux. Comparez son adresse et utilisez votre favori habituel. Ici, les champs étaient fictifs : aucune donnée réelle n’a été transmise.',
     shortLesson: 'Le cadenas chiffre la connexion ; il ne certifie pas le site.',
@@ -251,6 +258,7 @@ export const challenges: Challenges = {
       risky:
         'Approuver pourrait ouvrir votre compte à un tiers. Ignorer les demandes sans les signaler laisse une tentative en cours sans prise en charge.',
     },
+    lessonEmphasis: 'se refuse et se signale',
     lesson:
       'Une demande de confirmation de connexion que vous n’avez pas déclenchée se refuse et se signale. Si vous avez accepté par erreur, contactez immédiatement les équipes de sécurité informatique. Le lieu affiché peut être approximatif ; le signal clé est que vous n’avez rien demandé.',
     shortLesson: 'Une connexion non demandée : refuser, puis signaler.',

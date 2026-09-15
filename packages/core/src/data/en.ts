@@ -4,7 +4,9 @@ export const en: Catalog = {
   product: 'ShutterOS',
   organizationPlaceholder: 'Your organization',
   experience: {
-    finish: 'Finish the experience',
+    free: 'Free exploration',
+    freeHint: 'Choose activities yourself. Your progress is kept.',
+    finish: 'Guided journey',
     next: 'Next reflex',
     finishHint:
       'A short guided route covers only what remains. The current hourglass keeps running.',
@@ -25,6 +27,7 @@ export const en: Catalog = {
       'Your usual account centre requests a new password. An unexpected email asks for one? Find the known portal yourself instead of following its link.',
     passwordAction: 'Create a unique secret with the approved manager',
     passwordDone: 'Simulated password renewal completed.',
+    passwordEmphasis: 'Use a long, unique secret for each account',
     passwordLesson:
       'Use a long, unique secret for each account and keep work and personal passwords separate. Follow your organisation’s policy; after a leak or suspected compromise, report it immediately and follow its procedure.',
     update: 'A security update is ready',
@@ -33,6 +36,7 @@ export const en: Catalog = {
     updateAction: 'Accept the update scheduled by IT',
     updateReady: 'Ready to install through your usual IT tools.',
     updateDone: 'Update scheduled in the simulation.',
+    updateEmphasis: 'Updates fix vulnerabilities.',
     updateLesson:
       'Updates fix vulnerabilities. Use the organisation’s familiar tools; a website pop-up offering a patch is not a trusted source.',
     lock: 'Taking a break? Lock your session.',
@@ -68,6 +72,8 @@ export const en: Catalog = {
     openApp: 'Open',
     restore: 'Resume the current situation',
     minimize: 'Minimise window',
+    resize: 'Resize window',
+    resizeHint: 'Drag an edge or corner, or use the arrow keys.',
     maximize: 'Maximise window',
     restoreSize: 'Restore window size',
   },
@@ -108,7 +114,7 @@ export const en: Catalog = {
     nextPlayer: 'Next player',
     guide: 'A hint',
     close: 'Close',
-    finish: 'Finish the experience',
+    finish: 'Guided journey',
     resume: 'Back to the desk',
     connected: 'Network connected',
     isolated: 'Network isolated',
@@ -120,6 +126,7 @@ export const en: Catalog = {
     description: 'The password was in plain sight. The first weakness needed no technical skill.',
     guessedDescription:
       'The weak phrase accepted here could also have been guessed: short or predictable secrets are easy to try.',
+    principleEmphasis: 'Keep it in an approved password manager.',
     principle:
       'A long, unique password for every account: never the same at work and at home. Keep it in an approved password manager.',
     start: 'Explore the desk',
@@ -138,26 +145,39 @@ export const en: Catalog = {
     policy: 'AI policy for this exercise',
     policyIntro: 'For this simulation, the organisation has set these rules:',
     policyRules: [
-      'The internal tool permits drafting documents for routine projects, limiting personal data to what is necessary for the work.',
-      'Findings and action plans concerning site security are outside the approved scope of both tools.',
-      'The commercial AI service permits general templates and anonymised notes for routine, non-confidential projects. Named data stays in the internal tool.',
+      'The organisation permits drafting documents for routine projects in the internal tool, limiting personal data to what is necessary for the work.',
+      'Documents with restricted distribution or a high level of confidentiality are outside the approved scope of both tools.',
+      'The organisation does not block commercial AI services, but calls for great care: no named or sensitive data, and no details that could identify a person, the organisation or a project, even a non-confidential one. Removing names is not always enough.',
     ],
     choosePrompt: 'Prepare the message',
     routine: 'Write the minutes',
     routineAnonymised: 'Organise the decisions',
     confidential: 'Summarise the discussion',
     confidentialAnonymised: 'Produce a summary',
-    generic: 'Prepare a document',
+    generic: 'Plan an approach',
+    review: {
+      routine: 'Write minutes for the end-of-year meal, including names',
+      routineAnonymised:
+        'Organise decisions for the end-of-year meal, without names or identifying details',
+      confidential: 'Summarise the security meeting discussion, including names',
+      confidentialAnonymised:
+        'Summarise the security meeting without names, but with sensitive details',
+      generic: 'Plan a general meeting method, without a real case',
+    },
+    otherTool: {
+      internal: 'Allowed in the internal tool.',
+      commercial: 'Not allowed in the commercial tool.',
+    },
     routinePrompt:
-      'Write minutes for the car park meeting: Alex Example suggests moving the planters to free up three spaces. Sam Demo will consult colleagues on Tuesday and check the ground markings.',
+      'Write minutes for the team’s end-of-year meal planning: Alex Example compares menu proposals. Sam Demo collects registrations and coordinates the preparation tasks.',
     routineAnonymisedPrompt:
-      'Organise the decisions from the car park meeting: move the planters to free up three spaces. For Tuesday, plan a consultation with colleagues and a check of the ground markings.',
+      'Organise the decisions for a team’s end-of-year meal: compare menu proposals, collect registrations and divide up the preparation tasks.',
     confidentialPrompt:
       '[Security] Summarise the meeting discussion: Alex Example reports that former contractors’ access badges are still active in Building C. Sam Demo plans to revoke them on Friday.',
     confidentialAnonymisedPrompt:
       '[Security] Produce a summary of these points: former contractors’ access badges are still active in Building C. Revocation is planned for Friday.',
     genericPrompt:
-      'Suggest a meeting minutes template with objectives, decisions and follow-up actions. Use empty sections only, without inventing facts.',
+      'Suggest a general method for running a work meeting and following up on decisions: what steps should be planned, how should responsibilities be shared and progress checked? Do not draw on a real case.',
     preview: 'Message ready to send',
     empty: 'Choose a message version to review before sending.',
     send: 'Send message',
@@ -173,17 +193,17 @@ export const en: Catalog = {
       'internal-confidentialAnonymised':
         'You removed the names, but the active access badges and remediation date remain confidential. The internal tool is not approved for this information in the exercise. Anonymisation does not lift that restriction.',
       'internal-generic':
-        'You requested a general template from the internal tool. This use is permitted. Fill it in with useful information within your organisation’s approved scope and review the result.',
+        'You requested a general method from the internal tool without sharing work notes. This use is permitted by the exercise policy. Check the advice and adapt it to your needs in your work tools.',
       'commercial-routine':
-        'The car park project is routine, but this message contains names. The exercise policy reserves this version for the internal tool. For the commercial service, use the anonymised project version or request a general template.',
+        'Planning an end-of-year meal is a routine subject, but this message contains names. The exercise policy reserves this version for the internal tool. For a commercial service, prepare a version without recognisable details or request a general method.',
       'commercial-routineAnonymised':
-        'This version of the car park project is permitted by the exercise policy: it contains no names or confidential information. For real documents, check anonymisation and the approved use: context may still identify someone. Review the result too.',
+        'These end-of-year meal notes are permitted by the exercise policy: they contain no names, sensitive information or details identifying the team. For real documents, removing names alone is not enough: a person, the organisation or the project could still be recognised. Check that risk and review the result.',
       'commercial-confidential':
         'These names, access findings and remediation dates would have been shared with the commercial service. This site security information is outside the scope approved by the policy. Follow the designated process for this document.',
       'commercial-confidentialAnonymised':
         'Removing names does not protect the badge finding or the remediation schedule. This information remains confidential and must not be shared with this service. Anonymisation does not make a document freely shareable.',
       'commercial-generic':
-        'You requested a general template from the commercial service without sharing names or internal notes. This use is permitted in the exercise. Fill it in using your work tools and check the result.',
+        'You requested a general method from the commercial service without sharing names or internal notes. This use is permitted by the exercise policy. Check the advice and adapt it to your needs in your work tools.',
     },
   },
   education: {
@@ -266,7 +286,7 @@ export const en: Catalog = {
     completed: (n: number) => `${n} situation${n === 1 ? '' : 's'} explored`,
     done: 'Explored',
     replay: 'Replay for practice',
-    doubleClick: 'Double-click to open · Enter on the keyboard',
+    openHint: 'Click to open · Enter on the keyboard',
     usb: 'Found USB drive',
     mail: 'Mail',
     spoof: 'Mail · unusual request',
@@ -275,6 +295,8 @@ export const en: Catalog = {
     incident: 'Security centre',
   },
   guide: {
+    counterOne: '1 activity left',
+    counterMany: '{count} activities left',
     prompt: 'Need a hand?',
     name: 'A little help',
     remainingOne: 'One activity left to explore.',
@@ -291,8 +313,9 @@ export const en: Catalog = {
     hideHint: 'Hide hint',
   },
   guidance: {
-    first: 'Need a first hint?',
-    second: 'Need another hint?',
+    minimize: 'Minimise hint',
+    restore: 'Show hint again',
+    first: 'Need a hint?',
     choices: 'View choices',
     close: 'Collapse choices',
     families: {
@@ -300,18 +323,20 @@ export const en: Catalog = {
       protection: 'Protect my workstation',
     },
     hints: {
-      usb: 'Eject the drive',
-      incident: 'Disconnect the network',
-      notify: 'Alert the known security contact',
-      mail: 'Forward the message to the security team',
-      spoof: 'Forward the request to the security team',
-      web: 'Return to the known bookmark',
-      mfa: 'Deny and report the request',
-      ai: 'Choose approved data and a suitable tool',
+      usb: 'Look at the drive controls',
+      incident: 'How could the infection spread?',
+      notify: 'Which contact did you know before seeing this alert?',
+      mail: 'What do the full address and attachment type reveal? How should you handle this email?',
+      spoof: 'Does this request fit your usual way of working? How should you handle this email?',
+      web: 'How could you reach this service using a familiar route?',
+      mfa: 'Did you start this sign-in yourself?',
+      ai: 'What does the policy allow for this tool and this information?',
     },
   },
   feedback: {
     safe: 'Good habit.',
+    caution: 'Risk taken, then a good response.',
+    simulatedIncident: 'Simulated incident.',
     risky: 'A trap, and a lesson.',
     continue: 'Continue exploring',
     incident: 'Respond to the incident',
@@ -342,14 +367,23 @@ export const en: Catalog = {
     kind: 'Application',
     otherFile: 'Team_photos.zip',
     readme: 'READ-ME.txt',
-    openFile: 'Open selected item',
-    readmePreview:
-      'Phew, this text file is harmless in this simulation. That does not guarantee that the other files or the drive are safe.',
+    readmePreview: 'Meeting documents\n\nPhotos and working documents.',
+    readmeAdvisoryTitle: 'Risk taken',
+    readmeAdvisory:
+      'Opening this file was already risky. Seeing nothing suspicious does not prove the workstation is safe: a file can exploit a flaw in the software that reads it, and a “.txt” extension does not guarantee safety.',
     editorMenu: 'File   Edit   View',
     closePreview: 'Close preview',
+    ejectShort: 'Eject',
+    openFile: 'Open',
     eject: 'Eject the drive',
     ejected:
       'You ejected the drive without running the disguised program. Hand it to the designated inspection process: ejecting a device that was already connected does not guarantee the workstation’s safety.',
+    ejectedAfterReadme:
+      'Ejecting the drive and handing it to the designated inspection process is the right response. But you had already opened an unchecked file: nothing unusual on screen guarantees that the workstation is safe. Report what happened through the designated process.',
+    recoveredAfterReadme:
+      'You then took a protective action: that is a good response. But you had already opened an unchecked file. The absence of suspicious signs does not guarantee that the workstation is safe. Report what happened through the designated process.',
+    cautionSummary:
+      'You took a protective action after opening an unchecked file. No visible incident occurred in the simulation.',
     warning: 'The drive has not been checked.',
     reminder: 'A file name can hide its true nature.',
   },
@@ -400,6 +434,7 @@ export const en: Catalog = {
   spoof: {
     to: 'To: Camille Martin',
     subject: 'Send the project file before 11:00',
+    hintPhrase: 'to my personal address',
     body: 'I am travelling and cannot access the internal share. Send the working file to my personal address so I can review it before the meeting.',
     sender: 'Alex Martin · Project management',
     date: '10:06',
@@ -451,13 +486,15 @@ export const en: Catalog = {
     eyebrow: 'YOUR RECAP',
     title: 'Small habits make a difference.',
     description: 'You do not need to be an expert to make an attacker’s job harder.',
-    safeCount: (safe: number, total: number) =>
-      `${safe} good habit${safe === 1 ? '' : 's'} out of ${total} situation${total === 1 ? '' : 's'} explored`,
+    safeCount: (safe: number, caution: number, total: number) =>
+      `${safe} good habit${safe === 1 ? '' : 's'}${caution > 0 ? `, ${caution} risk${caution === 1 ? '' : 's'} followed by ${caution === 1 ? 'a good response' : 'good responses'}` : ''} out of ${total} situation${total === 1 ? '' : 's'} explored`,
     notGrade: 'A starting point, not a grade.',
     password: 'Protect access',
     passwordNote: 'A visible secret is no longer a secret.',
     discovered: 'Discovered',
     safe: 'Good habit',
+    caution: 'Risk taken, then a good response',
+    incident: 'Simulated incident',
     risky: 'Remember',
     notSeen: 'To explore',
     three: 'THREE HABITS TO TAKE WITH YOU',

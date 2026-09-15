@@ -22,7 +22,12 @@
   } = $props();
 </script>
 
-<div class="challenge-window" data-challenge={scene.id} data-step={scene.step}>
+<div
+  class="challenge-window"
+  class:application-canvas={scene.id !== 'incident' && scene.id !== 'mfa'}
+  data-challenge={scene.id}
+  data-step={scene.step}
+>
   {#if scene.id === 'usb'}<Usb {dispatch} />
   {:else if scene.id === 'incident'}
     {#if scene.priorChoiceId}<div class="px-6 pt-6">

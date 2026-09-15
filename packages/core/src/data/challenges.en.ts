@@ -8,7 +8,7 @@ export const englishChallenges: Challenges = {
     tagline: 'Routine project or confidential document: choose the right scope.',
     question: 'What can you share with this tool?',
     hints: [
-      'The AI assistant can help with a real work task. Compare the car park and security notes, then check the exercise policy.',
+      'The AI assistant can help with a real work task. Compare the meal-planning and security notes, then check the exercise policy.',
       'Names are not the only clue: also consider what the notes reveal about the organisation and what the policy permits.',
     ],
     choices: [],
@@ -16,6 +16,7 @@ export const englishChallenges: Challenges = {
       safe: 'You chose an approved use for this tool. Check the minutes before sharing them.',
       risky: 'Both the tool and the data must comply with your organisation’s rules.',
     },
+    lessonEmphasis: 'removing names is not enough',
     lesson:
       'Names can be useful and permitted in the internal tool for routine work. Confidential documents need a different approved scope: removing names is not enough, especially before sending to a commercial AI service. Always check how sensitive the information is, your organisation’s policy and its AI usage charter.',
     shortLesson: 'Approved tool, necessary data, policy followed.',
@@ -38,7 +39,7 @@ export const englishChallenges: Challenges = {
       {
         id: 'archive',
         label: 'Open the photo archive',
-        detail: 'The ZIP file looks less suspicious than the disguised program.',
+        detail: 'I want to look at the photos inside the archive.',
       },
       {
         id: 'eject',
@@ -61,6 +62,7 @@ export const englishChallenges: Challenges = {
       risky:
         'Curiosity triggered the simulated infection. The media should have gone through the required check first.',
     },
+    lessonEmphasis: 'Do not plug unknown media into your workstation.',
     lesson:
       'Do not plug unknown media into your workstation. Give it to support or the designated media sanitisation station: a dedicated, isolated computer. Analysis reduces risk without guaranteeing safety.',
     shortLesson: 'Unknown media goes through the checking procedure first.',
@@ -96,6 +98,7 @@ export const englishChallenges: Challenges = {
       risky:
         'Waiting, restarting, or erasing traces can complicate response. First isolate the network, then alert the security team.',
     },
+    lessonEmphasis: 'Isolate the workstation from the network',
     lesson:
       'Isolate the workstation from the network, then promptly contact the security team through a known channel. Do not restart, shut down, or delete files without their instructions.',
     shortLesson: 'Isolate the network. Alert the security team. Follow their instructions.',
@@ -131,6 +134,7 @@ export const englishChallenges: Challenges = {
       risky:
         'Opening the attachment or replying stays in the situation prepared by the sender. An impostor can confirm their own story.',
     },
+    lessonEmphasis: 'Check the full address and whether the request makes sense',
     lesson:
       'A plausible message can contain a dangerous attachment. Check the full address and whether the request makes sense, then forward suspicious messages to the security team through the designated channel. If you need to confirm, use a known contact independent of the message.',
     shortLesson: 'Examine the address and request. Report without opening or replying.',
@@ -166,6 +170,7 @@ export const englishChallenges: Challenges = {
       risky:
         'A familiar address does not make the request safe. A reply may reach the same impostor or already compromised account.',
     },
+    lessonEmphasis: 'visible identity alone does not validate an unusual request',
     lesson:
       'A displayed name can be copied, an address can be forged, and a real mailbox can also be compromised. Mail systems have technical checks, but visible identity alone does not validate an unusual request. Report it through the designated channel and check with a known contact independent of the message.',
     shortLesson: 'Even a known mailbox can be compromised. Report the unusual request.',
@@ -197,6 +202,7 @@ export const englishChallenges: Challenges = {
       risky:
         'The portal could have captured your credentials. Its appearance and encrypted connection do not prove its identity.',
     },
+    lessonEmphasis: 'Compare its address and use your usual bookmark.',
     lesson:
       'The padlock means exchanges with this site are protected, even if the site is fraudulent. Compare its address and use your usual bookmark. Here, the fields were fictional: no real data was sent.',
     shortLesson: 'The padlock encrypts the connection; it does not certify the site.',
@@ -220,6 +226,7 @@ export const englishChallenges: Challenges = {
       risky:
         'Approving could give a third party access to your account. Ignoring without reporting leaves an attempt unhandled.',
     },
+    lessonEmphasis: 'Deny and report a sign-in confirmation you did not request.',
     lesson:
       'Deny and report a sign-in confirmation you did not request. If you accepted by mistake, contact the security team immediately. The displayed location may be approximate; the key signal is that you did not request the sign-in.',
     shortLesson: 'An unrequested sign-in: deny, then report.',

@@ -8,7 +8,6 @@ type ActivityAction = {
 };
 
 type ActivityStepDefinition = {
-  firstHintTarget: string | null;
   actions: Readonly<Record<string, ActivityAction>>;
 };
 
@@ -28,7 +27,6 @@ export const activityDefinitions = {
     initialStep: 'choose',
     steps: {
       choose: {
-        firstHintTarget: 'eject',
         actions: {
           open: { outcome: 'risky' },
           archive: { outcome: 'risky' },
@@ -37,7 +35,7 @@ export const activityDefinitions = {
           report: { outcome: 'safe' },
         },
       },
-      notify: { firstHintTarget: null, actions: {} },
+      notify: { actions: {} },
     },
   },
   incident: {
@@ -45,7 +43,6 @@ export const activityDefinitions = {
     initialStep: 'choose',
     steps: {
       choose: {
-        firstHintTarget: 'network',
         actions: {
           isolate: { outcome: 'safe', nextStep: 'notify' },
           restart: { outcome: 'risky' },
@@ -53,7 +50,6 @@ export const activityDefinitions = {
         },
       },
       notify: {
-        firstHintTarget: 'report',
         actions: {
           notify: { outcome: 'safe' },
           'call-number': { outcome: 'risky' },
@@ -67,14 +63,13 @@ export const activityDefinitions = {
     initialStep: 'choose',
     steps: {
       choose: {
-        firstHintTarget: 'report',
         actions: {
           reply: { outcome: 'risky' },
           open: { outcome: 'risky' },
           report: { outcome: 'safe' },
         },
       },
-      notify: { firstHintTarget: null, actions: {} },
+      notify: { actions: {} },
     },
   },
   spoof: {
@@ -82,14 +77,13 @@ export const activityDefinitions = {
     initialStep: 'choose',
     steps: {
       choose: {
-        firstHintTarget: 'report',
         actions: {
           comply: { outcome: 'risky' },
           reply: { outcome: 'risky' },
           report: { outcome: 'safe' },
         },
       },
-      notify: { firstHintTarget: null, actions: {} },
+      notify: { actions: {} },
     },
   },
   web: {
@@ -97,14 +91,13 @@ export const activityDefinitions = {
     initialStep: 'choose',
     steps: {
       choose: {
-        firstHintTarget: 'bookmark',
         actions: {
           submit: { outcome: 'risky' },
           'known-address': { outcome: 'safe' },
           'trust-lock': { outcome: 'risky' },
         },
       },
-      notify: { firstHintTarget: null, actions: {} },
+      notify: { actions: {} },
     },
   },
   mfa: {
@@ -112,14 +105,13 @@ export const activityDefinitions = {
     initialStep: 'choose',
     steps: {
       choose: {
-        firstHintTarget: 'deny-report',
         actions: {
           approve: { outcome: 'risky' },
           'deny-report': { outcome: 'safe' },
           ignore: { outcome: 'risky' },
         },
       },
-      notify: { firstHintTarget: null, actions: {} },
+      notify: { actions: {} },
     },
   },
   ai: {
@@ -127,7 +119,6 @@ export const activityDefinitions = {
     initialStep: 'choose',
     steps: {
       choose: {
-        firstHintTarget: 'tool',
         actions: {
           'internal-routine': { outcome: 'safe' },
           'internal-routineAnonymised': { outcome: 'safe' },
@@ -141,7 +132,7 @@ export const activityDefinitions = {
           'commercial-generic': { outcome: 'safe' },
         },
       },
-      notify: { firstHintTarget: null, actions: {} },
+      notify: { actions: {} },
     },
   },
 } as const satisfies Readonly<Record<ChallengeId, ActivityDefinition>>;

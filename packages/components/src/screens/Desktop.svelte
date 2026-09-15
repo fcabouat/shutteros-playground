@@ -21,16 +21,14 @@
   const helpId = $props.id();
   let selected = $state<ChallengeId | null>(null);
 
-  function activate(id: ChallengeId, event: MouseEvent) {
+  function activate(id: ChallengeId) {
     selected = id;
-    if (event.detail === 0 || event.detail >= 2) {
-      dispatch({ type: 'open', id });
-    }
+    dispatch({ type: 'open', id });
   }
 </script>
 
 <div class="desktop-canvas relative flex flex-1">
-  <span id={helpId} class="sr-only">{copy.desktop.doubleClick}</span>
+  <span id={helpId} class="sr-only">{copy.desktop.openHint}</span>
   <nav
     class="desktop-icons grid auto-rows-min grid-cols-[112px] content-start gap-2"
     aria-label={copy.shell.desktop}
@@ -42,9 +40,9 @@
         class:selected={selected === id}
         class:running={activeId === id || (id === 'mail' && activeId === 'spoof')}
         disabled={!canExplore(snapshot)}
-        onclick={(event) => activate(id, event)}
+        onclick={() => activate(id)}
         aria-describedby={done ? undefined : helpId}
-        title={done ? copy.desktop.replay : copy.desktop.doubleClick}
+        title={done ? copy.desktop.replay : copy.desktop.openHint}
         aria-label={`${copy.desktop[id]}${done ? ` · ${copy.desktop.replay}` : ''}`}
       >
         <span class="app-icon relative" data-app={id}

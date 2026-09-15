@@ -4,17 +4,20 @@
   import { currentKnowledgeId } from '@shutteros/core/services/knowledge';
   import { getI18n } from '../i18n/context';
   import Icon from './Icon.svelte';
+  import EmphasizedText from './EmphasizedText.svelte';
   import KnowledgeCheck from './KnowledgeCheck.svelte';
   import { focusScreen } from './focus';
 
   let {
     lesson,
+    emphasis,
     points,
     snapshot,
     dispatch,
     children,
   }: {
     lesson: string;
+    emphasis: string;
     points: readonly string[];
     snapshot: Extract<GameState, { phase: 'session' }>;
     dispatch: (intent: Intent) => void;
@@ -27,11 +30,9 @@
 
 <div class="learning-panel outline-none" tabindex="-1" use:focusScreen={page}>
   {#if page === 'lesson'}
-    {@render children?.()}
-    <p
-      class="learning-takeaway my-5 border-l-4 border-[var(--accent)] pl-4 text-base leading-relaxed"
-    >
-      {lesson}
+    <div class="learning-context">{@render children?.()}</div>
+    <p class="learning-takeaway text-sm leading-relaxed">
+      <EmphasizedText text={lesson} {emphasis} />
     </p>
     <div class="flex flex-wrap gap-3">
       <button class="button button-text" onclick={() => (page = 'details')}

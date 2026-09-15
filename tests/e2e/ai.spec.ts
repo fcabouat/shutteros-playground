@@ -8,7 +8,7 @@ import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 async function openAiFromDesktop(page: import('@playwright/test').Page) {
-  await page.locator('.desktop-icon:has([data-app="ai"])').dblclick();
+  await page.locator('.desktop-icon:has([data-app="ai"])').click();
 }
 
 for (const locale of ['fr', 'en'] as const) {
@@ -27,7 +27,7 @@ for (const locale of ['fr', 'en'] as const) {
       await openAiFromDesktop(page);
       const scene = page.locator('[data-challenge="ai"]');
       await expect(scene).toBeVisible();
-      await expect(page.locator('.action-dock')).toHaveCount(0);
+      await expect(page.locator('.action-dock')).toBeHidden();
       await page.getByRole('button', { name: copy.ai.policy, exact: true }).click();
       await expect(page.getByText(copy.ai.policyRules[0], { exact: true })).toBeVisible();
       await page.getByRole('button', { name: copy.ai.policy, exact: true }).click();
@@ -50,6 +50,12 @@ for (const locale of ['fr', 'en'] as const) {
           exact: true,
         }),
       ).toBeVisible();
+      const review = page.locator('.decision-review[data-activity="ai"]');
+      for (const label of Object.values(copy.ai.review)) await expect(review).toContainText(label);
+      await expect(review.locator('[data-choice="commercial-routine"]')).toContainText(
+        copy.ai.otherTool.internal,
+      );
+      await expect(review.locator('.decision-review-tool-note')).toHaveCount(1);
       expect(outgoing).toEqual([]);
       await page.getByRole('button', { name: copy.shell.logout, exact: true }).click();
       await page.getByRole('button', { name: copy.shell.exitConfirm, exact: true }).click();
@@ -70,6 +76,13 @@ for (const locale of ['fr', 'en'] as const) {
           exact: true,
         }),
       ).toBeVisible();
+
+      await expect(review.locator('[data-choice="internal-routine"]')).toContainText(
+        copy.ai.otherTool.commercial,
+      );
+      await expect(review.locator('.decision-review-tool-note')).toHaveCount(1);
+      expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+      await page.screenshot({ path: `test-results/previews/ai-review-${locale}-${delivery}.png` });
 
       await page.getByRole('button', { name: copy.feedback.continue, exact: true }).click();
       await openAiFromDesktop(page);
@@ -160,7 +173,7 @@ for (const locale of ['fr', 'en'] as const) {
       await page
         .locator('.desktop-icons')
         .getByRole('button', { name: copy.desktop.ai, exact: true })
-        .dblclick();
+        .click();
       await page.getByRole('radio', { name: copy.ai.commercial, exact: false }).check();
       await page.getByRole('button', { name: copy.ai.connect, exact: true }).click();
       await page.getByRole('radio', { name: copy.ai.generic, exact: true }).check();

@@ -1,11 +1,11 @@
 import type { GameConfig } from '../model/configuration';
-import { activityDefinition } from '../data/activities';
 import {
   challengeOrder,
   guidanceDelayMs,
   type ChallengeId,
   type ChallengeResult,
   type GameState,
+  type ResultAssessment,
 } from '../model/game';
 
 export { challengeOrder } from '../model/game';
@@ -58,8 +58,24 @@ export function incidentIsolated(state: GameState): boolean {
 }
 
 export function safeCount(state: GameState): number {
+  return assessmentCount(state, 'safe');
+}
+
+/** A USB README view followed by a safe choice merits caution, not a safe assessment. */
+export function resultAssessment(result: ChallengeResult): ResultAssessment {
+  return result.id === 'usb' && result.outcome === 'safe' && result.openedReadme
+    ? 'caution'
+    : result.outcome;
+}
+
+/** Count final assessments without conflating caution with infection or risky choices. */
+function assessmentCount(state: GameState, assessment: ResultAssessment): number {
   if (state.phase !== 'session') return 0;
-  return state.results.filter((result) => result.outcome === 'safe').length;
+  return state.results.filter((result) => resultAssessment(result) === assessment).length;
+}
+
+export function cautionCount(state: GameState): number {
+  return assessmentCount(state, 'caution');
 }
 
 export function assessedCount(state: GameState): number {
@@ -79,13 +95,6 @@ export function guidanceLevel(state: GameState): 0 | 1 | 2 {
     guidance.activeElapsedMs +
     (guidance.activeSince === null ? 0 : Math.max(0, state.now - guidance.activeSince));
   return Math.min(2, guidance.requestedLevel + Math.floor(activeMs / guidanceDelayMs)) as 0 | 1 | 2;
-}
-
-export function guidanceTarget(state: GameState): string | null {
-  if (state.phase !== 'session' || state.scene.kind !== 'challenge' || guidanceLevel(state) === 0) {
-    return null;
-  }
-  return activityDefinition(state.scene.id).steps[state.scene.step].firstHintTarget;
 }
 
 export function loginHintVisible(state: GameState): boolean {
