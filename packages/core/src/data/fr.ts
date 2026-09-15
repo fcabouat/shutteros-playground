@@ -157,6 +157,19 @@ export const fr = {
     confidential: 'Résumer les échanges',
     confidentialAnonymised: 'Faire une synthèse',
     generic: 'Préparer la démarche',
+    review: {
+      routine: 'Rédiger le compte rendu du repas de fin d’année, avec les noms',
+      routineAnonymised:
+        'Organiser les décisions du repas de fin d’année, sans noms ni détails reconnaissables',
+      confidential: 'Résumer les échanges de la réunion de sécurité, avec les noms',
+      confidentialAnonymised:
+        'Faire une synthèse de la réunion de sécurité, sans les noms mais avec les détails sensibles',
+      generic: 'Préparer une méthode générale de réunion, sans cas réel',
+    },
+    otherTool: {
+      internal: 'Autorisé dans l’outil interne.',
+      commercial: 'Pas autorisé dans l’outil commercial.',
+    },
     routinePrompt:
       'Rédige le compte rendu de la préparation du repas de fin d’année du service : Camille Exemple compare les propositions de menus. Alex Démo recueille les inscriptions et coordonne les tâches de préparation.',
     routineAnonymisedPrompt:

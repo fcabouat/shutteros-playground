@@ -155,6 +155,19 @@ export const en: Catalog = {
     confidential: 'Summarise the discussion',
     confidentialAnonymised: 'Produce a summary',
     generic: 'Plan an approach',
+    review: {
+      routine: 'Write minutes for the end-of-year meal, including names',
+      routineAnonymised:
+        'Organise decisions for the end-of-year meal, without names or identifying details',
+      confidential: 'Summarise the security meeting discussion, including names',
+      confidentialAnonymised:
+        'Summarise the security meeting without names, but with sensitive details',
+      generic: 'Plan a general meeting method, without a real case',
+    },
+    otherTool: {
+      internal: 'Allowed in the internal tool.',
+      commercial: 'Not allowed in the commercial tool.',
+    },
     routinePrompt:
       'Write minutes for the team’s end-of-year meal planning: Alex Example compares menu proposals. Sam Demo collects registrations and coordinates the preparation tasks.',
     routineAnonymisedPrompt:
