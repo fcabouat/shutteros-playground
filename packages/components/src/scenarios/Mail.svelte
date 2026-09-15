@@ -93,6 +93,7 @@
           <button
             class="text-link mt-2 flex items-center gap-1 text-xs"
             type="button"
+            data-hint-target="sender-details"
             onclick={() => (details = !details)}
             aria-expanded={details}>{copy.mail.details}<Icon name="down" size={13} /></button
           >

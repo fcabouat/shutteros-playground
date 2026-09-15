@@ -30,6 +30,12 @@ export const infection = play([
   { type: 'open', id: 'usb' },
   { type: 'choose', choiceId: 'open' },
 ]);
+export const usbCaution = play([
+  ...enter,
+  { type: 'open', id: 'usb' },
+  { type: 'open-usb-readme' },
+  { type: 'choose', choiceId: 'eject' },
+]);
 export const debrief = play([
   ...enter,
   { type: 'open', id: 'mail' },

@@ -1,4 +1,3 @@
-import { activityDefinition } from '../data/activities';
 import type { GameConfig } from '../model/configuration';
 import {
   challengeOrder,
@@ -96,13 +95,6 @@ export function guidanceLevel(state: GameState): 0 | 1 | 2 {
     guidance.activeElapsedMs +
     (guidance.activeSince === null ? 0 : Math.max(0, state.now - guidance.activeSince));
   return Math.min(2, guidance.requestedLevel + Math.floor(activeMs / guidanceDelayMs)) as 0 | 1 | 2;
-}
-
-export function guidanceTarget(state: GameState): string | null {
-  if (state.phase !== 'session' || state.scene.kind !== 'challenge' || guidanceLevel(state) === 0) {
-    return null;
-  }
-  return activityDefinition(state.scene.id).steps[state.scene.step].firstHintTarget;
 }
 
 export function loginHintVisible(state: GameState): boolean {

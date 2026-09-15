@@ -50,7 +50,7 @@
         <Icon name="lock" size={17} /><span class="font-mono text-xs">{copy.incident.file}</span>
       </div>
       <div class="threat-progress mb-4 h-1 rounded-full" aria-hidden="true"><span></span></div>
-      <p class="flex items-center gap-2 text-sm">
+      <p class="flex w-fit items-center gap-2 text-sm" data-hint-target="network-status">
         <Icon name="network" size={17} />{copy.incident.spreading}
       </p>
     </div>

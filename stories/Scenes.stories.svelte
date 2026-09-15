@@ -8,6 +8,7 @@
     desktop,
     challenge,
     infection,
+    usbCaution,
     debrief,
     locked,
     lowTime,
@@ -30,6 +31,8 @@
 <Story name="Impersonated sender" args={{ initial: challenge('spoof') }} />
 <Story name="Fake portal" args={{ initial: challenge('web') }} />
 <Story name="Unexpected MFA" args={{ initial: challenge('mfa') }} />
+<Story name="USB caution feedback" args={{ initial: usbCaution }} />
+<Story name="English USB caution feedback" args={{ initial: usbCaution, locale: 'en' }} />
 <Story name="Infection feedback" args={{ initial: infection }} />
 <Story name="Personal recap" args={{ initial: debrief }} />
 <Story name="English desktop" args={{ initial: desktop, locale: 'en' }} />

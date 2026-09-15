@@ -36,7 +36,11 @@
   {/if}
   <div class="mt-7 space-y-4 text-sm leading-[1.8]">
     <p>{copy.spoof.bodyStart}</p>
-    <p>{copy.spoof.body}</p>
+    <p>
+      {copy.spoof.body.split(copy.spoof.hintPhrase)[0]}<span data-hint-target="personal-destination"
+        >{copy.spoof.hintPhrase}</span
+      >{copy.spoof.body.split(copy.spoof.hintPhrase)[1]}
+    </p>
     <div
       class="document-request flex items-center gap-3 rounded-lg border border-[var(--line)] p-3"
     >

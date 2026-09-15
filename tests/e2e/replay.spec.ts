@@ -19,8 +19,11 @@ async function openStart(page: Page, id: string) {
 }
 
 async function chooseFromGuidance(page: Page, choiceId: string) {
-  await page.locator('.activity-guidance .guidance-trigger').click();
-  await page.locator('.activity-guidance .guidance-trigger').click();
+  const choices = page.locator('.choices-trigger');
+  if (await choices.isDisabled()) {
+    await page.locator('.activity-guidance .guidance-trigger').click();
+  }
+  await choices.click();
   await page.locator(`.action-dock-panel [data-choice="${choiceId}"]`).click();
 }
 
@@ -30,13 +33,19 @@ for (const delivery of ['http', 'file'] as const) {
   }) => {
     await enter(page, delivery);
     const usbIcon = page.locator('.desktop-icon:has([data-app="usb"])');
-    await usbIcon.dblclick();
+    await usbIcon.click();
+    const readme = page.getByRole('button', { name: fr.usb.readme });
+    await readme.click();
+    await expect(page.getByRole('note')).toContainText(fr.usb.readmeAdvisoryTitle);
+    await page.getByRole('button', { name: fr.usb.closePreview }).click();
     await chooseFromGuidance(page, 'station');
-    await expect(page.locator('.feedback-card[data-outcome="safe"]')).toBeVisible();
+    await expect(page.locator('.feedback-card[data-outcome="caution"]')).toContainText(
+      fr.feedback.caution,
+    );
     await page.getByRole('button', { name: 'Continuer l’exploration' }).click();
 
-    await usbIcon.dblclick();
-    await page.locator('#usb-file-0').dblclick();
+    await usbIcon.click();
+    await page.locator('#usb-file-0').click();
     await expect(page.locator('.feedback-card[data-outcome="risky"]')).toBeVisible();
     await expect(page.getByText(fr.feedback.replay, { exact: true })).toBeVisible();
     await page.getByRole('button', { name: 'Continuer l’exploration' }).click();
@@ -48,9 +57,7 @@ for (const delivery of ['http', 'file'] as const) {
     await page.getByRole('button', { name: 'Continuer l’exploration' }).click();
     await openStart(page, 'web');
     await page.getByRole('button', { name: 'Réduire la fenêtre', exact: true }).click();
-    await page
-      .getByRole('button', { name: `${fr.os.openApp} ${fr.desktop.web}`, exact: true })
-      .click();
+    await page.locator('[data-taskbar-window="web"]').click();
     await expect(page.locator('[data-challenge="web"]')).toBeVisible();
     await page.getByRole('button', { name: fr.web.bookmark, exact: false }).click();
     await expect(page.locator('.feedback-card[data-outcome="safe"]')).toBeVisible();

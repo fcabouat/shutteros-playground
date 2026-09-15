@@ -29,6 +29,7 @@
     <span class="ai-brand"><Icon name="ai" size={19} />{connected ? copy[tool] : copy.app}</span>
     <button
       class="text-link"
+      data-hint-target="tool"
       aria-expanded={policyOpen}
       aria-controls={policyId}
       onclick={() => (policyOpen = !policyOpen)}

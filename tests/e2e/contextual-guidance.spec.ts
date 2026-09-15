@@ -1,7 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 import { fr } from '@shutteros/core/data/fr';
 import { guidanceDelayMs } from '@shutteros/core/model/game';
-import { activityDefinition } from '@shutteros/core/data/activities';
 
 async function enter(page: Page) {
   await page.goto('./');
@@ -11,14 +10,23 @@ async function enter(page: Page) {
 }
 
 async function open(page: Page, id: 'usb' | 'incident' | 'mail' | 'web' | 'mfa' | 'ai') {
-  await page.locator(`.desktop-icon:has([data-app="${id}"])`).dblclick();
+  await page.locator(`.desktop-icon:has([data-app="${id}"])`).click();
   await expect(page.locator(`[data-challenge="${id}"]`)).toBeVisible();
 }
 
 async function choices(page: Page) {
-  await page.getByRole('button', { name: fr.guidance.first, exact: true }).click();
-  await page.getByRole('button', { name: fr.guidance.second, exact: true }).click();
+  const originalWindow = await page.locator('.window-layer .os-window').boundingBox();
+  await expect(page.locator('.primary-help-slot .guidance-trigger')).toHaveText(fr.guidance.first);
+  await expect(page.locator('.choices-trigger')).toBeDisabled();
+  await expect(page.locator('.hint-window-layer')).toBeHidden();
+  await page.locator('.primary-help-slot .guidance-trigger').click();
+  await expect(page.locator('.choices-trigger')).toBeEnabled();
+  expect(await page.locator('.window-layer .os-window').boundingBox()).toEqual(originalWindow);
+  await page.locator('.choices-trigger').click();
   await expect(page.locator('.action-dock-panel')).toBeVisible();
+  await expect(page.locator('.primary-help-slot .guidance-trigger')).toHaveText(
+    fr.guidance.restore,
+  );
 }
 
 async function advance(page: Page) {
@@ -52,20 +60,51 @@ test('untouched login waits; first input starts the two-minute hint without star
   await expect(page.locator('[role="timer"]')).toHaveCount(0);
 });
 
-test('manual hints highlight a native control, then expose equivalent choices and their selected feedback', async ({
+test('hint and choice controls independently expose guidance and selected feedback', async ({
   page,
 }) => {
   await enter(page);
   await open(page, 'usb');
   await expect(page.locator('.action-dock-panel')).toHaveCount(0);
+  await expect(page.locator('.choices-trigger')).toBeDisabled();
   await page.getByRole('button', { name: fr.guidance.first, exact: true }).click();
-  const target = activityDefinition('usb').steps.choose.firstHintTarget;
-  await expect(page.locator(`[data-hint-target="${target}"]`).first()).toHaveCSS(
+  await expect(page.locator('.choices-trigger')).toBeEnabled();
+  const sidebar = (await page.locator('.file-sidebar').boundingBox())!;
+  const body = (await page.locator('.window-layer .window-body').boundingBox())!;
+  expect(sidebar.y + sidebar.height).toBeCloseTo(body.y + body.height, 0);
+  await expect(page.locator('[data-hint-target="eject"]').first()).toHaveCSS(
     'outline-width',
     '3px',
   );
+  await expect(page.locator('.browser-toolbar button').last()).toHaveCSS('outline-style', 'none');
+  await expect(page.locator('[data-hint-target="drive-label"]')).toHaveCount(2);
+  for (const label of await page.locator('[data-hint-target="drive-label"]').all()) {
+    await expect(label).toHaveCSS('text-decoration-line', 'underline');
+  }
+  const bar = (await page.locator('.os-topbar').boundingBox())!;
+  const help = (await page.locator('.primary-help-slot .guidance-trigger').boundingBox())!;
+  expect(help.y).toBeGreaterThanOrEqual(bar.y);
+  expect(help.y + help.height).toBeLessThanOrEqual(bar.y + bar.height);
+  await expect(page.locator('.primary-help-slot .guidance-trigger')).toHaveText(
+    fr.challenge.hideHint,
+  );
+  await expect(page.locator('.choices-trigger')).toHaveText(fr.guidance.choices);
+  await page
+    .locator('.hint-content')
+    .evaluate((element) =>
+      Promise.all(element.getAnimations({ subtree: true }).map((animation) => animation.finished)),
+    );
+  await page.screenshot({ path: 'test-results/previews/usb-first-hint.png' });
   await expect(page.locator('.action-dock-panel')).toHaveCount(0);
-  await page.getByRole('button', { name: fr.guidance.second, exact: true }).click();
+  await page.locator('.choices-trigger').click();
+  await expect(page.locator('.hint-window-layer')).toBeHidden();
+  await expect(page.locator('.primary-help-slot .guidance-trigger')).toHaveText(
+    fr.guidance.restore,
+  );
+  await expect(page.locator('.choices-trigger')).toHaveText(fr.guidance.close);
+  for (const choice of await page.locator('.action-dock-panel [data-choice]').all()) {
+    await expect(choice).not.toHaveCSS('outline-color', 'rgb(237, 186, 62)');
+  }
   await page.locator('.action-dock-panel [data-choice="eject"]').click();
   const review = page.locator('.decision-review');
   await expect(review.locator('[data-choice="eject"]')).toHaveAttribute('aria-current', 'true');
@@ -83,15 +122,26 @@ test('repeated clicks cannot postpone automatic help; closing and reopening pres
   await open(page, 'usb');
   await page.clock.fastForward(60_000);
   await page.locator('#usb-file-2').click();
+  await page.getByRole('button', { name: fr.usb.closePreview }).click();
   await page.clock.fastForward(60_100);
-  await expect(page.getByRole('button', { name: fr.guidance.second, exact: true })).toBeVisible();
-  await page.getByRole('button', { name: fr.shell.close, exact: true }).click();
+  await expect(page.locator('.primary-help-slot .guidance-trigger')).toHaveText(
+    fr.challenge.hideHint,
+  );
+  await page.locator('.primary-help-slot .guidance-trigger').click();
+  await page
+    .locator('.os-window')
+    .getByRole('button', { name: fr.shell.close, exact: true })
+    .click();
   await page.clock.fastForward(60_000);
   await open(page, 'usb');
-  await expect(page.getByRole('button', { name: fr.guidance.second, exact: true })).toBeVisible();
+  await expect(page.locator('.hint-window-layer')).toBeVisible();
+  await expect(page.locator('.primary-help-slot .guidance-trigger')).toHaveText(
+    fr.challenge.hideHint,
+  );
   await page.clock.fastForward(118_000);
   await expect(page.locator('.action-dock-panel')).toHaveCount(0);
-  await page.locator('#usb-file-1').click();
+  await page.locator('#usb-file-2').click();
+  await page.getByRole('button', { name: fr.usb.closePreview }).click();
   await page.clock.fastForward(2_100);
   await expect(page.locator('.action-dock-panel')).toBeVisible();
 });
@@ -105,13 +155,13 @@ test('minimizing pauses assistance, restoring resumes it, and notifications neve
   await page.clock.fastForward(60_000);
   await page.getByRole('button', { name: fr.os.minimize, exact: true }).click();
   await page.clock.fastForward(180_000);
-  await page
-    .getByRole('button', { name: `${fr.os.openApp} ${fr.desktop.web}`, exact: true })
-    .click();
+  await page.locator('[data-taskbar-window="web"]').click();
   await expect(page.getByRole('button', { name: fr.guidance.first, exact: true })).toBeVisible();
   await expect(page.locator('.action-dock-panel, .ambient-notice')).toHaveCount(0);
   await page.clock.fastForward(60_100);
-  await expect(page.getByRole('button', { name: fr.guidance.second, exact: true })).toBeVisible();
+  await expect(page.locator('.primary-help-slot .guidance-trigger')).toHaveText(
+    fr.challenge.hideHint,
+  );
   await expect(page.locator('.ambient-notice')).toHaveCount(0);
 });
 
@@ -119,20 +169,31 @@ for (const viewport of [
   { width: 1440, height: 900 },
   { width: 960, height: 720 },
 ]) {
-  test(`expanded guidance has its own space at ${viewport.width}px, including a maximized window`, async ({
-    page,
-  }) => {
+  test(`questionnaire expands a normal frame at ${viewport.width}px`, async ({ page }) => {
     await page.setViewportSize(viewport);
     await enter(page);
     await open(page, 'web');
-    await page.getByRole('button', { name: fr.os.maximize, exact: true }).click();
+    const window = page.locator('.window-layer .os-window');
+    await expect(window).not.toHaveClass(/maximized/);
+    const initial = (await window.boundingBox())!;
     await choices(page);
-    const frame = await page.locator('.os-window').boundingBox();
+    await expect(window).not.toHaveClass(/maximized/);
+    const frame = await window.boundingBox();
+    const workspace = await page.locator('.os-workspace').boundingBox();
     const guide = await page.locator('.activity-guidance').boundingBox();
     const panel = await page.locator('.action-dock-panel').boundingBox();
-    expect(frame && guide && panel).toBeTruthy();
+    expect(frame && workspace && guide && panel).toBeTruthy();
+    expect(frame!.width).toBeGreaterThanOrEqual(initial.width);
+    expect(frame!.width).toBeLessThanOrEqual(workspace!.width);
+    if (viewport.width === 1440) expect(frame!.width).toBeCloseTo(1280, 0);
     expectSeparated(frame!, guide!);
-    expectSeparated(frame!, panel!);
+    const content = (await page
+      .locator('.window-layer .os-window > .window-panes > .window-body')
+      .boundingBox())!;
+    expectSeparated(content, panel!);
+    expect(panel!.x).toBeGreaterThanOrEqual(frame!.x);
+    expect(panel!.x + panel!.width).toBeLessThanOrEqual(frame!.x + frame!.width);
+    await expect(page.locator('.hint-window-layer')).toBeHidden();
     await expect(page.getByRole('button', { name: fr.guidance.close, exact: true })).toBeInViewport(
       { ratio: 1 },
     );
@@ -140,25 +201,52 @@ for (const viewport of [
   });
 }
 
+test('questionnaire uses the device width and respects a manually resized application', async ({
+  page,
+}) => {
+  await enter(page);
+  await open(page, 'mfa');
+  await choices(page);
+  const device = page.locator('.window-layer .os-window');
+  await expect(device).not.toHaveClass(/maximized/);
+  expect((await device.boundingBox())!.width).toBeCloseTo(800, 0);
+
+  await page.locator('[data-taskbar-window="web"]').click();
+  await expect(page.locator('[data-challenge="web"]')).toBeVisible();
+  const application = page.locator('.window-layer .os-window');
+  const resize = application.locator('[data-resize-edge="e"]');
+  const before = (await application.boundingBox())!;
+  await resize.focus();
+  await page.keyboard.press('ArrowRight');
+  const resized = (await application.boundingBox())!;
+  expect(resized.width).toBeCloseTo(before.width + 10, 0);
+  await choices(page);
+  await expect(application).not.toHaveClass(/maximized/);
+  expect((await application.boundingBox())!.width).toBeCloseTo(resized.width, 0);
+});
+
 test('readme opens an editor; ZIP is a risky action; direct eject has the same reviewed result', async ({
   page,
 }) => {
   await enter(page);
   await open(page, 'usb');
-  await page.locator('#usb-file-2').dblclick();
+  await page.locator('#usb-file-2').click();
   await expect(page.getByRole('dialog', { name: fr.usb.readme, exact: true })).toBeVisible();
   await expect(page.locator('.text-editor-document')).toHaveText(fr.usb.readmePreview);
   await expect(page.locator('.feedback-card')).toHaveCount(0);
   await page.keyboard.press('Escape');
   await expect(page.locator('#usb-file-2')).toBeFocused();
-  await page.locator('#usb-file-1').dblclick();
+  await page.locator('#usb-file-1').click();
   await expect(page.locator('.feedback-card')).toHaveAttribute('data-outcome', 'risky');
   await expect(page.locator('.decision-review [data-choice="archive"]')).toHaveAttribute(
     'aria-current',
     'true',
   );
   await page.getByRole('button', { name: fr.feedback.incident, exact: true }).click();
-  await page.getByRole('button', { name: fr.shell.close, exact: true }).click();
+  await page
+    .locator('.os-window')
+    .getByRole('button', { name: fr.shell.close, exact: true })
+    .click();
   await open(page, 'usb');
   await page.locator('.file-sidebar-eject').click();
   await expect(page.locator('.decision-review [data-choice="eject"]')).toHaveAttribute(
@@ -204,7 +292,10 @@ test('a routine completed from Start suppresses its later reminder and is clearl
   await page.getByRole('button', { name: fr.routines.passwordAction, exact: true }).click();
   await page.clock.fastForward(90_100);
   await expect(page.locator('.ambient-notice')).toHaveCount(0);
-  await page.getByRole('button', { name: fr.shell.close, exact: true }).click();
+  await page
+    .locator('.os-window')
+    .getByRole('button', { name: fr.shell.close, exact: true })
+    .click();
   await expect(
     page.locator('.ambient-notice').filter({ hasText: fr.routines.password }),
   ).toHaveCount(0);
@@ -230,7 +321,7 @@ test('the optional quiz uses the same explicit correct and incorrect feedback as
   await expect(alternative).toContainText(fr.feedback.alternative);
 });
 
-test('manual second hint moves keyboard focus to its choices and keeps an AI draft across hiding', async ({
+test('the choices control moves keyboard focus and keeps an AI draft across hiding', async ({
   page,
 }) => {
   await enter(page);
@@ -244,7 +335,7 @@ test('manual second hint moves keyboard focus to its choices and keeps an AI dra
   await page.getByRole('button', { name: fr.guidance.choices, exact: true }).click();
   await expect(panel.locator('[data-choice="commercial-generic"] input')).toBeChecked();
   await page.getByRole('button', { name: fr.os.minimize, exact: true }).click();
-  await page.getByRole('button', { name: fr.os.restore, exact: true }).click();
+  await page.locator('[data-taskbar-window="core-ai"]').click();
   await expect(panel.locator('[data-choice="commercial-generic"] input')).toBeChecked();
   await panel.getByRole('button', { name: fr.ai.send, exact: true }).click();
   await expect(page.locator('.decision-review [data-choice="commercial-generic"]')).toHaveAttribute(
@@ -268,16 +359,20 @@ test('short landscape viewports can scroll to the guided choice and continue', a
   await expect(page.locator('[data-challenge]')).toHaveCount(0);
 });
 
-test('desktop help only navigates and leaves both activity hints available', async ({ page }) => {
+test('the remaining counter opens the guide and leaves both activity controls available', async ({
+  page,
+}) => {
   await enter(page);
   const trigger = page.locator('.companion-trigger');
-  await expect(trigger).toHaveText(fr.guide.prompt);
+  await expect(trigger).toHaveAccessibleName(/activit/);
+  await expect(trigger).toHaveText(fr.guide.counterMany.replace('{count}', '8'));
   const fits = await trigger.evaluate((button) => {
-    const label = button.querySelector('span')!.getBoundingClientRect();
+    const label = button.querySelector('span:not(.help-cue)')!.getBoundingClientRect();
     const bounds = button.getBoundingClientRect();
     return label.left >= bounds.left && label.right <= bounds.right && bounds.right <= innerWidth;
   });
   expect(fits).toBe(true);
+  const helpPosition = await trigger.boundingBox();
   await trigger.click();
   const guide = page.getByRole('dialog');
   await expect(guide).toContainText('À découvrir');
@@ -285,14 +380,23 @@ test('desktop help only navigates and leaves both activity hints available', asy
   await expect(guide.getByRole('button')).toHaveCount(3);
   await guide.getByRole('button', { name: fr.guide.next, exact: true }).click();
   await expect(page.locator('[data-challenge="usb"]')).toBeVisible();
-  await expect(page.locator('.guidance-trigger span')).toBeVisible();
-  await expect(page.locator('.guidance-trigger span')).not.toHaveClass(/sr-only/);
-  await expect(page.locator('.guidance-message')).toHaveCount(0);
+  await expect(trigger).toBeDisabled();
+  expect(await trigger.boundingBox()).toEqual(helpPosition);
+  const activityHelp = await page.locator('.primary-help-slot .guidance-trigger').boundingBox();
+  expect(activityHelp!.x).toBeGreaterThanOrEqual(helpPosition!.x + helpPosition!.width);
+  expect(activityHelp!.y).toBeCloseTo(helpPosition!.y, 0);
+  await expect(
+    page.locator('.primary-help-slot .guidance-trigger > span:not(.help-cue)'),
+  ).toBeVisible();
+  await expect(
+    page.locator('.primary-help-slot .guidance-trigger > span:not(.help-cue)'),
+  ).not.toHaveClass(/sr-only/);
+  await expect(page.locator('.hint-content')).toHaveCount(0);
   await expect(page.locator('.action-dock-panel')).toHaveCount(0);
   await page.getByRole('button', { name: fr.guidance.first, exact: true }).click();
-  await expect(page.locator('.guidance-message')).toBeVisible();
+  await expect(page.locator('.hint-content')).toBeVisible();
   await expect(page.locator('.action-dock-panel')).toHaveCount(0);
-  await page.getByRole('button', { name: fr.guidance.second, exact: true }).click();
+  await page.locator('.choices-trigger').click();
   await expect(page.locator('.action-dock-panel')).toBeVisible();
 });
 
@@ -305,7 +409,7 @@ for (const [action, choice] of [
     await enter(page);
     await open(page, 'incident');
     await page.getByRole('button', { name: fr.incident.isolateNetwork, exact: true }).click();
-    await expect(page.locator('.action-dock-panel, .guidance-message')).toHaveCount(0);
+    await expect(page.locator('.action-dock-panel, .hint-content')).toHaveCount(0);
     const scenario = page.locator('[data-challenge="incident"]');
     for (const name of ['callAction', 'reportAction', 'deleteAction'] as const) {
       const button = scenario.getByRole('button', { name: fr.incident[name], exact: true });
@@ -327,9 +431,173 @@ for (const locale of ['fr', 'en'] as const) {
     await page.getByRole('button', { name: locale.toUpperCase(), exact: true }).click();
     const trigger = page.locator('.companion-trigger');
     await expect(trigger).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollHeight <= innerHeight)).toBe(
+      true,
+    );
     expect(await trigger.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(
       true,
     );
     await page.screenshot({ path: `test-results/previews/desktop-${locale}.png` });
   });
 }
+
+test('hint text preserves maximized bounds and respects reduced motion', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await enter(page);
+  await open(page, 'usb');
+  await page.getByRole('button', { name: fr.os.maximize, exact: true }).click();
+  const window = page.locator('.window-layer .os-window');
+  const before = (await window.boundingBox())!;
+  await page.getByRole('button', { name: fr.guidance.first, exact: true }).click();
+  expect(await window.boundingBox()).toEqual(before);
+  const hint = page.locator('.hint-content');
+  await expect(hint).toHaveCSS('animation-name', 'none');
+  const box = (await hint.boundingBox())!;
+  expect(box.y).toBeGreaterThanOrEqual(0);
+  const highlightedDrive = page.locator('[data-hint-target="eject"]').first();
+  const driveLabel = page.locator('[data-hint-target="drive-label"]').first();
+  await expect(highlightedDrive).toHaveCSS('outline-style', 'solid');
+  await expect(driveLabel).toHaveCSS('text-decoration-line', 'underline');
+  await page.locator('.primary-help-slot .guidance-trigger').click();
+  await expect(hint).toBeHidden();
+  await expect(highlightedDrive).not.toHaveCSS('outline-style', 'solid');
+  await expect(driveLabel).not.toHaveCSS('text-decoration-line', 'underline');
+  await page.locator('[data-taskbar-window="hint"]').click();
+  await expect(hint).toBeVisible();
+  await expect(highlightedDrive).toHaveCSS('outline-style', 'solid');
+  await expect(driveLabel).toHaveCSS('text-decoration-line', 'underline');
+  expect(await window.boundingBox()).toEqual(before);
+  await expect(page.locator('.primary-help-slot .guidance-trigger')).toHaveText(
+    fr.challenge.hideHint,
+  );
+});
+
+for (const id of ['web', 'mfa'] as const) {
+  test(`${id} first hint offers text without highlighting an answer`, async ({ page }) => {
+    await enter(page);
+    await open(page, id);
+    await page.getByRole('button', { name: fr.guidance.first, exact: true }).click();
+    await expect(page.locator('.hint-content')).toHaveText(fr.guidance.hints[id]);
+    await expect(page.locator('[data-active-hint]')).toHaveCount(0);
+    await expect(page.locator('.action-dock-panel')).toHaveCount(0);
+  });
+}
+
+test('infection hint highlights the network status rather than the Wi-Fi action', async ({
+  page,
+}) => {
+  await enter(page);
+  await open(page, 'incident');
+  await page.getByRole('button', { name: fr.guidance.first, exact: true }).click();
+  await expect(page.locator('[data-hint-target="network-status"]')).toHaveCSS(
+    'outline-width',
+    '3px',
+  );
+  await expect(page.locator('[data-hint-target="network"]')).toHaveCSS('box-shadow', 'none');
+  await page.locator('.primary-help-slot .guidance-trigger').click();
+  await expect(page.locator('[data-active-hint]')).toHaveCount(0);
+});
+
+test('AI hint highlights the policy as well as the tool choice', async ({ page }) => {
+  await enter(page);
+  await open(page, 'ai');
+  await page.getByRole('button', { name: fr.guidance.first, exact: true }).click();
+  const policy = page.getByRole('button', { name: fr.ai.policy, exact: true });
+  await expect(policy).toHaveCSS('outline-color', 'rgb(237, 186, 62)');
+  await page.locator('.primary-help-slot .guidance-trigger').click();
+  await expect(policy).not.toHaveCSS('outline-color', 'rgb(237, 186, 62)');
+  await policy.click();
+  await expect(page.getByText(fr.ai.policyRules[2], { exact: true })).toBeVisible();
+});
+
+for (const [id, target] of [
+  ['mail', 'sender-details'],
+  ['spoof', 'personal-destination'],
+] as const) {
+  test(`${id} hint draws attention to evidence, not an answer`, async ({ page }) => {
+    await enter(page);
+    await open(page, 'mail');
+    if (id === 'spoof') await page.locator('.mail-list-message').nth(1).click();
+    await page.getByRole('button', { name: fr.guidance.first, exact: true }).click();
+    await expect(page.locator('[data-active-hint]')).toHaveAttribute('data-active-hint', target);
+    await expect(page.locator(`[data-hint-target="${target}"]`)).toBeVisible();
+    const cue = page.locator(`[data-hint-target="${target}"]`);
+    if (id === 'spoof') {
+      await expect(cue).toHaveText(fr.spoof.hintPhrase);
+      await expect(cue).toHaveCSS('text-decoration-line', 'underline');
+    } else await expect(cue).toHaveCSS('outline-color', 'rgb(237, 186, 62)');
+    await page.getByRole('button', { name: fr.guidance.minimize, exact: true }).click();
+    await expect(page.locator('[data-active-hint]')).toHaveCount(0);
+  });
+}
+
+test('guided choices keep hint visibility independent from the restored window size', async ({
+  page,
+}) => {
+  await enter(page);
+  await page.getByRole('button', { name: fr.experience.finish, exact: true }).first().click();
+  const frame = page.locator('.window-layer .os-window');
+  await expect(frame).toHaveClass(/maximized/);
+  await expect(page.locator('.action-dock-panel')).toBeVisible();
+  await expect(page.locator('.hint-window-layer')).toBeHidden();
+  const hintControl = page.locator('.primary-help-slot .guidance-trigger');
+  await expect(hintControl).toHaveText(fr.guidance.first);
+  await hintControl.click();
+  await expect(page.locator('.hint-window-layer')).toBeVisible();
+  await expect(page.locator('[data-active-hint]')).toHaveAttribute('data-active-hint', 'eject');
+  await expect(page.locator('.action-dock-panel')).toBeVisible();
+  await page.getByRole('button', { name: fr.guidance.minimize, exact: true }).click();
+  await expect(page.locator('.hint-window-layer')).toBeHidden();
+  await expect(hintControl).toHaveText(fr.guidance.restore);
+  await frame.getByRole('button', { name: fr.os.restoreSize, exact: true }).click();
+  await expect(frame).not.toHaveClass(/maximized/);
+  await expect(page.locator('.action-dock-panel')).toBeVisible();
+});
+
+test('activity windows and mode switches preserve only the state that belongs to them', async ({
+  page,
+}) => {
+  await enter(page);
+  const frame = page.locator('.window-layer .os-window');
+
+  await open(page, 'usb');
+  await frame.getByRole('button', { name: fr.os.maximize, exact: true }).click();
+  await expect(frame).toHaveClass(/maximized/);
+
+  await page.locator('[data-taskbar-window="web"]').click();
+  await expect(page.locator('[data-challenge="web"]')).toBeVisible();
+  await expect(frame).not.toHaveClass(/maximized/);
+  await choices(page);
+  await expect(frame).not.toHaveClass(/maximized/);
+  await expect(page.locator('.action-dock-panel')).toBeVisible();
+
+  await page.getByRole('button', { name: fr.experience.finish, exact: true }).first().click();
+  await expect(page.locator('.finish-experience')).toHaveText(fr.experience.free);
+  await expect(page.locator('[data-challenge="web"][data-step="choose"]')).toBeVisible();
+  await expect(frame).toHaveClass(/maximized/);
+  await expect(page.locator('.action-dock-panel')).toBeVisible();
+
+  await frame.getByRole('button', { name: fr.os.restoreSize, exact: true }).click();
+  await expect(frame).not.toHaveClass(/maximized/);
+  await page.locator('.action-dock-panel [data-choice="known-address"]').click();
+  await expect(page.locator('.learning-takeaway')).toBeVisible();
+  await expect(frame).not.toHaveClass(/maximized/);
+
+  await page.getByRole('button', { name: fr.experience.next, exact: true }).click();
+  const guidedActivity = page.locator('[data-challenge][data-step="choose"]');
+  await expect(guidedActivity).toBeVisible();
+  const guidedId = await guidedActivity.getAttribute('data-challenge');
+  await expect(frame).toHaveClass(/maximized/);
+
+  await page.getByRole('button', { name: fr.experience.free, exact: true }).first().click();
+  await expect(page.locator('.finish-experience')).toHaveText(fr.experience.finish);
+  await expect(page.locator(`[data-challenge="${guidedId}"][data-step="choose"]`)).toBeVisible();
+  await expect(page.locator('.action-dock-panel')).toBeVisible();
+  await expect(page.locator('.choices-trigger')).toBeEnabled();
+  await expect(frame).not.toHaveClass(/maximized/);
+
+  await page.locator('[data-taskbar-window="mail"]').click();
+  await expect(page.locator('[data-challenge="mail"]')).toBeVisible();
+  await expect(frame).not.toHaveClass(/maximized/);
+  await expect(page.locator('.choices-trigger')).toBeDisabled();
+});

@@ -32,7 +32,7 @@
           {@const correct = isCorrect(choice.id)}
           {@const selected = answer?.answerId === choice.id}
           <button
-            class="knowledge-option flex items-center gap-4 rounded-lg border px-4 py-4 text-left text-base leading-snug"
+            class="knowledge-option grid items-center gap-3 rounded-lg border px-4 py-4 text-left text-base leading-snug"
             disabled={evaluated}
             class:selected
             data-choice={choice.id}
@@ -58,7 +58,10 @@
       </div>
     </fieldset>
     {#if answer}
-      <p role="status" class="mt-4 flex items-start gap-2 text-sm leading-relaxed">
+      <p
+        role="status"
+        class="knowledge-explanation mt-5 flex items-start gap-3 text-sm leading-relaxed"
+      >
         <Icon name={answer.correct ? 'check' : 'light'} size={19} />
         <span
           ><strong>{answer.correct ? copy.knowledge.correct : copy.knowledge.remember}</strong>
@@ -73,6 +76,7 @@
 
 <style>
   .knowledge-option {
+    grid-template-columns: 1.5rem minmax(0, 1fr) auto;
     background: #edf4f8;
     border-color: #527c90;
     color: var(--ink);
@@ -128,15 +132,15 @@
   }
 
   @media (max-width: 520px) {
-    .knowledge-option {
-      align-items: flex-start;
-      flex-wrap: wrap;
+    .knowledge-option:disabled {
+      align-items: start;
+      grid-template-columns: 1.5rem minmax(0, 1fr);
     }
 
     .knowledge-option-status {
       width: 100%;
       max-width: none;
-      padding-left: 2rem;
+      grid-column: 2;
       text-align: left;
     }
   }
