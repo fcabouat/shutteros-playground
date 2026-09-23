@@ -91,6 +91,8 @@ export const en: Catalog = {
     invitation: 'An ordinary desk. A few traps. Your turn to play.',
     account: 'Demo account',
     password: 'Password',
+    showPassword: 'Show password',
+    hidePassword: 'Hide password',
     placeholder: 'Password',
     enter: 'Open the session',
     helper: 'Need a hint? Look at the note near the screen. A simple password can also work here.',

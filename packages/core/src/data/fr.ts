@@ -91,6 +91,8 @@ export const fr = {
     invitation: 'Un bureau ordinaire. Quelques pièges. À vous de jouer.',
     account: 'Compte de démonstration',
     password: 'Mot de passe',
+    showPassword: 'Afficher le mot de passe',
+    hidePassword: 'Masquer le mot de passe',
     placeholder: 'Mot de passe',
     enter: 'Ouvrir la session',
     helper:
