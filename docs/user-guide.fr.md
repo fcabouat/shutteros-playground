@@ -18,6 +18,8 @@ Le compteur d’activités restantes reste toujours visible à gauche des bouton
 
 Dans le bilan, faites défiler la liste des activités ; les boutons pour reprendre ou terminer restent visibles. Si vous réduisez cette fenêtre, **Voir mon bilan maintenant** apparaît dans la barre supérieure pour la retrouver.
 
+La charte de l’exercice IA est accessible dans l’assistant et peut être relue depuis son écran de réponse.
+
 ## Commandes utiles
 
 - **Connexion :** le mot de passe fictif est masqué pendant la saisie ; le bouton œil permet de le vérifier.

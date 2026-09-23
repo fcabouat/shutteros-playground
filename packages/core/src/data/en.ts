@@ -147,6 +147,7 @@ export const en: Catalog = {
     connect: 'Open chat',
     switch: 'Switch tool',
     policy: 'AI policy for this exercise',
+    policyReview: 'Review the AI policy for this exercise',
     policyIntro: 'For this simulation, the organisation has set these rules:',
     policyRules: [
       'The organisation permits drafting documents for routine projects in the internal tool, limiting personal data to what is necessary for the work.',

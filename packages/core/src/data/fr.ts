@@ -149,6 +149,7 @@ export const fr = {
     connect: 'Ouvrir le chat',
     switch: 'Changer d’outil',
     policy: 'Charte IA de cet exercice',
+    policyReview: 'Relire la charte IA de l’exercice',
     policyIntro: 'Pour cette simulation, l’organisation a défini ces règles :',
     policyRules: [
       'L’organisation autorise la préparation de documents pour les projets courants dans l’outil interne, en limitant les données personnelles à celles nécessaires au travail.',
