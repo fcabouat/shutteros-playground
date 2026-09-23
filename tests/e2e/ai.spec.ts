@@ -76,6 +76,10 @@ for (const locale of ['fr', 'en'] as const) {
           exact: true,
         }),
       ).toBeVisible();
+      await expect(review.locator('.decision-review-security')).toHaveCount(2);
+      await expect(review.locator('.decision-review-security').first()).toHaveText(
+        copy.ai.securityMarker,
+      );
 
       await expect(review.locator('[data-choice="internal-routine"]')).toContainText(
         copy.ai.otherTool.commercial,

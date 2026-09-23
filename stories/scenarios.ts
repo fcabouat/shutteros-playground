@@ -42,6 +42,10 @@ export const debrief = play([
   { type: 'choose', choiceId: 'report' },
   { type: 'continue' },
   { type: 'close' },
+  { type: 'routine', id: 'password', action: 'complete' },
+  { type: 'routine', id: 'update', action: 'complete' },
+  { type: 'practice-lock' },
+  { type: 'resume-lock' },
   { type: 'debrief' },
 ]);
 

@@ -62,6 +62,28 @@
       ? copy.ai.otherTool[otherTool]
       : null;
   }
+
+  function highlightedLabel(
+    choiceId: string,
+  ): { before: string; match: string; after: string } | null {
+    if (
+      id !== 'ai' ||
+      (!choiceId.endsWith('-confidential') && !choiceId.endsWith('-confidentialAnonymised'))
+    )
+      return null;
+    const label = choiceLabel(choiceId);
+    const marker = copy.ai.securityMarker;
+    const index = label
+      .toLocaleLowerCase(i18n.locale)
+      .indexOf(marker.toLocaleLowerCase(i18n.locale));
+    return index < 0
+      ? null
+      : {
+          before: label.slice(0, index),
+          match: label.slice(index, index + marker.length),
+          after: label.slice(index + marker.length),
+        };
+  }
 </script>
 
 <section class="decision-review" data-activity={id} aria-labelledby={titleId}>
@@ -77,6 +99,7 @@
       {@const outcome = choiceOutcome(id, step, choiceId)}
       {@const selected = choiceId === selectedChoiceId}
       {@const toolNote = otherToolNote(choiceId)}
+      {@const highlighted = highlightedLabel(choiceId)}
       {@const correct = outcome === 'safe'}
       <li
         class="decision-review-choice"
@@ -89,7 +112,9 @@
           <Icon name={correct ? 'check' : 'close'} size={17} />
         </span>
         <span class="decision-review-label">
-          {choiceLabel(choiceId)}
+          {#if highlighted}{highlighted.before}<span class="decision-review-security"
+              >{highlighted.match}</span
+            >{highlighted.after}{:else}{choiceLabel(choiceId)}{/if}
           {#if toolNote}<span class="decision-review-tool-note">{toolNote}</span>{/if}
         </span>
         <span class="decision-review-status">
@@ -187,6 +212,13 @@
     margin-top: 0.3rem;
     font-weight: 400;
     font-size: 0.8125rem;
+  }
+
+  .decision-review-security {
+    color: #a32924;
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 0.14em;
   }
 
   .decision-review-status {

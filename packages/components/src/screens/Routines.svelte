@@ -59,7 +59,7 @@
         <button
           class="button button-soft"
           aria-expanded={checkOpen}
-          onclick={() => (checkOpen = !checkOpen)}>{copy.routines.check}</button
+          onclick={() => (checkOpen = !checkOpen)}>{copy.routines.passwordCheck}</button
         >
         {#if checkOpen}<div class="mt-4"><KnowledgeCheck {snapshot} {dispatch} /></div>{/if}
       </div>

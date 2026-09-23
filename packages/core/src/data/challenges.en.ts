@@ -114,6 +114,11 @@ export const englishChallenges: Challenges = {
     ],
     choices: [
       {
+        id: 'report',
+        label: 'Forward to the security team',
+        detail: 'Use the organisation’s designated reporting channel.',
+      },
+      {
         id: 'open',
         label: 'Open the attachment',
         detail: 'The message explains why it was sent.',
@@ -122,11 +127,6 @@ export const englishChallenges: Challenges = {
         id: 'reply',
         label: 'Reply to the message',
         detail: 'Ask the sender to confirm the attachment.',
-      },
-      {
-        id: 'report',
-        label: 'Forward to the security team',
-        detail: 'Use the organisation’s designated reporting channel.',
       },
     ],
     feedback: {
@@ -155,14 +155,14 @@ export const englishChallenges: Challenges = {
         detail: 'The message came from the usual work address.',
       },
       {
-        id: 'reply',
-        label: 'Reply to confirm',
-        detail: 'Ask in this conversation whether the request is correct.',
-      },
-      {
         id: 'report',
         label: 'Forward to the security team',
         detail: 'Use the organisation’s designated reporting channel.',
+      },
+      {
+        id: 'reply',
+        label: 'Reply to confirm',
+        detail: 'Ask in this conversation whether the request is correct.',
       },
     ],
     feedback: {
@@ -217,9 +217,9 @@ export const englishChallenges: Challenges = {
       'If you did not start the sign-in, do not approve it. Then alert the security team.',
     ],
     choices: [
+      { id: 'deny-report', label: 'Deny and report', detail: 'I did not start this sign-in.' },
       { id: 'approve', label: 'Approve', detail: 'To make the notifications disappear.' },
       { id: 'ignore', label: 'Ignore the requests', detail: 'They will eventually stop.' },
-      { id: 'deny-report', label: 'Deny and report', detail: 'I did not start this sign-in.' },
     ],
     feedback: {
       safe: 'You denied the sign-in and raised the alert. The repeated requests did not get your approval.',

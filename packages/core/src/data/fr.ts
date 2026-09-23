@@ -52,6 +52,8 @@ export const fr = {
     dismiss: 'Masquer ce rappel',
     notification: 'Notification du poste',
     check: 'Tester ce réflexe',
+    passwordCheck: 'Test facultatif · mot de passe professionnel',
+    resume: 'Reprendre les gestes',
   },
   about: {
     title: 'À propos de ShutterOS',
@@ -168,6 +170,7 @@ export const fr = {
         'Faire une synthèse de la réunion de sécurité, sans les noms mais avec les détails sensibles',
       generic: 'Préparer une méthode générale de réunion, sans cas réel',
     },
+    securityMarker: 'sécurité',
     otherTool: {
       internal: 'Autorisé dans l’outil interne.',
       commercial: 'Pas autorisé dans l’outil commercial.',
@@ -257,11 +260,11 @@ export const fr = {
     password: {
       question: 'Mon mot de passe pro, réutilisé sur un site perso, a fuité. Que faire ?',
       choices: [
+        { id: 'wait-cycle', label: 'J’attends le prochain changement programmé au travail.' },
         {
           id: 'replace-now',
           label: 'Je le signale immédiatement et suis la procédure de mon organisation.',
         },
-        { id: 'wait-cycle', label: 'J’attends le prochain changement programmé au travail.' },
       ],
       explanation:
         'Une compromission ne peut pas attendre. Signalez-la immédiatement et suivez la procédure de votre organisation pour protéger le compte professionnel.',
@@ -269,8 +272,8 @@ export const fr = {
     incident: {
       question: 'Vous avez cliqué, mais tout semble fonctionner. Vous faites quoi ?',
       choices: [
-        { id: 'wait-symptoms', label: 'J’attends de voir un problème avant d’en parler.' },
         { id: 'report-now', label: 'Je signale tout de suite ce qui s’est passé.' },
+        { id: 'wait-symptoms', label: 'J’attends de voir un problème avant d’en parler.' },
       ],
       explanation:
         'Un incident peut rester invisible. Alerter tôt et suivre la procédure de votre organisation permet aux équipes de sécurité informatique d’agir ; vous n’avez pas à prouver l’infection pour demander de l’aide.',

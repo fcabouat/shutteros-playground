@@ -491,7 +491,16 @@
             />{/key}
         </div>
         <div class="primary-help-slot">
-          {#if activityVisible}
+          {#if minimized && (snapshot.scene.kind === 'routines' || snapshot.scene.kind === 'debrief')}
+            <button class="guidance-trigger offered" onclick={activateCore}>
+              <Icon name={snapshot.scene.kind === 'debrief' ? 'checkbox' : 'key'} size={20} />
+              <span
+                >{snapshot.scene.kind === 'debrief'
+                  ? copy.experience.review
+                  : copy.routines.resume}</span
+              >
+            </button>
+          {:else if activityVisible}
             <aside class="activity-guidance" aria-label={copy.shell.guide}>
               <button
                 class="guidance-trigger"
