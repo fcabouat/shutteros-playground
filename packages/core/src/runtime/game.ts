@@ -96,9 +96,8 @@ export function transition(
     case 'close':
       return closeScene(timed);
     case 'debrief':
-      return timed.scene.kind === 'desktop' && timed.results.length > 0
-        ? { ...timed, scene: { kind: 'debrief' } }
-        : timed;
+      if (timed.scene.kind !== 'desktop' || timed.results.length === 0) return timed;
+      return routinesComplete(timed) ? { ...timed, scene: { kind: 'debrief' } } : timed;
     case 'answer-check':
       return answerKnowledge(timed, intent.answerId);
     case 'activity':

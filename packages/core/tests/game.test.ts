@@ -249,6 +249,29 @@ describe('activity definitions and outcomes', () => {
     );
   });
 
+  it('keeps localized choices stable while varying the safe answer position', () => {
+    const expectedOrder = {
+      incident: ['restart', 'isolate', 'ignore'],
+      mail: ['report', 'open', 'reply'],
+      spoof: ['comply', 'report', 'reply'],
+      web: ['submit', 'trust-lock', 'known-address'],
+      mfa: ['deny-report', 'approve', 'ignore'],
+    } as const;
+    for (const [id, order] of Object.entries(expectedOrder)) {
+      const challengeId = id as keyof typeof expectedOrder;
+      expect(challenges[challengeId].choices.map((choice) => choice.id)).toEqual(order);
+      expect(englishChallenges[challengeId].choices.map((choice) => choice.id)).toEqual(order);
+    }
+    expect(
+      Object.entries(expectedOrder).map(([id, order]) =>
+        order.findIndex(
+          (choiceId) =>
+            choiceOutcome(id as keyof typeof expectedOrder, 'choose', choiceId) === 'safe',
+        ),
+      ),
+    ).toEqual([1, 0, 1, 2, 0]);
+  });
+
   it('uses the requested USB, mail, and spoof outcomes', () => {
     expect(challengeChoiceIds('usb', 'choose')).toEqual([
       'open',

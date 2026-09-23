@@ -53,6 +53,8 @@ export const en: Catalog = {
     dismiss: 'Dismiss reminder',
     notification: 'Computer notification',
     check: 'Try this reflex',
+    passwordCheck: 'Optional check · work password',
+    resume: 'Resume protection steps',
   },
   about: {
     title: 'About ShutterOS',
@@ -166,6 +168,7 @@ export const en: Catalog = {
         'Summarise the security meeting without names, but with sensitive details',
       generic: 'Plan a general meeting method, without a real case',
     },
+    securityMarker: 'security',
     otherTool: {
       internal: 'Allowed in the internal tool.',
       commercial: 'Not allowed in the commercial tool.',
@@ -255,11 +258,11 @@ export const en: Catalog = {
     password: {
       question: 'My work password, reused on a personal site, has leaked. What now?',
       choices: [
+        { id: 'wait-cycle', label: 'Wait for the next scheduled work password change.' },
         {
           id: 'replace-now',
           label: 'Report it immediately and follow my organisation’s procedure.',
         },
-        { id: 'wait-cycle', label: 'Wait for the next scheduled work password change.' },
       ],
       explanation:
         'Compromise cannot wait. Report it immediately and follow your organisation’s procedure to protect your work account.',
@@ -267,8 +270,8 @@ export const en: Catalog = {
     incident: {
       question: 'You clicked, but everything seems to work. What now?',
       choices: [
-        { id: 'wait-symptoms', label: 'Wait for a problem before mentioning it.' },
         { id: 'report-now', label: 'Report what happened immediately.' },
+        { id: 'wait-symptoms', label: 'Wait for a problem before mentioning it.' },
       ],
       explanation:
         'An incident can remain invisible. Early reporting and following your organisation’s procedure help the security team respond; you do not need to prove infection before asking for help.',

@@ -24,15 +24,20 @@ async function signIn(page: Page) {
 async function answerKnowledge(
   page: Page,
   id: 'password' | 'incident' | 'mfa',
-  optionIndex: number,
+  answerId: string,
   expected: string,
 ) {
   const check = page.locator(`[data-knowledge="${id}"]`);
   if (!(await check.isVisible())) {
-    await page.getByRole('button', { name: 'Tester ce réflexe', exact: true }).click();
+    await page
+      .getByRole('button', {
+        name: id === 'password' ? fr.routines.passwordCheck : fr.routines.check,
+        exact: true,
+      })
+      .click();
   }
   await expect(check).toBeVisible();
-  await check.locator('.knowledge-option').nth(optionIndex).click();
+  await check.locator(`[data-choice="${answerId}"]`).click();
   await expect(check.getByRole('status')).toContainText(expected);
 }
 
@@ -124,7 +129,7 @@ test('guided completion sweeps remaining situations without local timers', async
   await page
     .getByRole('button', { name: 'Créer un secret unique avec le gestionnaire approuvé' })
     .click();
-  await answerKnowledge(page, 'password', 0, 'Exact.');
+  await answerKnowledge(page, 'password', 'replace-now', 'Exact.');
   await expectNoAxeViolations(page);
   await page
     .getByRole('button', { name: 'Accepter la mise à jour prévue par le Service Informatique' })
@@ -229,7 +234,7 @@ for (const delivery of ['http', 'file'] as const) {
     await chooseFromDock(page, 'isolate');
     await expect(page.getByRole('heading', { name: fr.incident.contained })).toBeVisible();
     await page.getByRole('button', { name: fr.incident.reportAction, exact: true }).click();
-    await answerKnowledge(page, 'incident', 1, 'Exact.');
+    await answerKnowledge(page, 'incident', 'report-now', 'Exact.');
     await advance(page);
 
     await openNext(page, 'mail');
@@ -252,7 +257,7 @@ for (const delivery of ['http', 'file'] as const) {
 
     await openNext(page, 'mfa');
     await chooseFromDock(page, 'deny-report');
-    await answerKnowledge(page, 'mfa', 1, 'Exact.');
+    await answerKnowledge(page, 'mfa', 'never-share', 'Exact.');
     await advance(page);
     await openNext(page, 'ai', false);
     await sendSafeAiPrompt(page);
@@ -274,16 +279,40 @@ for (const delivery of ['http', 'file'] as const) {
     await expect(
       page.getByRole('button', { name: fr.experience.review, exact: true }),
     ).toBeDisabled();
+    if (delivery === 'http')
+      await page.screenshot({ path: 'test-results/previews/routines-pending.png' });
+    await page
+      .locator('.window-titlebar')
+      .getByRole('button', { name: fr.os.minimize, exact: true })
+      .click();
+    await expect(page.getByRole('button', { name: fr.routines.resume, exact: true })).toBeVisible();
+    await page.getByRole('button', { name: fr.routines.resume, exact: true }).click();
     await page.locator('[data-routine="password"] button').first().click();
     await page.locator('[data-routine="update"] button').first().click();
     await page.locator('[data-routine="lock"] button').first().click();
     await page.getByRole('button', { name: fr.routines.unlock, exact: true }).click();
+    await expect(
+      page.getByRole('button', { name: fr.experience.review, exact: true }),
+    ).toBeEnabled();
+    if (delivery === 'http')
+      await page.screenshot({ path: 'test-results/previews/routines-complete.png' });
     await page.getByRole('button', { name: fr.experience.review, exact: true }).click();
     await expect(
       page.getByText(
         '6 bons réflexes, 1 prise de risque puis bonne réaction sur 7 situations explorées',
       ),
     ).toBeVisible();
+    await page
+      .locator('.window-titlebar')
+      .getByRole('button', { name: fr.os.minimize, exact: true })
+      .click();
+    await expect(
+      page.getByRole('button', { name: fr.experience.review, exact: true }),
+    ).toBeVisible();
+    if (delivery === 'http')
+      await page.screenshot({ path: 'test-results/previews/recap-minimized.png' });
+    await page.getByRole('button', { name: fr.experience.review, exact: true }).click();
+    await expect(page.locator('.debrief-view')).toBeVisible();
     await page.getByRole('button', { name: fr.shell.resume, exact: true }).click();
     await page.locator('.desktop-icon:has([data-app="usb"])').click();
     await page.locator('#usb-file-0').click();
