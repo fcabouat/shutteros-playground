@@ -2,6 +2,7 @@
   import type { AiPrompt, AiTool, Intent } from '@shutteros/core/model/game';
   import { getI18n } from '../i18n/context';
   import Icon from '../commons/Icon.svelte';
+  import AiPolicy from '../commons/AiPolicy.svelte';
 
   let { dispatch }: { dispatch: (intent: Intent) => void } = $props();
   const i18n = getI18n();
@@ -19,31 +20,14 @@
   let tool = $state<AiTool>('internal');
   let connected = $state(false);
   let prompt = $state<AiPrompt | null>(null);
-  let policyOpen = $state(false);
-  const policyId = $props.id();
   const preview = $derived(prompt === null ? '' : copy[`${prompt}Prompt`]);
 </script>
 
 <section class="ai-chat" aria-label={copy.app}>
   <header class="ai-toolbar">
     <span class="ai-brand"><Icon name="ai" size={19} />{connected ? copy[tool] : copy.app}</span>
-    <button
-      class="text-link"
-      data-hint-target="tool"
-      aria-expanded={policyOpen}
-      aria-controls={policyId}
-      onclick={() => (policyOpen = !policyOpen)}
-      ><Icon name="document" size={15} />{copy.policy}</button
-    >
+    <AiPolicy hintTarget />
   </header>
-  {#if policyOpen}
-    <aside class="ai-policy" id={policyId}>
-      <p class="font-semibold">{copy.policyIntro}</p>
-      <ul class="mt-2 list-disc space-y-2 pl-5">
-        {#each copy.policyRules as rule (rule)}<li>{rule}</li>{/each}
-      </ul>
-    </aside>
-  {/if}
   {#if !connected}
     <div class="ai-connect">
       <span class="app-icon" data-app="ai"><Icon name="ai" size={26} /></span>
@@ -117,7 +101,6 @@
     color: var(--ink);
     min-height: 440px;
   }
-  .ai-toolbar,
   .ai-brand,
   .ai-workspace {
     display: flex;
@@ -125,8 +108,10 @@
     gap: 0.75rem;
   }
   .ai-toolbar {
-    justify-content: space-between;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.75rem;
     border-bottom: 1px solid var(--line);
     padding: 1rem 1.25rem;
     background: white;
@@ -134,12 +119,6 @@
   .ai-brand {
     font-size: 0.875rem;
     font-weight: 650;
-  }
-  .ai-toolbar button {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    font-size: 0.8rem;
   }
   .ai-connect,
   .ai-conversation {
@@ -149,13 +128,6 @@
   }
   .ai-connect {
     max-width: 640px;
-  }
-  .ai-policy {
-    padding: 1rem 1.5rem;
-    border-bottom: 1px solid var(--line);
-    background: #eaf1f5;
-    font-size: 0.8125rem;
-    line-height: 1.5;
   }
   .ai-tools,
   .ai-prompts {
@@ -215,6 +187,9 @@
     color: var(--muted);
   }
   @media (max-width: 600px) {
+    .ai-toolbar {
+      grid-template-columns: minmax(0, 1fr);
+    }
     .ai-tools,
     .ai-prompts {
       grid-template-columns: 1fr;

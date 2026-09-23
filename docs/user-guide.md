@@ -18,6 +18,8 @@ The remaining-activity counter is always visible to the left of the hint and que
 
 In the recap, scroll the activity list; the buttons to resume or leave remain visible. If you minimise this window, **View my recap now** appears in the top bar to restore it.
 
+The exercise AI policy is available in the assistant and can be reviewed from its feedback screen.
+
 ## Useful controls
 
 - **Login:** the fictional password is masked while you type; use the eye button to check it.
