@@ -10,16 +10,17 @@ ShutterOS est un jeu de sensibilisation à la cybersécurité sur un bureau fict
 
 En parcours libre, chaque nouvelle activité s’ouvre dans une fenêtre de taille normale, quelle que soit la taille de l’activité précédente. Afficher le QCM peut élargir la fenêtre pour garder le contenu lisible, sans la maximiser. En parcours guidé, les activités s’enchaînent ; chaque nouvelle activité s’ouvre agrandie avec le QCM visible, mais vous pouvez la restaurer. Le résultat reste agrandi ou en mode fenêtré, selon votre choix pour l’activité en cours.
 
-Le sablier indique le temps restant : quinze minutes par défaut. Il continue pendant le parcours guidé. À zéro, le jeu revient à la connexion et efface la progression.
+Le sablier laisse trente minutes par défaut pour explorer et lire les explications. Il continue pendant le parcours guidé. Vous pouvez terminer plus tôt et vous déconnecter pour passer au joueur suivant. À zéro, le jeu revient à la connexion et efface la progression.
 
 Vous pouvez rejouer les situations terminées pour essayer une autre approche. Le bilan conserve votre premier résultat ; il sert à échanger, pas à enregistrer une évaluation. Un résultat orange reconnaît une bonne réaction après une prise de risque, par exemple l’arrêt de l’exploration d’une clé après avoir ouvert le fichier texte `LISEZ-MOI.txt`.
 
-Le compteur d’activités restantes reste toujours visible à gauche des boutons d’indice et de QCM. Sur le bureau, lorsqu’aucune activité n’est affichée en exploration libre, il est activé : ouvrez-le pour consulter l’aide, puis choisissez **M’y emmener** afin d’accéder à l’activité suivante. Cette action ne révèle ni ne consomme son indice. Le parcours compte sept scénarios et une activité **Protéger mon poste**, en trois étapes : mot de passe, mises à jour et verrouillage. Ces trois gestes sont proposés avant le bilan, même sans avoir ouvert leurs notifications.
+Le compteur d’activités restantes reste toujours visible à gauche des boutons d’indice et de QCM. Sur le bureau, lorsqu’aucune activité n’est affichée en exploration libre, il est activé : ouvrez-le pour consulter l’aide, puis choisissez **M’y emmener** afin d’accéder à l’activité suivante. Cette action ne révèle ni ne consomme son indice. Le parcours compte sept scénarios et une activité **Protéger mon poste**, en trois étapes : mot de passe, mises à jour et verrouillage. Ces trois gestes doivent être essayés avant d’accéder au bilan, même sans avoir ouvert leurs notifications. La question complémentaire sur le mot de passe reste facultative.
 
-Dans le bilan, faites défiler la liste des activités ; les boutons pour reprendre ou terminer restent visibles.
+Dans le bilan, faites défiler la liste des activités ; les boutons pour reprendre ou terminer restent visibles. Si vous réduisez cette fenêtre, **Voir mon bilan maintenant** apparaît dans la barre supérieure pour la retrouver.
 
 ## Commandes utiles
 
+- **Connexion :** le mot de passe fictif est masqué pendant la saisie ; le bouton œil permet de le vérifier.
 - **Langue :** choisissez FR ou EN sur l’écran de connexion ou dans la barre des tâches.
 - **Fenêtres :** déplacez-les par leur barre de titre ; redimensionnez les fenêtres principales par leurs bords ou leurs coins. Agrandissez-les pour couvrir le bureau. Réduisez-les puis retrouvez-les dans la barre des tâches sans perdre votre place. Le fichier texte de la clé et les indices ont leurs propres fenêtres déplaçables ; **Masquer l’indice** replie sa fenêtre et ses repères visuels ; **Revoir l’indice** permet de relire l’indice.
 - **Clavier :** Tab passe d’une commande à l’autre ; Entrée ou Espace active les boutons. Le son n’est pas nécessaire.
