@@ -33,7 +33,7 @@ Use this artifact where a single local file is preferable. Because the configura
 
 ## Configuration
 
-`static/kiosk-config.json` uses version 1. It sets the fictional accepted passwords, global session duration, organisation labels, optional local organisation-logo filename, security contact details, and fictional mail addresses used in the simulation. `mailLegitimateAddress` is the familiar sender of the unusual request; `mailImpersonatorAddress` is the suspicious sender of the ordinary request. The global session duration defaults to fifteen minutes.
+`static/kiosk-config.json` uses version 1. It sets the fictional accepted passwords, global session duration, organisation labels, optional local organisation-logo filename, security contact details, and fictional mail addresses used in the simulation. `mailLegitimateAddress` is the familiar sender of the unusual request; `mailImpersonatorAddress` is the suspicious sender of the ordinary request. The global session duration defaults to thirty minutes.
 
 `supportLabel` and `supportContact` identify the organisation’s security reporting channel. Configure that direct contact; the general help desk can be a fallback if your procedure requires it. Routine workstation maintenance remains an IT responsibility.
 

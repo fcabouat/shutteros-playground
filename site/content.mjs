@@ -42,7 +42,7 @@ export const content = {
       ],
       [
         'Terminez à votre rythme',
-        'Un parcours guidé reprend les situations restantes. Un seul chrono global : pas de course contre la montre à chaque réponse.',
+        'Un parcours guidé reprend les situations restantes. La session laisse 30 minutes pour explorer et échanger, sans chrono par réponse.',
       ],
       [
         'Gardez un réflexe utile',
@@ -131,7 +131,7 @@ export const content = {
       ],
       [
         'Finish at your own pace',
-        'A guided ending covers the remaining situations. One global session clock, with no countdown for each answer.',
+        'A guided journey covers the remaining situations. The session allows 30 minutes to explore and discuss, with no countdown for each answer.',
       ],
       [
         'Take away a useful habit',
