@@ -141,6 +141,11 @@ export const challenges: Challenges = {
     ],
     choices: [
       {
+        id: 'report',
+        label: 'Transmettre aux équipes de sécurité informatique',
+        detail: 'Utiliser le canal de signalement prévu par l’organisation.',
+      },
+      {
         id: 'open',
         label: 'Ouvrir la pièce jointe',
         detail: 'Le message explique pourquoi elle a été envoyée.',
@@ -149,11 +154,6 @@ export const challenges: Challenges = {
         id: 'reply',
         label: 'Répondre au message',
         detail: 'Demander à l’expéditeur de confirmer la pièce jointe.',
-      },
-      {
-        id: 'report',
-        label: 'Transmettre aux équipes de sécurité informatique',
-        detail: 'Utiliser le canal de signalement prévu par l’organisation.',
       },
     ],
     feedback: {
@@ -183,14 +183,14 @@ export const challenges: Challenges = {
         detail: 'Le message vient de l’adresse professionnelle habituelle.',
       },
       {
-        id: 'reply',
-        label: 'Répondre pour confirmer',
-        detail: 'Demander dans cette conversation si la demande est correcte.',
-      },
-      {
         id: 'report',
         label: 'Transmettre aux équipes de sécurité informatique',
         detail: 'Utiliser le canal de signalement prévu par l’organisation.',
+      },
+      {
+        id: 'reply',
+        label: 'Répondre pour confirmer',
+        detail: 'Demander dans cette conversation si la demande est correcte.',
       },
     ],
     feedback: {
@@ -245,13 +245,13 @@ export const challenges: Challenges = {
       'Si vous n’avez pas commencé la connexion, ne l’approuvez pas. Prévenez ensuite les équipes de sécurité informatique.',
     ],
     choices: [
-      { id: 'approve', label: 'Approuver', detail: 'Pour faire disparaître les notifications.' },
-      { id: 'ignore', label: 'Ignorer les demandes', detail: 'Cela finira bien par s’arrêter.' },
       {
         id: 'deny-report',
         label: 'Refuser et signaler',
         detail: 'Je n’ai pas initié cette connexion.',
       },
+      { id: 'approve', label: 'Approuver', detail: 'Pour faire disparaître les notifications.' },
+      { id: 'ignore', label: 'Ignorer les demandes', detail: 'Cela finira bien par s’arrêter.' },
     ],
     feedback: {
       safe: 'Vous avez refusé la connexion et donné l’alerte. Les demandes répétées n’ont pas obtenu votre accord.',

@@ -4,7 +4,7 @@ import type { GameState, Intent, ChallengeId, Scene } from '@shutteros/core/mode
 
 // Fixed clocks make these view scenarios stable and let their buttons remain playable.
 export const config: GameConfig = {
-  sessionDurationMs: 900_000,
+  sessionDurationMs: 1_800_000,
   idleReminderMs: 45_000,
   eventIntervalMs: 90_000,
   acceptedPasswords: ['Bureau2026', 'password', 'motdepasse'],
@@ -42,6 +42,10 @@ export const debrief = play([
   { type: 'choose', choiceId: 'report' },
   { type: 'continue' },
   { type: 'close' },
+  { type: 'routine', id: 'password', action: 'complete' },
+  { type: 'routine', id: 'update', action: 'complete' },
+  { type: 'practice-lock' },
+  { type: 'resume-lock' },
   { type: 'debrief' },
 ]);
 

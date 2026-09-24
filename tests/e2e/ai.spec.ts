@@ -56,6 +56,16 @@ for (const locale of ['fr', 'en'] as const) {
         copy.ai.otherTool.internal,
       );
       await expect(review.locator('.decision-review-tool-note')).toHaveCount(1);
+      const rereadPolicy = page.getByRole('button', { name: copy.ai.policyReview, exact: true });
+      await expect(rereadPolicy).toHaveAttribute('aria-expanded', 'false');
+      await rereadPolicy.click();
+      for (const rule of copy.ai.policyRules)
+        await expect(page.getByText(rule, { exact: true })).toBeVisible();
+      await expect(page.locator('.feedback-card[data-outcome="risky"]')).toBeVisible();
+      expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+      await page.screenshot({ path: `test-results/previews/ai-policy-${locale}-${delivery}.png` });
+      await rereadPolicy.click();
+      await expect(page.getByText(copy.ai.policyIntro, { exact: true })).toBeHidden();
       expect(outgoing).toEqual([]);
       await page.getByRole('button', { name: copy.shell.logout, exact: true }).click();
       await page.getByRole('button', { name: copy.shell.exitConfirm, exact: true }).click();
@@ -76,6 +86,10 @@ for (const locale of ['fr', 'en'] as const) {
           exact: true,
         }),
       ).toBeVisible();
+      await expect(review.locator('.decision-review-security')).toHaveCount(2);
+      await expect(review.locator('.decision-review-security').first()).toHaveText(
+        copy.ai.securityMarker,
+      );
 
       await expect(review.locator('[data-choice="internal-routine"]')).toContainText(
         copy.ai.otherTool.commercial,

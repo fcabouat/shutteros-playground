@@ -227,4 +227,25 @@ describe('game runtime regressions', () => {
       now: 4,
     });
   });
+
+  it('does not open the recap until all three routine actions are complete', () => {
+    const withResult = {
+      ...desktop(),
+      results: [{ id: 'web', choiceId: 'known-address', outcome: 'safe' }],
+    } as const;
+    expect(apply(withResult, { type: 'debrief' }, 1)).toEqual({ ...withResult, now: 1 });
+
+    const completed = {
+      ...withResult,
+      routines: {
+        ...withResult.routines,
+        password: 'done',
+        update: 'scheduled',
+        lockPracticed: true,
+      },
+    } as const;
+    expect(apply(completed, { type: 'debrief' }, 2)).toMatchObject({
+      scene: { kind: 'debrief' },
+    });
+  });
 });

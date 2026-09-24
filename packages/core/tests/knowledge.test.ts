@@ -92,6 +92,23 @@ describe('knowledge service', () => {
     expect(knowledgeAnswer('mfa', 'toString')).toBeNull();
     expect(knowledgeAnswer('mfa', null as never)).toBeNull();
   });
+
+  it('uses the same stable, varied answer order in both languages', () => {
+    const expected = {
+      password: ['wait-cycle', 'replace-now'],
+      incident: ['report-now', 'wait-symptoms'],
+      mfa: ['share-code', 'never-share'],
+    } as const;
+    for (const [id, order] of Object.entries(expected)) {
+      const knowledgeId = id as keyof typeof expected;
+      expect(fr.knowledge[knowledgeId].choices.map((choice) => choice.id)).toEqual(order);
+      expect(en.knowledge[knowledgeId].choices.map((choice) => choice.id)).toEqual(order);
+    }
+    expect(fr.routines.passwordCheck).toContain('mot de passe professionnel');
+    expect(en.routines.passwordCheck).toContain('work password');
+    expect(fr.routines.check).not.toContain('mot de passe');
+    expect(en.routines.check).not.toContain('password');
+  });
 });
 
 it('keeps editorial highlights inside their translated lessons', () => {

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import type { GameConfig } from '@shutteros/core/model/configuration';
   import { loginHintVisible } from '@shutteros/core/projections/game';
   import { passwordHint } from '@shutteros/core/services/passwords';
@@ -28,11 +29,18 @@
     branding?: Branding;
   } = $props();
   let password = $state('');
+  let passwordVisible = $state(false);
+  let supportsTextSecurity = $state(true);
   const showHelp = $derived(loginHintVisible(snapshot));
   function login() {
     dispatch({ type: 'login', password });
     password = '';
+    passwordVisible = false;
   }
+
+  onMount(() => {
+    supportsTextSecurity = CSS.supports('-webkit-text-security', 'disc');
+  });
 </script>
 
 <main
@@ -78,7 +86,7 @@
                This reduces password-manager prompts; autocomplete is only a browser hint. -->
           <input
             id="session-code"
-            type="text"
+            type={passwordVisible || supportsTextSecurity ? 'text' : 'password'}
             bind:value={password}
             maxlength={100}
             autocomplete="off"
@@ -98,8 +106,20 @@
               .filter(Boolean)
               .join(' ') || undefined}
             aria-invalid={snapshot.failedAttempts > 0}
+            class:minimal-secret-mask={supportsTextSecurity && !passwordVisible}
             class="min-w-0 flex-1 bg-transparent px-4 py-3.5 text-base outline-none"
           />
+          <button
+            type="button"
+            class="mr-1 rounded-md p-2 text-white/75 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[var(--lime)]"
+            aria-label={passwordVisible ? copy.login.hidePassword : copy.login.showPassword}
+            aria-pressed={passwordVisible}
+            aria-controls="session-code"
+            onclick={() => (passwordVisible = !passwordVisible)}
+            onmousedown={(event) => event.preventDefault()}
+          >
+            <Icon name={passwordVisible ? 'eyeOff' : 'eye'} size={19} />
+          </button>
         </div>
         {#if showHelp}<p
             id="password-help"
@@ -160,3 +180,9 @@
     <Language />
   </footer>
 </main>
+
+<style>
+  .minimal-secret-mask {
+    -webkit-text-security: disc;
+  }
+</style>

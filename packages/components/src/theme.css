@@ -232,8 +232,15 @@ button:active:not(:disabled) {
   background: var(--accent);
   color: #fff;
 }
-.button-primary:hover {
+.button-primary:hover:not(:disabled) {
   background: var(--accent-strong);
+}
+.button-primary:disabled {
+  border-color: #9aaab4;
+  background: #d4dce1;
+  color: #52616b;
+  opacity: 1;
+  box-shadow: none;
 }
 .button-soft {
   background: var(--soft);
@@ -1611,6 +1618,13 @@ button:active:not(:disabled) {
   width: 100%;
   font-size: 0.75rem;
   white-space: nowrap;
+}
+.session-finish button:disabled {
+  background: #d4dce1;
+  border-color: #b8c5cd;
+  color: #52616b;
+  opacity: 1;
+  box-shadow: none;
 }
 .session-help .companion-trigger,
 .session-help .guidance-trigger {

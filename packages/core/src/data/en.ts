@@ -53,6 +53,8 @@ export const en: Catalog = {
     dismiss: 'Dismiss reminder',
     notification: 'Computer notification',
     check: 'Try this reflex',
+    passwordCheck: 'Optional check · work password',
+    resume: 'Resume protection steps',
   },
   about: {
     title: 'About ShutterOS',
@@ -91,6 +93,8 @@ export const en: Catalog = {
     invitation: 'An ordinary desk. A few traps. Your turn to play.',
     account: 'Demo account',
     password: 'Password',
+    showPassword: 'Show password',
+    hidePassword: 'Hide password',
     placeholder: 'Password',
     enter: 'Open the session',
     helper: 'Need a hint? Look at the note near the screen. A simple password can also work here.',
@@ -143,6 +147,7 @@ export const en: Catalog = {
     connect: 'Open chat',
     switch: 'Switch tool',
     policy: 'AI policy for this exercise',
+    policyReview: 'Review the AI policy for this exercise',
     policyIntro: 'For this simulation, the organisation has set these rules:',
     policyRules: [
       'The organisation permits drafting documents for routine projects in the internal tool, limiting personal data to what is necessary for the work.',
@@ -164,6 +169,7 @@ export const en: Catalog = {
         'Summarise the security meeting without names, but with sensitive details',
       generic: 'Plan a general meeting method, without a real case',
     },
+    securityMarker: 'security',
     otherTool: {
       internal: 'Allowed in the internal tool.',
       commercial: 'Not allowed in the commercial tool.',
@@ -253,11 +259,11 @@ export const en: Catalog = {
     password: {
       question: 'My work password, reused on a personal site, has leaked. What now?',
       choices: [
+        { id: 'wait-cycle', label: 'Wait for the next scheduled work password change.' },
         {
           id: 'replace-now',
           label: 'Report it immediately and follow my organisation’s procedure.',
         },
-        { id: 'wait-cycle', label: 'Wait for the next scheduled work password change.' },
       ],
       explanation:
         'Compromise cannot wait. Report it immediately and follow your organisation’s procedure to protect your work account.',
@@ -265,8 +271,8 @@ export const en: Catalog = {
     incident: {
       question: 'You clicked, but everything seems to work. What now?',
       choices: [
-        { id: 'wait-symptoms', label: 'Wait for a problem before mentioning it.' },
         { id: 'report-now', label: 'Report what happened immediately.' },
+        { id: 'wait-symptoms', label: 'Wait for a problem before mentioning it.' },
       ],
       explanation:
         'An incident can remain invisible. Early reporting and following your organisation’s procedure help the security team respond; you do not need to prove infection before asking for help.',

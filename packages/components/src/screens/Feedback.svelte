@@ -15,6 +15,7 @@
   const challenges = $derived(i18n.challenges);
   const copy = $derived(i18n.text);
   import Icon from '../commons/Icon.svelte';
+  import AiPolicy from '../commons/AiPolicy.svelte';
   import DecisionReview from '../commons/DecisionReview.svelte';
   import LearningPanel from '../commons/LearningPanel.svelte';
   let {
@@ -81,6 +82,7 @@
                     : copy.feedback[result.outcome]}
             </h1>
           </div>
+          {#if result.id === 'ai'}<AiPolicy reread />{/if}
           {#if result.priorChoiceId}
             <DecisionReview id={result.id} step="choose" selectedChoiceId={result.priorChoiceId} />
           {/if}
