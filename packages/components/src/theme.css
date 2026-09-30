@@ -1803,8 +1803,7 @@ button:active:not(:disabled) {
   color: var(--accent-strong);
   font-weight: 650;
 }
-.topbar-explainer,
-.welcome-privacy {
+.topbar-explainer {
   background: #edf3f5;
   border: 1px solid #d4e1e6;
 }
@@ -1840,7 +1839,6 @@ button:active:not(:disabled) {
   background: #e6f1eb;
   border: 1px solid #afd0bd;
 }
-.welcome-privacy,
 .welcome-reset {
   padding: 0.8rem 1rem;
   color: #3f5765;
