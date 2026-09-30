@@ -7,7 +7,7 @@ export const en: Catalog = {
     eyebrow: 'CYBERSECURITY PRACTICE',
     title: 'A day at work. Choices that matter.',
     description: (name: string) =>
-      `You play as ${name}. A found USB drive, unexpected messages and workstation protection await in a simulated desktop.`,
+      `You play as ${name}, a public-sector employee. The day is starting: messages to answer, a meeting to prepare… and a USB drive found near your desk. As requests and surprises come your way, decide what to trust, when to ask for help and how to protect your workstation and your organisation’s information.`,
     choose: 'Choose a journey',
     guided: {
       title: 'Gentle walkthrough',
@@ -24,7 +24,7 @@ export const en: Catalog = {
     expired: 'The session time ended. Local answers have been erased.',
     loggedOut: 'The previous game and its local answers have been erased.',
     reset: (minutes: number) =>
-      `After sign-in, a ${minutes}-minute hourglass resets the session. Your answers are neither saved nor sent and disappear at the end. The recap is not a grade.`,
+      `After sign-in, a ${minutes}-minute hourglass resets the session. Your answers are neither saved nor sent and disappear at the end. The recap is not retained.`,
     families: {
       vigilance: 'Vigilance · orange: spot and handle unusual situations.',
       protection: 'Protect my workstation · green: apply everyday protection habits.',

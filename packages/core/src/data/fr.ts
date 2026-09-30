@@ -5,7 +5,7 @@ export const fr = {
     eyebrow: 'ENTRAÎNEMENT CYBERSÉCURITÉ',
     title: 'Une journée de travail. Des choix qui comptent.',
     description: (name: string) =>
-      `Vous incarnez ${name}. Une clé USB retrouvée, des messages inattendus et la protection du poste vous attendent dans un bureau simulé.`,
+      `Vous incarnez ${name}, agente dans un service public. La journée commence : des messages à traiter, une réunion à préparer… et une clé USB retrouvée près du bureau. Au fil des demandes et des imprévus, à vous de décider à quoi faire confiance, quand demander de l’aide et comment protéger votre poste et les informations du service.`,
     choose: 'Choisir un parcours',
     guided: {
       title: 'Parcours en douceur',
@@ -22,7 +22,7 @@ export const fr = {
     expired: 'Le temps de la session est écoulé. Les réponses locales ont été effacées.',
     loggedOut: 'La partie précédente et ses réponses locales ont été effacées.',
     reset: (minutes: number) =>
-      `Après la connexion, un sablier de ${minutes} min réinitialise la session. Vos réponses ne sont ni enregistrées ni envoyées et disparaissent en fin de partie. Le bilan n’est pas une note.`,
+      `Après la connexion, un sablier de ${minutes} min réinitialise la session. Vos réponses ne sont ni enregistrées ni envoyées et disparaissent en fin de partie. Le bilan n’est pas conservé.`,
     families: {
       vigilance: 'Vigilance · orange : repérer et traiter les situations inhabituelles.',
       protection: 'Protéger mon poste · vert : appliquer les gestes de protection courants.',
