@@ -158,7 +158,7 @@ confirm both behaviours on the installed browser and touch hardware. This option
 does not affect the public web demo or the temporary policy-inspection window.
 
 Closing Chromium remains an accepted recovery path: systemd restarts Cage and
-Chromium with `--kiosk`, returning to the simulated login with no saved progress.
+Chromium with `--kiosk`, returning to the welcome screen with no saved progress.
 The restart delay starts at two seconds and backs off to thirty seconds on
 repeated exits. No interactive shell or desktop is launched in between.
 
