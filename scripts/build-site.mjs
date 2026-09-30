@@ -64,6 +64,13 @@ for (const file of documents) {
   // source file so guides also work when served below a repository Pages prefix.
   const markdown = new Marked({
     renderer: {
+      code({ text, lang }) {
+        const language = lang?.split(/\s+/)[0];
+        const label = locale === 'fr' ? 'Exemple de code' : 'Code example';
+        // Long commands scroll horizontally on narrow screens; keep that region
+        // reachable by keyboard as well as by pointer.
+        return `<pre tabindex="0" aria-label="${label}"><code${language ? ` class="language-${escapeHtml(language)}"` : ''}>${escapeHtml(text)}\n</code></pre>`;
+      },
       heading({ tokens, depth }) {
         const label = this.parser.parseInline(tokens);
         const plain = tokens.map((token) => token.text ?? '').join('');
@@ -91,7 +98,9 @@ for (const file of documents) {
       locale,
       title: `${title} · ShutterOS`,
       body,
-      section: file.includes('user-guide') ? 'guide' : 'docs',
+      section: file.includes('user-guide')
+        ? 'guide'
+        : (/\/(branding|kiosk)(?:\.fr)?\.md$/.exec(file)?.[1] ?? 'docs'),
       up,
       version,
     }),

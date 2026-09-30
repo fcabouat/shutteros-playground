@@ -1,5 +1,7 @@
 # Organisation branding
 
+[Français](branding.fr.md)
+
 **ShutterOS** is the fictional OS identity, with its window-and-curtains icon. The deploying organisation's name, campaign label, and logo appear together in the upper-left corner of the welcome screen, login and desktop. Supply organisation assets locally and keep them out of version control. See [licensing and attribution](legal.md) for ownership and redistribution terms.
 
 With no organisation fields configured, the public demo displays **Votre organisation** / **Your organization**, following the selected language. A second organisation is optional and shares the same identity block.

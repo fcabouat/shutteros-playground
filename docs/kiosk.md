@@ -1,5 +1,7 @@
 # Kiosk deployment
 
+[Français](kiosk.fr.md)
+
 ShutterOS is a static browser application. Build with `pnpm build`, then serve `dist/` over local HTTP with Python; `pnpm preview` is for development verification and `pnpm dev` is for development. A portable HTML artifact is optional. It does not require an application server, database, identity provider, external API, CDN, or Internet connection after its files are available.
 
 ## Standard static build
@@ -37,11 +39,11 @@ Use this artifact where a single local file is preferable. Because the configura
 
 `supportLabel` and `supportContact` identify the organisation’s security reporting channel. Configure that direct contact; the general help desk can be a fallback if your procedure requires it. Routine workstation maintenance remains an IT responsibility.
 
-Allow ten to twenty minutes for the whole experience. Players choose guided or free exploration at welcome and can switch later; the global clock starts only when the login exercise is completed. The visible sticky note uses the first entry of `acceptedPasswords`. The built-in phrase adapts to French (`Bureau2026`) or English (`Office2026`), provided that translation is also in the accepted list. A custom first phrase stays unchanged. Other entries silently accept common weak passwords. Leading/trailing spaces and letter case are tolerated by default. After three unsuccessful attempts, a hint helps the participant continue.
+Allow ten to twenty minutes for the whole experience. Free exploration is selected at welcome; players can choose the guided route and switch later; the global clock starts only when the login exercise is completed. The visible sticky note uses the first entry of `acceptedPasswords`. The built-in phrase adapts to French (`Bureau2026`) or English (`Office2026`), provided that translation is also in the accepted list. A custom first phrase stays unchanged. Other entries silently accept common weak passwords. Leading/trailing spaces and letter case are tolerated by default. After three unsuccessful attempts, a hint helps the participant continue.
 
 On page load, `?lang=fr` or `?lang=en` selects the game language when present. Otherwise, the first supported French or English browser language is selected, with French as the fallback. The FR/EN selector remains available; its choice survives next-player resets until the page reloads. No language preference is stored.
 
-Set `showPasswordHint` to `false` to remove the digital note and use a physical one on the monitor. Write only the chosen fictional password on it. The guided login asks where to keep a secret instead of requiring a typed phrase. Set `passwordManagerName` to the organisation-approved manager’s name (1–80 non-blank characters); omitted values default to `KeePass`. This name is used in the explanations, never to launch or connect to a real manager. The Ubuntu validator accepts the same setting. Rebuild the standalone HTML to embed a changed name.
+Set `showPasswordHint` to `false` to remove the digital note and use a physical one on the monitor. Write only the chosen fictional password on it. The guided login asks where to keep a secret instead of requiring a typed phrase. Set `passwordManagerName` to the organisation-approved manager’s name (1–80 non-blank characters); omitted values default to `KeePassXC`. This name is used in the explanations, never to launch or connect to a real manager. The Ubuntu validator accepts the same setting. Rebuild the standalone HTML to embed a changed name.
 
 Session duration accepts 1 to 30 minutes. Address fields are bounded, simple email addresses. The UI shows a clear validation error for malformed, unknown, or out-of-range values and starts no game until valid configuration is available. Older V1 files may still include `challengeSeconds`, `explorationSeconds` and `defaultCalmMode`; these keys remain accepted and validated for compatibility but are unused.
 
@@ -69,7 +71,7 @@ The game has no persistent progress, so refreshing the page, closing the browser
 
 ## Before opening the kiosk
 
-Use a dedicated browser profile with password saving and autofill disabled through your normal host policy. Keep game passwords and scenario identities fictional; use the organisation's real branding and security reporting contact. Try the entire game on the actual screen, with its mouse or touch input, and verify logout plus one timed reset. The app works without sound; the guide is optional and the language selector is in the taskbar.
+Use a dedicated browser profile with password saving and autofill disabled through your normal host policy. Keep game passwords and scenario identities fictional; use the organisation's real branding and security reporting contact. Try the entire game on the actual screen, with its mouse or touch input, and verify logout plus one timed reset. The app works without sound; the welcome screen explains the controls and the language selector remains available.
 
 For `file:///` use, open `dist/portable/shutteros.html` directly when the optional artifact is required. For normal use, deploy the whole `dist/` directory over local HTTP. Use the production build for a kiosk; keep `pnpm dev` for development.
 
