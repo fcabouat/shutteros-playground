@@ -3,7 +3,7 @@ export const content = {
     title: 'ShutterOS Playground — la cybersécurité se pratique',
     description:
       'Un jeu de sensibilisation à la cybersécurité, gratuit et libre. Explorez un faux bureau en 10 à 20 minutes, en ligne ou sur un poste kiosk.',
-    nav: ['Démo', 'Guide', 'Architecture · EN', 'API · EN', 'Storybook', 'GitHub'],
+    nav: ['Démo', 'Déployer', 'Architecture · EN', 'API · EN', 'Storybook', 'GitHub'],
     navigation: 'Navigation du site',
     language: 'Langue',
     skip: 'Aller au contenu',
@@ -38,7 +38,7 @@ export const content = {
     steps: [
       [
         'Choisissez votre parcours',
-        'Dès l’accueil, choisissez le parcours guidé avec QCM ou l’exploration du bureau. Vous pouvez changer de mode à tout moment.',
+        'Relevez le défi en mode libre, proposé par défaut, ou avancez en douceur avec les QCM du mode guidé. Changez de mode à tout moment.',
       ],
       [
         'Terminez à votre rythme',
@@ -58,13 +58,13 @@ export const content = {
       'Configurez le contact de sécurité et la durée de session. Le poste se réinitialise pour la personne suivante.',
       'Hébergez les fichiers statiques ou préparez un poste Ubuntu avec le kit Cage + Chromium.',
     ],
-    deployLink: 'Préparer un poste kiosk · EN',
+    deployLink: 'Préparer un poste de démonstration',
     resourcesTitle: 'Pour jouer, déployer ou contribuer.',
     resources: [
       [
-        'Guide utilisateur',
-        'Les gestes du jeu et les repères pour animer une session.',
-        'guide/fr.html',
+        'Personnalisation',
+        'Votre identité, vos logos et les paramètres de votre organisation.',
+        'docs/branding.fr.html',
       ],
       [
         'Architecture',
@@ -93,7 +93,7 @@ export const content = {
     title: 'ShutterOS Playground — practise cybersecurity',
     description:
       'A free, open-source cybersecurity awareness game. Explore a fictional desktop in 10 to 20 minutes, online or on a shared kiosk.',
-    nav: ['Demo', 'User guide', 'Architecture', 'API', 'Storybook', 'GitHub'],
+    nav: ['Demo', 'Deploy', 'Architecture', 'API', 'Storybook', 'GitHub'],
     navigation: 'Site navigation',
     language: 'Language',
     skip: 'Skip to content',
@@ -127,7 +127,7 @@ export const content = {
     steps: [
       [
         'Choose your route',
-        'Start with a guided questionnaire or explore the desktop freely. Switch routes at any time without losing progress.',
+        'Take on the challenge in free exploration, selected by default, or follow a gentler guided questionnaire. Switch routes at any time without losing progress.',
       ],
       [
         'Finish at your own pace',
@@ -150,7 +150,11 @@ export const content = {
     deployLink: 'Prepare a kiosk workstation',
     resourcesTitle: 'Play, deploy or contribute.',
     resources: [
-      ['User guide', 'How to play and how to facilitate an awareness session.', 'guide/en.html'],
+      [
+        'Organisation branding',
+        'Your identity, logos and organisation settings.',
+        'docs/branding.html',
+      ],
       ['Architecture', 'A pure core, a session loop and verifiable boundaries.', 'overview.html'],
       [
         'API reference',

@@ -6,20 +6,20 @@ You play Camille Martin at a fictional workstation: a found USB drive, messages 
 
 The [welcome screen](images/welcome.png) introduces the **game bar**, visible throughout the journey, and offers two routes:
 
-- **Guided journey**: situations follow one another with their choices displayed. Login is a question about where to keep a password.
-- **Free exploration**: explore applications and find controls to act. At login, find the fictional password; a hint helps after three failed attempts or two minutes of searching.
+- **Free mode (exploration)**, selected by default: take on the challenge by exploring applications and finding the controls to act. At login, find the fictional password; a hint helps after three failed attempts or two minutes of searching.
+- **Guided mode (Q&A)**: take it gently, one situation at a time, with choices displayed. Login starts with a question about where to keep a password, followed by an explanation of each option.
 
-Switch routes at any time without losing progress. Using the sticky note to enter the simulation is not a player mistake: it illustrates a poorly protected secret. Explanations name the manager configured for the exercise, KeePass by default.
+Switch routes at any time without losing progress. Using the sticky note to enter the simulation is not a player mistake: it illustrates a poorly protected secret. Explanations name the manager configured for the exercise, KeePassXC by default.
 
 Windows labelled **Vigilance** ask you to examine a situation; **Protect my workstation** windows offer protective actions. Labels accompany the colours so you do not need to guess a window’s purpose.
 
 ## Finding your way
 
-The game bar shows remaining activities, **Need a hint?**, **View choices**, the current route and time available. Controls that do not apply to the current step are disabled. From the desktop, the activity counter can take you to the next activity without revealing its hint.
+The game bar shows remaining activities, **Need a hint?**, the route switch and time available. Controls that do not apply to the current step are disabled. From the desktop, the activity counter can take you to the next activity without revealing its hint.
 
-A hint offers a question to consider and sometimes a visual cue. Hide it and read it again as needed. In free exploration, view the hint before opening the questionnaire; in guided mode, choices are available independently. Help is also offered after two minutes without progress, then choices after another two minutes. No local countdown rushes your answer.
+A hint offers a question to consider and sometimes a visual cue. Hide it and read it again as needed. In free mode, find how to act inside the applications: the questionnaire never opens automatically. Switch to guided mode to display choices without losing your place; switching back hides them. Hints remain independent of the route and are also offered after two minutes without progress. No local countdown rushes your answer.
 
-The journey includes seven scenarios and one activity with three steps: passwords, updates and locking. Try all three before the recap; the extra password question is optional. In the mailbox, continuing after the first email opens the remaining one.
+The journey includes seven scenarios and one activity with three steps: passwords, updates and locking. Guided mode identifies the next step and the controls to use. Try all three before the recap; the extra password question is optional. In the mailbox, continuing after the first email opens the remaining one.
 
 ## Reading your recap
 
@@ -33,7 +33,7 @@ The hourglass starts after the login exercise and allows thirty minutes by defau
 
 - **Language**: choose FR or EN at welcome, then on the taskbar.
 - **Windows**: drag their title bars, resize main windows by their edges, minimise them and find them again on the taskbar. Hints and the USB text file have independent windows.
-- **Size**: new activities open maximised in guided mode and at normal size in free exploration. Restore them if preferred; opening choices can widen a window without maximising it.
+- **Size**: new activities open maximised in guided mode and at normal size in free exploration. Restore them if preferred; switching to guided mode can widen the current window to accommodate choices without maximising it.
 - **Keyboard**: Tab moves between controls; Enter or Space activates buttons. The fictional password is masked; the eye button reveals it.
 - **Sign out**: confirmation prevents accidental resets. The operator shortcut `Ctrl+Alt+Home` resets the game immediately.
 

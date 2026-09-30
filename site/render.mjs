@@ -9,13 +9,19 @@ export const escapeHtml = (value) =>
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#39;');
 const home = (locale) => (locale === 'fr' ? 'fr.html' : 'index.html?lang=en');
+const translatedPages = {
+  home,
+  guide: (locale) => `guide/${locale}.html`,
+  kiosk: (locale) => `docs/kiosk${locale === 'fr' ? '.fr' : ''}.html`,
+  branding: (locale) => `docs/branding${locale === 'fr' ? '.fr' : ''}.html`,
+};
 
 /** All site-owned pages share real links; a language change never needs storage. */
 export function navigation(locale, section = 'home', up = '') {
   const c = content[locale];
   const paths = [
     `demo/?lang=${locale}`,
-    `guide/${locale}.html`,
+    translatedPages.kiosk(locale),
     'overview.html',
     'api/index.html',
     'storybook/index.html',
@@ -27,7 +33,7 @@ export function navigation(locale, section = 'home', up = '') {
         `<a href="${escapeHtml(path.startsWith('https:') ? path : up + path)}">${c.nav[i]}</a>`,
     )
     .join('');
-  const translated = section === 'home' || section === 'guide';
+  const translated = translatedPages[section];
   const languages = ['fr', 'en']
     .map((language) => {
       const label = language === 'fr' ? 'Français' : 'English';
@@ -35,7 +41,7 @@ export function navigation(locale, section = 'home', up = '') {
         return `<span lang="${language}" aria-current="true">${label}</span>`;
       if (!translated)
         return `<span lang="${language}" aria-disabled="true" title="${escapeHtml(c.englishOnly)}">${label}</span>`;
-      const href = section === 'guide' ? `guide/${language}.html` : home(language);
+      const href = translated(language);
       return `<a lang="${language}" hreflang="${language}" href="${up}${href}">${label}</a>`;
     })
     .join('');
@@ -57,6 +63,6 @@ export function documentPage({
 
 export function landing(locale, version) {
   const c = content[locale];
-  const body = `<main id="main"><section class="hero"><div class="wrap hero-grid"><div><p class="eyebrow">${c.eyebrow}</p><h1>${c.heading}</h1><p class="hero-lead">${c.lead}</p><div class="actions"><a class="button primary" href="demo/?lang=${locale}">${c.play}<span aria-hidden="true">↗</span></a><a class="button secondary" href="demo/portable/shutteros.html" download="shutteros.html">${c.download}<span aria-hidden="true">↓</span></a></div><p class="hero-note">${c.note}</p></div><div class="hero-art" aria-hidden="true"><div class="window-mark"><img src="assets/favicon.svg" width="190" height="190" alt=""></div><span class="art-caption">ShutterOS<span>PLAYGROUND</span></span></div></div><dl class="wrap stats">${c.stats.map(([value, label]) => `<div><dt>${value}</dt><dd>${label}</dd></div>`).join('')}</dl></section><section class="wrap preview"><div class="section-heading"><h2>${c.preview}</h2><p>${c.previewText}</p></div><figure><div class="preview-bar"><span aria-hidden="true">● ● ●</span><span>ShutterOS Playground</span></div><img src="assets/desktop${locale === 'fr' ? '.fr' : ''}.png" width="1280" height="720" alt="${c.imageAlt}" loading="lazy"></figure></section><section class="wrap situations"><h2>${c.situationsTitle}</h2><ul>${c.situations.map((label, i) => `<li><span aria-hidden="true">${String(i + 1).padStart(2, '0')}</span>${label}</li>`).join('')}</ul></section><section class="pale"><div class="wrap"><h2>${c.stepsTitle}</h2><div class="steps">${c.steps.map(([title, text], i) => `<article><span class="step-number">0${i + 1}</span><h3>${title}</h3><p>${text}</p></article>`).join('')}</div></div></section><section class="wrap deployment"><div><p class="eyebrow">${c.deploymentEyebrow}</p><h2>${c.deployTitle}</h2><p>${c.deployText}</p></div><div><ul>${c.deployPoints.map((text) => `<li>${text}</li>`).join('')}</ul><a class="text-link" href="docs/ubuntu-kiosk.html">${c.deployLink} →</a></div></section><section class="wrap resources" id="resources"><h2>${c.resourcesTitle}</h2><div class="resource-grid">${c.resources.map(([title, text, href]) => `<a class="resource" href="${href}"><h3>${title}<span aria-hidden="true">↗</span></h3><p>${text}</p></a>`).join('')}</div><div class="source-links"><a href="${repository}">${c.source} ↗</a><a href="${repository}/releases">${c.release} ↗</a></div></section></main>`;
+  const body = `<main id="main"><section class="hero"><div class="wrap hero-grid"><div><p class="eyebrow">${c.eyebrow}</p><h1>${c.heading}</h1><p class="hero-lead">${c.lead}</p><div class="actions"><a class="button primary" href="demo/?lang=${locale}">${c.play}<span aria-hidden="true">↗</span></a><a class="button secondary" href="demo/portable/shutteros.html" download="shutteros.html">${c.download}<span aria-hidden="true">↓</span></a></div><p class="hero-note">${c.note}</p></div><div class="hero-art" aria-hidden="true"><div class="window-mark"><img src="assets/favicon.svg" width="190" height="190" alt=""></div><span class="art-caption">ShutterOS<span>PLAYGROUND</span></span></div></div><dl class="wrap stats">${c.stats.map(([value, label]) => `<div><dt>${value}</dt><dd>${label}</dd></div>`).join('')}</dl></section><section class="wrap preview"><div class="section-heading"><h2>${c.preview}</h2><p>${c.previewText}</p></div><figure><div class="preview-bar"><span aria-hidden="true">● ● ●</span><span>ShutterOS Playground</span></div><img src="assets/desktop${locale === 'fr' ? '.fr' : ''}.png" width="1280" height="720" alt="${c.imageAlt}" loading="lazy"></figure></section><section class="wrap situations"><h2>${c.situationsTitle}</h2><ul>${c.situations.map((label, i) => `<li><span aria-hidden="true">${String(i + 1).padStart(2, '0')}</span>${label}</li>`).join('')}</ul></section><section class="pale"><div class="wrap"><h2>${c.stepsTitle}</h2><div class="steps">${c.steps.map(([title, text], i) => `<article><span class="step-number">0${i + 1}</span><h3>${title}</h3><p>${text}</p></article>`).join('')}</div></div></section><section class="wrap deployment"><div><p class="eyebrow">${c.deploymentEyebrow}</p><h2>${c.deployTitle}</h2><p>${c.deployText}</p></div><div><ul>${c.deployPoints.map((text) => `<li>${text}</li>`).join('')}</ul><a class="text-link" href="${translatedPages.kiosk(locale)}">${c.deployLink} →</a></div></section><section class="wrap resources" id="resources"><h2>${c.resourcesTitle}</h2><div class="resource-grid">${c.resources.map(([title, text, href]) => `<a class="resource" href="${href}"><h3>${title}<span aria-hidden="true">↗</span></h3><p>${text}</p></a>`).join('')}</div><div class="source-links"><a href="${repository}">${c.source} ↗</a><a href="${repository}/releases">${c.release} ↗</a></div></section></main>`;
   return documentPage({ locale, title: c.title, body, autoLocale: locale === 'en', version });
 }

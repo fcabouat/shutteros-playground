@@ -57,17 +57,22 @@ test('landing follows browser locale and an explicit query override', async ({ p
   await page.screenshot({ path: '/tmp/shutteros-site-desktop.png', fullPage: true });
 });
 
-test('language navigation keeps the selected locale across guide and home links', async ({
+test('deployment and branding guides switch between their French and English versions', async ({
   page,
 }) => {
-  await page.goto('./index.html?lang=en');
-  const guide = page.locator('a[href*="guide/en.html"]').first();
-  await expect(guide).toBeVisible();
-  await guide.click();
-  await expect(page).toHaveURL(/\/guide\/en\.html$/);
-  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
-  await page.locator('a[href*="index.html?lang=en"]').first().click();
-  await expect(page).toHaveURL(/\/index\.html\?lang=en$/);
+  for (const [french, english] of [
+    ['docs/kiosk.fr.html', 'docs/kiosk.html'],
+    ['docs/branding.fr.html', 'docs/branding.html'],
+  ] as const) {
+    await page.goto(french);
+    await expect(page.locator('html')).toHaveAttribute('lang', 'fr');
+    await page.locator('.site-languages a[hreflang="en"]').click();
+    expect(new URL(page.url()).pathname.endsWith(`/${english}`)).toBe(true);
+    await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+    await page.locator('.site-languages a[hreflang="fr"]').click();
+    expect(new URL(page.url()).pathname.endsWith(`/${french}`)).toBe(true);
+    await expect(page.locator('html')).toHaveAttribute('lang', 'fr');
+  }
 });
 
 test('landing exposes the demo and portable download as native links', async ({ page }) => {
@@ -79,9 +84,40 @@ test('landing exposes the demo and portable download as native links', async ({ 
   await expect(page.locator('html')).toHaveAttribute('lang', 'en');
 });
 
-test('landing and guide fit mobile and pass an accessibility smoke scan', async ({ page }) => {
+test('landing navigation exposes deployment, technical references and branding resources', async ({
+  page,
+}) => {
+  await page.goto('./index.html?lang=en');
+  const navigation = page.locator('.site-links');
+  for (const href of [
+    'demo/?lang=en',
+    'docs/kiosk.html',
+    'overview.html',
+    'api/index.html',
+    'storybook/index.html',
+  ]) {
+    await expect(navigation.locator(`a[href="${href}"]`)).toBeVisible();
+  }
+  await expect(navigation.locator('a[href^="https://github.com/"]')).toBeVisible();
+  await expect(page.locator('.deployment a[href="docs/kiosk.html"]')).toBeVisible();
+  await expect(page.locator('.resource[href="docs/branding.html"]')).toBeVisible();
+  await expect(page.locator('a[href="guide/en.html"]')).toHaveCount(0);
+
+  await page.goto('./fr.html');
+  await expect(page.locator('.deployment a[href="docs/kiosk.fr.html"]')).toBeVisible();
+  await expect(page.locator('.resource[href="docs/branding.fr.html"]')).toBeVisible();
+});
+
+test('landing and translated documentation fit mobile and pass an accessibility smoke scan', async ({
+  page,
+}) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  for (const path of ['./fr.html', './guide/fr.html']) {
+  for (const path of [
+    './fr.html',
+    './docs/kiosk.fr.html',
+    './docs/branding.fr.html',
+    './guide/fr.html',
+  ]) {
     await page.goto(path);
     await expect(page.locator('html')).toHaveAttribute('lang', 'fr');
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
@@ -103,6 +139,8 @@ test('API and Storybook artifacts load as runnable pages', async ({ request, pag
   await page.goto('storybook/iframe.html?id=game-scenes--welcome&viewMode=story');
   await expect(page.getByRole('heading', { name: fr.welcome.title })).toBeVisible();
   await expect(page.locator('.welcome-hero')).toBeVisible();
+  await expect(page.getByRole('radio', { name: fr.welcome.free.title })).toBeChecked();
+  await expect(page.getByRole('button', { name: fr.welcome.begin, exact: true })).toBeVisible();
   await page.goto('storybook/iframe.html?id=game-scenes--guided-login&viewMode=story');
   await expect(page.getByRole('group', { name: fr.login.guidedQuestion })).toBeVisible();
   await page.goto('storybook/iframe.html?id=game-scenes--login&viewMode=story');

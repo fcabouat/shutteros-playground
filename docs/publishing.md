@@ -19,17 +19,17 @@ The workflow derives `/repository-name` for a project site and an empty base for
 
 The **shutteros-static-and-portable** Actions artifact contains the root-path build for a local kiosk. The **github-pages** artifact contains `dist/site/`, the separately verified product site with the Pages base path. Do not copy the project-path Pages artifact to a server's root URL: use the kiosk artifact instead.
 
-`pnpm build:site` builds and assembles the landing page, demo, guides, TypeDoc API and Storybook. It rebuilds the game for the nested demo URL; run `pnpm build` again before distributing a root-path kiosk build. The public layout is:
+`pnpm build:site` builds and assembles the landing page, demo, deployment documentation, TypeDoc API and Storybook. It rebuilds the game for the nested demo URL; run `pnpm build` again before distributing a root-path kiosk build. The public layout is:
 
-| Path                               | Content                                                                          |
-| ---------------------------------- | -------------------------------------------------------------------------------- |
-| `/`, `/fr.html`                    | English and French product pages; the default entry follows the browser language |
-| `/demo/`                           | Game, with an optional `?lang=fr` or `?lang=en` override                         |
-| `/demo/portable/shutteros.html`    | Standalone download                                                              |
-| `/guide/en.html`, `/guide/fr.html` | Player and facilitator guide                                                     |
-| `/overview.html`, `/docs/`         | Architecture and deployment documentation in English                             |
-| `/api/`                            | Core TypeScript reference, generated from source                                 |
-| `/storybook/`                      | Interactive component catalog                                                    |
+| Path                               | Content                                                                           |
+| ---------------------------------- | --------------------------------------------------------------------------------- |
+| `/`, `/fr.html`                    | English and French product pages; the default entry follows the browser language  |
+| `/demo/`                           | Game, with an optional `?lang=fr` or `?lang=en` override                          |
+| `/demo/portable/shutteros.html`    | Standalone download                                                               |
+| `/guide/en.html`, `/guide/fr.html` | Legacy player guides; retained for existing links                                 |
+| `/overview.html`, `/docs/`         | Architecture (EN), deployment and branding (FR/EN), other technical documentation |
+| `/api/`                            | Core TypeScript reference, generated from source                                  |
+| `/storybook/`                      | Interactive component catalog                                                     |
 
 These paths sit below the repository prefix on a project Pages site. Direct kiosk URLs and downloads use the game-only build. Language links are ordinary URLs, without cookies or stored preferences; English-only technical references are marked as such.
 
@@ -41,7 +41,7 @@ BUILD_ROOT=dist/site/demo BASE_PATH=/shutteros-preview/demo pnpm test:e2e
 BASE_PATH=/shutteros-preview pnpm test:site
 ```
 
-The browser test fixture serves only the selected build directory on loopback port 4183, under that exact prefix. It has no SPA fallback and never reuses the interactive preview on port 4173. Site checks exercise language navigation, the download, demo, guide, API and Storybook, including mobile layout and automated accessibility checks. To preview manually at a root URL, run `pnpm build:site` without `BASE_PATH`, then `python3 -m http.server 4174 --bind 127.0.0.1 --directory dist/site`.
+The browser test fixture serves only the selected build directory on loopback port 4183, under that exact prefix. It has no SPA fallback and never reuses the interactive preview on port 4173. Site checks exercise language navigation, the download, demo, bilingual deployment documentation, API and Storybook, including mobile layout and automated accessibility checks. To preview manually at a root URL, run `pnpm build:site` without `BASE_PATH`, then `python3 -m http.server 4174 --bind 127.0.0.1 --directory dist/site`.
 
 GitHub documents the required publishing source, artifact, permissions, and environment in [custom Pages workflows](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages).
 

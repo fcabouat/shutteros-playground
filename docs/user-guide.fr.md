@@ -6,20 +6,20 @@ Vous incarnez Camille Martin sur un poste fictif : une clé USB trouvée, des me
 
 L’[écran d’accueil](images/welcome.fr.png) présente la **barre de jeu**, visible pendant tout le parcours, et propose deux modes :
 
-- **Parcours guidé** : les situations s’enchaînent avec leurs choix affichés. La connexion est une question sur le rangement d’un mot de passe.
-- **Parcours libre** : explorez les applications et cherchez les commandes pour agir. À la connexion, retrouvez le mot de passe fictif ; un indice aide après trois essais ratés ou deux minutes de recherche.
+- **Mode libre (exploration)**, proposé par défaut : relevez le défi en explorant les applications et en trouvant les commandes pour agir. À la connexion, retrouvez le mot de passe fictif ; un indice aide après trois essais ratés ou deux minutes de recherche.
+- **Mode guidé (QCM)** : avancez en douceur, une situation après l’autre, avec les choix affichés. La connexion commence par une question sur le rangement d’un mot de passe, puis une explication de chaque option.
 
-Vous pouvez changer de mode à tout moment sans perdre votre progression. Utiliser le post-it pour entrer dans la simulation n’est pas une faute : il illustre un secret mal protégé. Le gestionnaire cité dans les explications est celui configuré pour l’exercice, KeePass par défaut.
+Vous pouvez changer de mode à tout moment sans perdre votre progression. Utiliser le post-it pour entrer dans la simulation n’est pas une faute : il illustre un secret mal protégé. Le gestionnaire cité dans les explications est celui configuré pour l’exercice, KeePassXC par défaut.
 
 Les fenêtres **Vigilance** invitent à examiner une situation ; celles portant **Protéger mon poste** proposent des gestes de sécurisation. Les libellés accompagnent les couleurs : le jeu ne demande pas de deviner la fonction d’une fenêtre.
 
 ## Trouver son chemin
 
-La barre de jeu affiche les activités restantes, **Un indice ?**, **Voir les choix**, le mode de parcours et le temps disponible. Les commandes sans effet à l’étape courante sont désactivées. Depuis le bureau, le compteur permet de rejoindre la prochaine activité sans révéler son indice.
+La barre de jeu affiche les activités restantes, **Un indice ?**, le changement de mode et le temps disponible. Les commandes sans effet à l’étape courante sont désactivées. Depuis le bureau, le compteur permet de rejoindre la prochaine activité sans révéler son indice.
 
-Un indice donne une piste, parfois un repère visuel. Vous pouvez le masquer puis le relire. En exploration libre, il faut l’avoir consulté avant d’ouvrir le QCM ; en guidé, les choix sont disponibles indépendamment de l’indice. L’aide est aussi proposée après deux minutes sans progression, puis les choix après deux minutes supplémentaires. Aucun chrono local ne presse votre réponse.
+Un indice donne une piste, parfois un repère visuel. Vous pouvez le masquer puis le relire. En mode libre, cherchez comment agir dans les applications : le QCM ne s’ouvre jamais automatiquement. Passez en mode guidé pour afficher les choix, sans perdre votre place ; revenir au libre les masque. L’indice reste indépendant du mode et se propose aussi après deux minutes sans progression. Aucun chrono local ne presse votre réponse.
 
-Le parcours comprend sept scénarios et une activité en trois étapes : mot de passe, mises à jour et verrouillage. Ces trois gestes doivent être essayés avant le bilan ; la question complémentaire sur le mot de passe est facultative. Dans la messagerie, continuer après un premier courriel conduit à celui qui reste.
+Le parcours comprend sept scénarios et une activité en trois étapes : mot de passe, mises à jour et verrouillage. En mode guidé, une consigne indique le prochain geste à effectuer et les boutons à utiliser. Ces trois gestes doivent être essayés avant le bilan ; la question complémentaire sur le mot de passe est facultative. Dans la messagerie, continuer après un premier courriel conduit à celui qui reste.
 
 ## Lire son bilan
 
@@ -33,7 +33,7 @@ Le sablier démarre après l’exercice de connexion et laisse trente minutes pa
 
 - **Langue** : FR ou EN dès l’accueil, puis dans la barre des tâches.
 - **Fenêtres** : déplacez-les par leur titre, redimensionnez les fenêtres principales par leurs bords, réduisez-les puis retrouvez-les dans la barre des tâches. Les indices et le fichier texte sont des fenêtres indépendantes.
-- **Taille** : les nouvelles activités s’ouvrent agrandies en guidé et en taille normale en libre. Vous pouvez les restaurer ; afficher les choix peut élargir une fenêtre sans la maximiser.
+- **Taille** : les nouvelles activités s’ouvrent agrandies en guidé et en taille normale en libre. Vous pouvez les restaurer ; passer en mode guidé peut élargir la fenêtre courante pour accueillir les choix, sans la maximiser.
 - **Clavier** : Tab passe d’une commande à l’autre ; Entrée ou Espace active les boutons. Le mot de passe fictif est masqué ; le bouton œil permet de le vérifier.
 - **Déconnexion** : une confirmation évite d’effacer la progression par erreur. Le raccourci opérateur `Ctrl+Alt+Home` réinitialise immédiatement le jeu.
 
