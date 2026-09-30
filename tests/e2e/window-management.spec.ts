@@ -236,6 +236,9 @@ test('every window edge resizes while keeping its opposite edge anchored', async
 });
 
 for (const [id, surface] of [
+  ['usb', '.usb-browser'],
+  ['incident', '.incident-scene'],
+  ['spoof', '.mail-list'],
   ['mail', '.mail-list'],
   ['ai', '.ai-chat'],
   ['web', '.web-scene'],
@@ -243,11 +246,25 @@ for (const [id, surface] of [
   test(`${id} application surface fills the window height`, async ({ page }) => {
     await login(page);
     await page.getByRole('button', { name: fr.intro.start, exact: true }).click();
-    await page.locator(`.desktop-icon:has([data-app="${id}"])`).click();
+    await page.locator(`.desktop-icon:has([data-app="${id === 'spoof' ? 'mail' : id}"])`).click();
+    if (id === 'spoof') await page.locator('.mail-list-message').nth(1).click();
     const frame = page.locator('.window-layer .os-window');
-    const body = (await frame.locator('.window-body').boundingBox())!;
-    const panel = (await frame.locator(surface).boundingBox())!;
-    expect(panel.y + panel.height).toBeCloseTo(body.y + body.height, 0);
-    await expect(frame.getByRole('button', { name: fr.os.resize, exact: true })).toHaveCount(1);
+    const expectFilled = async () => {
+      const body = (await frame.locator('.window-body').boundingBox())!;
+      const panel = (await frame.locator(surface).boundingBox())!;
+      expect(panel.y).toBeCloseTo(body.y, 0);
+      expect(panel.y + panel.height).toBeGreaterThanOrEqual(body.y + body.height - 1);
+    };
+    await expectFilled();
+    await frame.getByRole('button', { name: fr.os.maximize, exact: true }).click();
+    await expectFilled();
+    await switchToGuided(page);
+    await expectFilled();
+    if (id === 'incident') {
+      await page.locator('.action-dock-panel [data-choice="isolate"]').click();
+      const body = (await frame.locator('.window-body').boundingBox())!;
+      const panel = (await frame.locator(surface).boundingBox())!;
+      expect(panel.y + panel.height).toBeGreaterThanOrEqual(body.y + body.height - 1);
+    }
   });
 }

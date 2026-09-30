@@ -1006,6 +1006,9 @@ button:active:not(:disabled) {
 .application-canvas > * {
   flex: 1;
 }
+.application-canvas > .incident-review {
+  flex: none;
+}
 .window-panes {
   display: flex;
   flex-direction: column;

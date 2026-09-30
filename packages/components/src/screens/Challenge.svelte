@@ -24,13 +24,13 @@
 
 <div
   class="challenge-window"
-  class:application-canvas={scene.id !== 'incident' && scene.id !== 'mfa'}
+  class:application-canvas={scene.id !== 'mfa'}
   data-challenge={scene.id}
   data-step={scene.step}
 >
   {#if scene.id === 'usb'}<Usb {dispatch} />
   {:else if scene.id === 'incident'}
-    {#if scene.priorChoiceId}<div class="px-6 pt-6">
+    {#if scene.priorChoiceId}<div class="incident-review px-6 pt-6">
         <DecisionReview id="incident" selectedChoiceId={scene.priorChoiceId} />
       </div>{/if}
     <Incident
