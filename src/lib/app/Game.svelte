@@ -17,6 +17,7 @@
   const copy = $derived(i18n.text);
   let kioskInput: ReturnType<typeof createKioskInput> | undefined;
   import type { GameState, Intent } from '@shutteros/core/model/game';
+  import Welcome from '@shutteros/components/screens/Welcome.svelte';
   import Login from '@shutteros/components/screens/Login.svelte';
   import Session from '@shutteros/components/screens/Session.svelte';
   import Brand from '@shutteros/components/commons/Brand.svelte';
@@ -80,7 +81,7 @@
   }
 
   function dispatch(intent: Intent) {
-    if (intent.type === 'login') void kioskInput?.activate();
+    if (intent.type === 'begin') void kioskInput?.activate();
     runtime?.dispatch(intent);
   }
   function operatorShortcut(event: KeyboardEvent) {
@@ -149,7 +150,15 @@
   <!-- Resetting the domain alone would leave component drafts and dialogs alive.
        The generation key remounts them; tests/e2e/game.spec.ts covers an open-dialog reset. -->
   {#key game.generation}
-    {#if game.phase === 'login'}<Login
+    {#if game.phase === 'welcome'}<Welcome
+        snapshot={game}
+        config={result.config}
+        {dispatch}
+        {branding}
+        {embeddedOrganizationLogo}
+        {embeddedPartnerOrganizationLogo}
+      />
+    {:else if game.phase === 'login'}<Login
         snapshot={game}
         config={result.config}
         {dispatch}

@@ -57,6 +57,7 @@ describe('loadConfiguration', () => {
           sessionDurationMs: 300_000,
           idleReminderMs: 45_000,
           eventIntervalMs: 90_000,
+          passwordManagerName: 'KeePass',
         },
       },
     );
@@ -66,6 +67,19 @@ describe('loadConfiguration', () => {
       signal: controller.signal,
     });
     vi.unstubAllGlobals();
+  });
+
+  it('maps a configurable approved password manager and rejects invalid names', () => {
+    expect(configure({ ...configuration, passwordManagerName: 'Coffre interne' })).toMatchObject({
+      ok: true,
+      config: { passwordManagerName: 'Coffre interne' },
+    });
+    for (const passwordManagerName of ['', '   ', 'a'.repeat(81), null, 42]) {
+      expect(configure({ ...configuration, passwordManagerName })).toMatchObject({
+        ok: false,
+        issues: [{ kind: 'field', path: 'passwordManagerName' }],
+      });
+    }
   });
 
   it('maps an optional local organisation logo filename', () => {

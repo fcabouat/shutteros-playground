@@ -32,6 +32,7 @@ describe('portable configuration preparation', () => {
     const root = await fixtureFor({
       organizationName: '</ScRiPt><script>compromised</script>',
       organizationLogo: 'logo-organisation.svg',
+      passwordManagerName: 'Coffre interne',
     });
     try {
       await writeFile(
@@ -44,6 +45,7 @@ describe('portable configuration preparation', () => {
         'utf8',
       );
       expect(generated).toContain('organizationLogo":"logo-organisation.svg');
+      expect(generated).toContain('passwordManagerName":"Coffre interne');
       expect(generated).toContain('data:image/svg+xml;base64,');
       expect(generated).toContain('\\u003c/ScRiPt\\u003e');
       expect(generated).not.toContain('<script>');

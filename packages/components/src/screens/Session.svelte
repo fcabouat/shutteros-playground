@@ -29,7 +29,7 @@
   import TaskbarApps, { type TaskbarAppEntry } from '../commons/TaskbarApps.svelte';
   import ReadmeWindow from '../scenarios/ReadmeWindow.svelte';
   import ActionDock from '../commons/ActionDock.svelte';
-  import Organizations from '../commons/Organizations.svelte';
+  import GameTopbar from '../commons/GameTopbar.svelte';
   import WallpaperCurtain from '../commons/WallpaperCurtain.svelte';
   import { hintTarget } from './guidance';
   import { focusScreen } from '../commons/focus';
@@ -85,8 +85,15 @@
   );
   // An activity and its feedback share the player's size choice; another activity
   // gets the default for its exploration mode.
-  const windowDefaultsKey = $derived(`${snapshot.mode}:${taskbarId ?? snapshot.scene.kind}`);
-  let coreMaximized = $derived(windowDefaultsKey.startsWith('guided:'));
+  const windowDefaultsKey = $derived(`${taskbarId ?? snapshot.scene.kind}`);
+  let previousWindowDefaultsKey = $state('');
+  let coreMaximized = $state(false);
+  $effect(() => {
+    if (windowDefaultsKey !== previousWindowDefaultsKey) {
+      previousWindowDefaultsKey = windowDefaultsKey;
+      coreMaximized = snapshot.mode === 'guided';
+    }
+  });
   const coreUsesPinnedTaskbar = $derived(
     taskbarId !== null && ['usb', 'mail', 'spoof', 'web'].includes(taskbarId),
   );
@@ -212,8 +219,10 @@
       !hintMinimized &&
       hintKey &&
       !seenHints.includes(hintKey)
-    )
+    ) {
       seenHints = [...seenHints, hintKey];
+      dispatch({ type: 'hint-viewed' });
+    }
   });
   function toggleHint() {
     acknowledgedHelpLevel = helpLevel;
@@ -458,19 +467,7 @@
   <div class="wallpaper-orbit" aria-hidden="true"></div>
   <WallpaperCurtain />
   <a href="#session-main" class="skip-link">{copy.shell.skip}</a>
-  <header class="os-topbar" inert={snapshot.locked}>
-    <div class="desktop-organization">
-      <Organizations
-        name={branding.organizationName ?? config.organizationName}
-        logo={branding.organizationLogo ?? embeddedOrganizationLogo ?? config.organizationLogo}
-        partnerName={branding.partnerOrganizationName ?? config.partnerOrganizationName}
-        partnerLogo={branding.partnerOrganizationLogo ??
-          embeddedPartnerOrganizationLogo ??
-          config.partnerOrganizationLogo}
-        campaign={branding.campaignName}
-      />
-    </div>
-    <span class="sr-only">{copy.simulation}</span>
+  {#snippet controls()}
     <div class="session-controls">
       <div class="session-help">
         <div class="progress-slot">
@@ -541,9 +538,8 @@
         <button
           class="finish-experience rounded-lg px-3 py-2 text-xs"
           title={guidedMode ? copy.experience.freeHint : copy.experience.finishHint}
-          disabled={snapshot.scene.kind === 'intro' || snapshot.scene.kind === 'debrief'}
-          onclick={() => execute({ type: guidedMode ? 'explore-freely' : 'finish-experience' })}
-          >{guidedMode ? copy.experience.free : copy.experience.finish}<Icon
+          onclick={() => execute({ type: 'set-mode', mode: guidedMode ? 'free' : 'guided' })}
+          >{guidedMode ? copy.experience.free : copy.experience.guided}<Icon
             name="arrow"
             size={14}
             class="ml-2 inline"
@@ -560,8 +556,16 @@
         ><Icon name="hourglass" size={17} /><span aria-hidden="true">{formattedTime}</span></span
       >
     </div>
-    {#if seconds <= 30}<p class="sr-only" role="status">{copy.shell.lowTime}</p>{/if}
-  </header>
+  {/snippet}
+  <GameTopbar
+    {config}
+    {branding}
+    {embeddedOrganizationLogo}
+    {embeddedPartnerOrganizationLogo}
+    {controls}
+    inert={snapshot.locked}
+  />
+  {#if seconds <= 30}<p class="sr-only" role="status">{copy.shell.lowTime}</p>{/if}
   <main
     id="session-main"
     class="os-workspace relative z-10 outline-none"
@@ -593,7 +597,11 @@
               inert={minimized || settingsVisible}
             >
               {#snippet currentView()}
-                {#if snapshot.scene.kind === 'intro'}<Intro {snapshot} dispatch={execute} />
+                {#if snapshot.scene.kind === 'intro'}<Intro
+                    {snapshot}
+                    {config}
+                    dispatch={execute}
+                  />
                 {:else if snapshot.scene.kind === 'challenge'}<Challenge
                     {snapshot}
                     scene={snapshot.scene}
@@ -608,6 +616,7 @@
                   />
                 {:else if snapshot.scene.kind === 'routines'}<Routines
                     {snapshot}
+                    {config}
                     dispatch={execute}
                   />
                 {:else if snapshot.scene.kind === 'debrief'}<Debrief
@@ -699,7 +708,7 @@
                 />{:else if settings === 'about'}<About
                   {legalNotices}
                   {legalNoticesFailed}
-                />{:else}<Routines {snapshot} {dispatch} />{/if}</WindowFrame
+                />{:else}<Routines {snapshot} {config} {dispatch} />{/if}</WindowFrame
             >
           </div>{/if}
       </div>

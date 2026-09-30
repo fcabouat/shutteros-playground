@@ -27,11 +27,12 @@ describe('runtime lifecycle', () => {
       },
       (snapshot) => snapshots.push(snapshot),
     );
-    runtime.dispatch({ type: 'login', password: 'password' });
+    runtime.dispatch({ type: 'begin' });
+    runtime.dispatch({ type: 'answer-login', choiceId: 'manager' });
     expect(snapshots.at(-1)?.phase).toBe('session');
     now = decoded.config.sessionDurationMs + 1;
     tick();
-    expect(snapshots.at(-1)).toMatchObject({ phase: 'login', reason: 'expired' });
+    expect(snapshots.at(-1)).toMatchObject({ phase: 'welcome', reason: 'expired' });
     const count = snapshots.length;
     runtime.dispose();
     tick();

@@ -16,6 +16,7 @@ type KioskConfigV1 = {
   partnerOrganizationName?: string;
   partnerOrganizationLogo?: string;
   playerName: string;
+  passwordManagerName?: string;
   supportLabel: string;
   supportContact: string;
   stationLabel: string;
@@ -44,6 +45,7 @@ const keys = [
   'partnerOrganizationName',
   'partnerOrganizationLogo',
   'playerName',
+  'passwordManagerName',
   'supportLabel',
   'supportContact',
   'stationLabel',
@@ -53,6 +55,7 @@ const keys = [
 ] as const;
 
 const optionalKeys = [
+  'passwordManagerName',
   'organizationName',
   'explorationSeconds',
   'idleReminderSeconds',
@@ -96,7 +99,11 @@ export function decodeConfiguration(value: unknown): DecodeConfigurationResult {
   validateOptionalNumber(value.idleReminderSeconds, 'idleReminderSeconds', 10, 300, issues);
   validateOptionalNumber(value.eventIntervalSeconds, 'eventIntervalSeconds', 30, 300, issues);
   validatePasswords(value.acceptedPasswords, issues);
-  for (const key of ['organizationName', 'partnerOrganizationName'] as const) {
+  for (const key of [
+    'organizationName',
+    'partnerOrganizationName',
+    'passwordManagerName',
+  ] as const) {
     if (value[key] !== undefined) validateText(value[key], key, 80, issues);
   }
   validateOptionalLogo(value.organizationLogo, 'organizationLogo', issues);

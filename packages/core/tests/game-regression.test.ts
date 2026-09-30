@@ -12,6 +12,7 @@ const config: GameConfig = {
   acceptedPasswords: [' Accès ', 'Café'],
   caseSensitivePasswords: false,
   showPasswordHint: false,
+  passwordManagerName: 'KeePass',
   playerName: 'Jules',
   supportLabel: 'Support',
   supportContact: '01 02 03 04 05',
@@ -24,8 +25,15 @@ function apply(state: GameState, intent: Intent, now: number): GameState {
   return transition(state, intent, now, config);
 }
 
+function loginScreen(now = 0): Extract<GameState, { phase: 'login' }> {
+  let state = apply(initialState(now), { type: 'set-mode', mode: 'free' }, now);
+  state = apply(state, { type: 'begin' }, now);
+  if (state.phase !== 'login') throw new Error('Expected login');
+  return state;
+}
+
 function session(now = 0): Extract<GameState, { phase: 'session' }> {
-  const loggedIn = apply(initialState(now), { type: 'login', password: 'accès' }, now);
+  const loggedIn = apply(loginScreen(now), { type: 'login', password: 'accès' }, now);
   if (loggedIn.phase !== 'session') throw new Error('Expected session');
   return loggedIn;
 }
@@ -39,15 +47,15 @@ function desktop(now = 0): Extract<GameState, { phase: 'session' }> {
 
 describe('game runtime regressions', () => {
   it('normalizes passwords and retains only their learning category', () => {
-    const displayed = apply(initialState(), { type: 'login', password: '  ACCÈS  ' }, 1);
+    const displayed = apply(loginScreen(), { type: 'login', password: '  ACCÈS  ' }, 1);
     expect(displayed).toMatchObject({ phase: 'session', loginCategory: 'displayed' });
     expect(displayed).not.toHaveProperty('password');
-    expect(apply(initialState(), { type: 'login', password: 'café' }, 1)).toMatchObject({
+    expect(apply(loginScreen(), { type: 'login', password: 'café' }, 1)).toMatchObject({
       phase: 'session',
       loginCategory: 'weak',
     });
     expect(
-      transition(initialState(), { type: 'login', password: 'accès' }, 1, {
+      transition(loginScreen(), { type: 'login', password: 'accès' }, 1, {
         ...config,
         caseSensitivePasswords: true,
       }),
@@ -57,7 +65,7 @@ describe('game runtime regressions', () => {
   it('classifies configured translations and never accepts an unconfigured one', () => {
     const bilingual = { ...config, acceptedPasswords: ['Bureau2026', 'Office2026', 'password'] };
     for (const password of [' bureau2026 ', ' OFFICE2026 ']) {
-      expect(transition(initialState(), { type: 'login', password }, 1, bilingual)).toMatchObject({
+      expect(transition(loginScreen(), { type: 'login', password }, 1, bilingual)).toMatchObject({
         phase: 'session',
         loginCategory: 'displayed',
       });
@@ -66,7 +74,7 @@ describe('game runtime regressions', () => {
     expect(passwordHint(bilingual, 'en')).toBe('Office2026');
     const legacy = { ...config, acceptedPasswords: ['Bureau2026'] };
     expect(
-      transition(initialState(), { type: 'login', password: 'Office2026' }, 1, legacy),
+      transition(loginScreen(), { type: 'login', password: 'Office2026' }, 1, legacy),
     ).toMatchObject({
       phase: 'login',
       failedAttempts: 1,
@@ -86,22 +94,26 @@ describe('game runtime regressions', () => {
     const readmeOpened = apply(opened, { type: 'open-usb-readme' }, 3);
     const loggedOut = apply(readmeOpened, { type: 'logout' }, 4);
     expect(loggedOut).toMatchObject({
-      phase: 'login',
+      phase: 'welcome',
       generation: 1,
       now: 4,
       reason: 'logout',
-      failedAttempts: 0,
     });
     expect(loggedOut).not.toHaveProperty('results');
+    const restarted = apply(
+      apply(loggedOut, { type: 'set-mode', mode: 'free' }, 5),
+      { type: 'begin' },
+      5,
+    );
     const freshUsb = apply(
-      apply(apply(loggedOut, { type: 'login', password: 'accès' }, 5), { type: 'continue' }, 5),
+      apply(apply(restarted, { type: 'login', password: 'accès' }, 5), { type: 'continue' }, 5),
       { type: 'open', id: 'usb' },
       6,
     );
     expect(freshUsb).toMatchObject({ scene: { kind: 'challenge' } });
     expect(freshUsb).not.toHaveProperty('scene.openedReadme');
     expect(apply(opened, { type: 'choose', choiceId: 'eject' }, 60_000)).toMatchObject({
-      phase: 'login',
+      phase: 'welcome',
       reason: 'expired',
     });
   });
@@ -117,7 +129,7 @@ describe('game runtime regressions', () => {
       results: [],
     });
     expect(apply(locked, { type: 'tick' }, 60_000)).toMatchObject({
-      phase: 'login',
+      phase: 'welcome',
       reason: 'expired',
     });
   });
@@ -198,7 +210,7 @@ describe('game runtime regressions', () => {
       now: 4,
     });
     expect(apply(state, { type: 'answer-check', answerId: 'replace-now' }, 60_000)).toMatchObject({
-      phase: 'login',
+      phase: 'welcome',
       reason: 'expired',
     });
   });

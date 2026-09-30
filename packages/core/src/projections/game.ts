@@ -5,6 +5,7 @@ import {
   type ChallengeId,
   type ChallengeResult,
   type GameState,
+  type PlayMode,
   type ResultAssessment,
 } from '../model/game';
 
@@ -83,6 +84,39 @@ export function assessedCount(state: GameState): number {
   return state.results.length;
 }
 
+/** Facts used by the recap; hints stay descriptive and never reduce result scores. */
+export function debriefStats(state: GameState): {
+  activitiesCompleted: number;
+  dailyHabitsCompleted: number;
+  reportsMade: number;
+  workstationProtected: boolean;
+} {
+  if (state.phase !== 'session') {
+    return {
+      activitiesCompleted: 0,
+      dailyHabitsCompleted: 0,
+      reportsMade: 0,
+      workstationProtected: false,
+    };
+  }
+  const dailyHabitsCompleted = [
+    state.routines.password === 'done',
+    state.routines.update === 'scheduled',
+    state.routines.lockPracticed,
+  ].filter(Boolean).length;
+  return {
+    activitiesCompleted: state.results.length,
+    dailyHabitsCompleted,
+    reportsMade: state.results.filter(
+      (result) =>
+        result.choiceId === 'report' ||
+        result.choiceId === 'notify' ||
+        result.choiceId === 'deny-report',
+    ).length,
+    workstationProtected: dailyHabitsCompleted === 3,
+  };
+}
+
 export function remainingSeconds(deadline: number, now: number): number {
   return Math.max(0, Math.ceil((deadline - now) / 1000));
 }
@@ -101,6 +135,7 @@ export function loginHintVisible(state: GameState): boolean {
   if (state.phase !== 'login') return false;
   if (state.failedAttempts >= 3) return true;
   const guidance = state.loginGuidance;
+  if (guidance.requestedLevel > 0) return true;
   const activeMs =
     guidance.activeElapsedMs +
     (guidance.activeSince === null ? 0 : Math.max(0, state.now - guidance.activeSince));
@@ -112,7 +147,27 @@ export function loginHelpStarted(state: GameState): boolean {
 }
 
 export function activityIsVisible(state: GameState): boolean {
-  return state.phase === 'session' ? state.activityVisible : state.loginGuidance.visible;
+  return state.phase === 'session'
+    ? state.activityVisible
+    : state.phase === 'login'
+      ? state.loginGuidance.visible
+      : true;
+}
+
+export function journeySummary(state: GameState): {
+  mode: PlayMode | 'mixed';
+  modes: readonly PlayMode[];
+  hints: readonly string[];
+  hintCount: number;
+} | null {
+  if (state.phase === 'welcome') return null;
+  const distinctModes = new Set(state.journey.modes);
+  return {
+    mode: distinctModes.size > 1 ? 'mixed' : (state.journey.modes[0] ?? state.mode),
+    modes: state.journey.modes,
+    hints: state.journey.hints,
+    hintCount: state.journey.hints.length,
+  };
 }
 
 export function idleReminderVisible(
