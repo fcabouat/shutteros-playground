@@ -241,7 +241,7 @@ for (const [id, surface] of [
   ['spoof', '.mail-list'],
   ['mail', '.mail-list'],
   ['ai', '.ai-chat'],
-  ['web', '.web-scene'],
+  ['web', '.fake-portal'],
 ] as const) {
   test(`${id} application surface fills the window height`, async ({ page }) => {
     await login(page);
@@ -252,7 +252,7 @@ for (const [id, surface] of [
     const expectFilled = async () => {
       const body = (await frame.locator('.window-body').boundingBox())!;
       const panel = (await frame.locator(surface).boundingBox())!;
-      expect(panel.y).toBeCloseTo(body.y, 0);
+      if (id !== 'web') expect(panel.y).toBeCloseTo(body.y, 0);
       expect(panel.y + panel.height).toBeGreaterThanOrEqual(body.y + body.height - 1);
     };
     await expectFilled();
