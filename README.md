@@ -5,7 +5,7 @@
 
 **A familiar desktop. A safe place to make mistakes.**
 
-ShutterOS is a French/English cybersecurity awareness game for the browser or a shared kiosk. In five to fifteen minutes, players explore a
+ShutterOS is a French/English cybersecurity awareness game for the browser or a shared kiosk. In ten to twenty minutes, players explore a
 fictional desktop and practise seven situations involving a found USB drive, an
 incident, urgent mail, sender spoofing, a look-alike login, an unexpected sign-in
 request, and sharing work information with an AI assistant. An eighth activity covers
@@ -13,7 +13,7 @@ passwords, updates and screen locking before the recap.
 
 [**Play the live demo**](https://fcabouat.github.io/shutteros-playground/demo/?lang=en) · [Jouer en français](https://fcabouat.github.io/shutteros-playground/demo/?lang=fr)
 
-Use it in a reception area, a team workshop or a Cybersecurity Month event. Add your organisation’s identity, configure the session length (30 minutes by default), and let the kiosk reset for the next player. Players can explore freely, ask for a hint before opening the choices, or follow a guided route through the remaining activities.
+Use it in a reception area, a team workshop or a Cybersecurity Month event. Add your organisation’s identity, configure the session length (30 minutes by default), and let the kiosk reset for the next player. Players choose free exploration or a guided questionnaire from the welcome screen, and can switch at any time. A persistent game bar keeps help and progress within reach. A personal recap shows the route followed and hints consulted before the detailed explanations, without grading the player.
 The experience is local and fictional: it has no backend, account system,
 telemetry, persistence, external API, or real authentication. Game phrases,
 messages, addresses, files, and forms stay in the current session and are never

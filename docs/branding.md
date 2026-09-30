@@ -1,6 +1,6 @@
 # Organisation branding
 
-**ShutterOS** is the fictional OS identity, with its window-and-curtains icon. The deploying organisation's name, campaign label, and logo appear together in the upper-left corner of the login screen and desktop. Supply organisation assets locally and keep them out of version control. See [licensing and attribution](legal.md) for ownership and redistribution terms.
+**ShutterOS** is the fictional OS identity, with its window-and-curtains icon. The deploying organisation's name, campaign label, and logo appear together in the upper-left corner of the welcome screen, login and desktop. Supply organisation assets locally and keep them out of version control. See [licensing and attribution](legal.md) for ownership and redistribution terms.
 
 With no organisation fields configured, the public demo displays **Votre organisation** / **Your organization**, following the selected language. A second organisation is optional and shares the same identity block.
 
@@ -49,7 +49,7 @@ For a build that also customises the OS name or campaign label, create `private/
 
 The private file also accepts optional `partnerOrganizationName` and `partnerOrganizationLogo` (a path under `private/`).
 
-Keep `applicationName` (the OS name) distinct from `organizationName` (the organisation shown in the organisation block). This optional build-time logo accepts PNG or WebP of at most 256 KiB; use the deployment-local method above for SVG. `pnpm dev`, `pnpm check`, `pnpm build`, and the Storybook commands automatically prepare the branding. The script validates the name, resolves symlinks, checks that the logo remains inside `private/`, verifies magic bytes, and writes the ignored `src/lib/branding.generated.ts` data module with an embedded base64 data URL. No remote URL is accepted. The composition root imports the generated module and passes its values as props. The organisation block is rendered once per screen, at the upper left of login and desktop; the OS symbol remains independent. Without private configuration, the build uses the generic ShutterOS identity.
+Keep `applicationName` (the OS name) distinct from `organizationName` (the organisation shown in the organisation block). This optional build-time logo accepts PNG or WebP of at most 256 KiB; use the deployment-local method above for SVG. `pnpm dev`, `pnpm check`, `pnpm build`, and the Storybook commands automatically prepare the branding. The script validates the name, resolves symlinks, checks that the logo remains inside `private/`, verifies magic bytes, and writes the ignored `src/lib/branding.generated.ts` data module with an embedded base64 data URL. No remote URL is accepted. The composition root imports the generated module and passes its values as props. The organisation block is rendered once per screen, at the upper left of welcome, login and desktop; the OS symbol remains independent. Without private configuration, the build uses the generic ShutterOS identity.
 
 Keep `private/branding.json` and `private/logo.*` outside version control. This project is personal MIT software; private brand assets remain with the deploying organisation. The generated module is also ignored and must be regenerated on each clean checkout. Do not put real passwords, credentials, or other secrets in branding files.
 

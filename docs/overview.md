@@ -20,14 +20,14 @@ The typed text catalogue currently groups scenario copy and interface labels in 
 
 A player action follows **view → app runtime → core transition → state → view**. The runtime supplies time explicitly, so transitions are reproducible without a browser. Native application actions and questionnaire choices use the same commands and outcome rules, defined in the [activity matrix](../packages/core/src/data/activities.ts).
 
-The core owns the session deadline, assistance progression and recorded outcomes. Window movement, resizing, visual hint targets and keyboard focus remain presentation state. Minimising an activity reports its visibility to the core so assistance time pauses without extending the session deadline.
+The core owns onboarding, the selected route, the session deadline, assistance progression and recorded outcomes. The welcome and login phases precede the timed session; changing route preserves progress. Window movement, resizing, visual hint targets and keyboard focus remain presentation state. Minimising an activity reports its visibility to the core so assistance time pauses without extending the session deadline.
 
 ## Invariants
 
 - Every action is checked against the session deadline, including after browser timers have been delayed.
 - Navigation preserves unfinished decisions. Replays never replace the first recorded result.
 - An action's outcome and its assessment are distinct: a safe USB action after opening the unchecked text file receives a caution assessment.
-- Session reset remounts the views to clear drafts and dialogs. Language preference survives outside that boundary.
+- Session reset returns to welcome and remounts the views to clear drafts and dialogs. Journey statistics record viewed hints independently of questionnaire visibility and never alter outcomes. Language preference survives outside that boundary.
 - External configuration is validated before entering the game; invalid input produces an error screen.
 
 ## Delivery
