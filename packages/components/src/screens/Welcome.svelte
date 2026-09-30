@@ -94,15 +94,6 @@
         {/each}
       </div>
 
-      <div class="mt-4 flex flex-wrap items-center gap-4">
-        <button class="button button-primary" onclick={() => dispatch({ type: 'begin' })}>
-          {copy.welcome.begin}<Icon name="arrow" size={18} />
-        </button>
-        <span class="text-muted flex items-center gap-2 text-sm"
-          ><Icon name="clock" size={17} />{copy.welcome.duration}</span
-        >
-      </div>
-
       <aside class="topbar-explainer mt-5 rounded-2xl p-4" aria-label={copy.welcome.controls.title}>
         <p class="text-sm font-semibold">{copy.welcome.controls.title}</p>
         <p class="text-muted mt-2 text-xs leading-relaxed">{copy.welcome.controls.introduction}</p>
@@ -130,21 +121,31 @@
           <Icon name="secure" size={18} />{copy.welcome.families.protection}
         </p>
       </div>
-      <p class="welcome-privacy mt-3 text-xs leading-relaxed">
-        {copy.welcome.reset(config.sessionDurationMs / 60_000)}
-      </p>
       {#if snapshot.reason !== 'initial'}
         <p class="welcome-reset mt-5 text-sm" role="status">
           {snapshot.reason === 'expired' ? copy.welcome.expired : copy.welcome.loggedOut}
         </p>
       {/if}
+      <div class="welcome-start mt-5 border-t border-[var(--line)] pt-5">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <span class="text-muted flex items-center gap-2 text-sm">
+            <Icon name="clock" size={17} />{copy.welcome.duration}
+          </span>
+          <button class="button button-primary ml-auto" onclick={() => dispatch({ type: 'begin' })}>
+            {copy.welcome.begin}<Icon name="arrow" size={18} />
+          </button>
+        </div>
+      </div>
     </section>
   </div>
   <footer
     class="welcome-footer relative z-10 flex flex-wrap items-center justify-between gap-4 px-5 py-3 text-xs text-white/75 sm:px-9 lg:px-12"
   >
     <Brand name={branding.applicationName} />
-    <span>{copy.fictional}</span>
+    <p class="order-last w-full text-center leading-relaxed sm:order-none sm:w-auto sm:flex-1">
+      {copy.fictional}
+      {copy.welcome.reset(config.sessionDurationMs / 60_000)}
+    </p>
     <Language />
   </footer>
 </main>
