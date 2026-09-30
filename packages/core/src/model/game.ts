@@ -36,6 +36,18 @@ export const challengeOrder = [
   'ai',
 ] as const satisfies readonly ChallengeId[];
 
+/** Distinct activity-help contexts offered by the complete journey. */
+export const challengeHintContexts = [
+  'usb:choose',
+  'incident:choose',
+  'incident:notify',
+  'mail:choose',
+  'spoof:choose',
+  'web:choose',
+  'mfa:choose',
+  'ai:choose',
+] as const;
+
 /**
  * Authoritative domain actions. Labels and explanations remain in the content
  * catalogue, while the pure core owns which identifiers are valid and their effect.

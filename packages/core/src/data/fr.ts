@@ -597,20 +597,21 @@ export const fr = {
     source: 'Conseils inspirés des recommandations ANSSI, CERT-FR et Cybermalveillance.gouv.fr.',
     summary: {
       eyebrow: 'VOTRE PARCOURS',
-      title: 'Merci d’avoir pris le temps d’essayer.',
+      title: (name: string, complete: boolean) =>
+        complete ? `Parcours terminé, ${name}.` : `Merci pour ce parcours, ${name}.`,
       description:
         'Ce récapitulatif décrit votre parcours. Il ne vous attribue aucune note et l’usage des indices ne vous pénalise pas.',
-      situations: (count: number) =>
-        `${count} situation${count > 1 ? 's' : ''} terminée${count > 1 ? 's' : ''}`,
-      habits: (count: number) =>
-        `${count} geste${count > 1 ? 's' : ''} du quotidien réalisé${count > 1 ? 's' : ''}`,
-      hints: (count: number) =>
-        `${count} indice${count > 1 ? 's' : ''} unique${count > 1 ? 's' : ''} consulté${count > 1 ? 's' : ''}`,
+      situations: (count: number, total: number) => `Activités : ${count}/${total}`,
+      habits: (count: number, total: number) => `Gestes du quotidien : ${count}/${total}`,
+      hints: (count: number, total: number) => `Indices d’activité consultés : ${count}/${total}`,
       journey: 'Parcours suivi',
       modes: { guided: 'Guidé', free: 'Libre', mixed: 'Mixte' },
       badges: 'Repères de votre parcours',
       activityBadge: 'Situations mises en pratique',
-      reportBadge: 'Signalements au premier passage',
+      reportBadge: (count: number, total: number) =>
+        `Signalements : ${count}/${total} situations à signaler`,
+      firstAttempt:
+        'Ce repère compte les premières réponses conservées pour l’incident, les deux messages suspects et la demande de connexion.',
       protectedBadge: 'Poste protégé',
       detailed: 'Lire mon bilan détaillé',
     },

@@ -1,5 +1,6 @@
 import type { GameConfig } from '../model/configuration';
 import {
+  challengeHintContexts,
   challengeOrder,
   guidanceDelayMs,
   type ChallengeId,
@@ -84,18 +85,32 @@ export function assessedCount(state: GameState): number {
   return state.results.length;
 }
 
+/** First-result choices where reporting is the expected response in the activity. */
+const reportingChoices: Partial<Record<ChallengeId, string>> = {
+  incident: 'notify',
+  mail: 'report',
+  spoof: 'report',
+  mfa: 'deny-report',
+};
+
 /** Facts used by the recap; hints stay descriptive and never reduce result scores. */
 export function debriefStats(state: GameState): {
   activitiesCompleted: number;
+  activitiesTotal: number;
   dailyHabitsCompleted: number;
+  dailyHabitsTotal: number;
   reportsMade: number;
+  reportsEligible: number;
   workstationProtected: boolean;
 } {
   if (state.phase !== 'session') {
     return {
       activitiesCompleted: 0,
+      activitiesTotal: challengeOrder.length,
       dailyHabitsCompleted: 0,
+      dailyHabitsTotal: 3,
       reportsMade: 0,
+      reportsEligible: 0,
       workstationProtected: false,
     };
   }
@@ -106,13 +121,12 @@ export function debriefStats(state: GameState): {
   ].filter(Boolean).length;
   return {
     activitiesCompleted: state.results.length,
+    activitiesTotal: challengeOrder.length,
     dailyHabitsCompleted,
-    reportsMade: state.results.filter(
-      (result) =>
-        result.choiceId === 'report' ||
-        result.choiceId === 'notify' ||
-        result.choiceId === 'deny-report',
-    ).length,
+    dailyHabitsTotal: 3,
+    reportsMade: state.results.filter((result) => reportingChoices[result.id] === result.choiceId)
+      .length,
+    reportsEligible: Object.keys(reportingChoices).length,
     workstationProtected: dailyHabitsCompleted === 3,
   };
 }
@@ -155,6 +169,8 @@ export function journeySummary(state: GameState): {
   modes: readonly PlayMode[];
   hints: readonly string[];
   hintCount: number;
+  challengeHintCount: number;
+  challengeHintTotal: number;
 } | null {
   if (state.phase === 'welcome') return null;
   const distinctModes = new Set(state.journey.modes);
@@ -163,6 +179,10 @@ export function journeySummary(state: GameState): {
     modes: state.journey.modes,
     hints: state.journey.hints,
     hintCount: state.journey.hints.length,
+    challengeHintCount: state.journey.hints.filter((hint) =>
+      challengeHintContexts.includes(hint as (typeof challengeHintContexts)[number]),
+    ).length,
+    challengeHintTotal: challengeHintContexts.length,
   };
 }
 

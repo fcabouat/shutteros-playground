@@ -149,6 +149,8 @@ describe('play mode onboarding', () => {
       modes: ['free', 'guided', 'free'],
       hints: [],
       hintCount: 0,
+      challengeHintCount: 0,
+      challengeHintTotal: 8,
     });
   });
 
@@ -236,9 +238,29 @@ describe('play mode onboarding', () => {
     expect(safeCount(state)).toBe(2);
     expect(debriefStats(state)).toEqual({
       activitiesCompleted: 2,
+      activitiesTotal: 7,
       dailyHabitsCompleted: 3,
-      reportsMade: 2,
+      dailyHabitsTotal: 3,
+      reportsMade: 1,
+      reportsEligible: 4,
       workstationProtected: true,
+    });
+    expect(journeySummary(state)).toMatchObject({
+      hintCount: 1,
+      challengeHintCount: 1,
+      challengeHintTotal: 8,
+    });
+  });
+
+  it('keeps the login hint outside the activity-hint denominator', () => {
+    const state = {
+      ...session('free'),
+      journey: { modes: ['free'] as const, hints: ['login', 'incident:notify'] },
+    };
+    expect(journeySummary(state)).toMatchObject({
+      hintCount: 2,
+      challengeHintCount: 1,
+      challengeHintTotal: 8,
     });
   });
 

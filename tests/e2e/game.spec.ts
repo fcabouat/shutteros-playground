@@ -173,7 +173,9 @@ test('guided completion sweeps remaining situations without local timers', async
   await page.getByRole('button', { name: 'Reprendre la simulation' }).click();
   await expect(page.locator('.guided-routine-next')).toHaveText(fr.routines.steps.complete);
   await page.getByRole('button', { name: 'Voir mon bilan maintenant' }).click();
-  await expect(page.getByRole('heading', { name: fr.debrief.summary.title })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: fr.debrief.summary.title(config.playerName, true) }),
+  ).toBeVisible();
   const recapViewports = [
     { width: 1280, height: 720 },
     { width: 390, height: 844 },
@@ -339,7 +341,9 @@ for (const delivery of ['http', 'file'] as const) {
     if (delivery === 'http')
       await page.screenshot({ path: 'test-results/previews/routines-complete.png' });
     await page.getByRole('button', { name: fr.experience.review, exact: true }).click();
-    await expect(page.getByRole('heading', { name: fr.debrief.summary.title })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: fr.debrief.summary.title(config.playerName, true) }),
+    ).toBeVisible();
     if (delivery === 'http')
       await page.screenshot({ path: 'test-results/previews/recap-summary.png' });
     await openDetailedRecap(page);
