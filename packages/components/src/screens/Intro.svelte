@@ -73,8 +73,8 @@
       </div>
     </div>
   </div>
-  <footer class="shrink-0 border-t border-[var(--line)] px-5 py-4 sm:px-6">
-    <div class="reading-column">
+  <footer class="shrink-0 border-t border-[var(--line)] px-5 py-4 sm:px-7">
+    <div class="window-actions">
       <button class="button button-primary" onclick={() => dispatch({ type: 'continue' })}
         >{snapshot.mode === 'guided' ? copy.intro.guidedStart : copy.intro.start}<Icon
           name="arrow"

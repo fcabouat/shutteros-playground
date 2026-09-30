@@ -110,7 +110,7 @@
     </div>
   </div>
   <footer class="shrink-0 border-t border-[var(--line)] px-5 py-4 sm:px-7">
-    <div class="reading-column">
+    <div class="window-actions">
       <button class="button button-primary" onclick={() => dispatch({ type: 'continue' })}
         >{snapshot.mode === 'guided'
           ? copy.experience.next
