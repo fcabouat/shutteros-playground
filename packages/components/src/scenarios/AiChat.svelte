@@ -4,10 +4,12 @@
   import Icon from '../commons/Icon.svelte';
   import AiPolicy from '../commons/AiPolicy.svelte';
 
-  let { dispatch }: { dispatch: (intent: Intent) => void } = $props();
+  let { guided = false, dispatch }: { guided?: boolean; dispatch: (intent: Intent) => void } =
+    $props();
   const i18n = getI18n();
   const copy = $derived(i18n.text.ai);
-  // Interleave the drafts so position does not group them by outcome or redaction.
+  // Interleave drafts without grouping them by outcome. Both modes submit the
+  // same pair to the core, and keep the draft when the player switches modes.
   const promptOptions = [
     'confidentialAnonymised',
     'routine',
@@ -15,187 +17,272 @@
     'confidential',
     'routineAnonymised',
   ] as const satisfies readonly AiPrompt[];
-  // These are fictional draft selections, discarded with the mounted session.
-  // The core evaluates the submitted pair; this view never awards an outcome.
   let tool = $state<AiTool>('internal');
-  let connected = $state(false);
   let prompt = $state<AiPrompt | null>(null);
   const preview = $derived(prompt === null ? '' : copy[`${prompt}Prompt`]);
 </script>
 
-<section class="ai-chat" aria-label={copy.app}>
+<section class="ai-chat" class:ai-questionnaire={guided} aria-label={copy.app}>
   <header class="ai-toolbar">
-    <span class="ai-brand"><Icon name="ai" size={19} />{connected ? copy[tool] : copy.app}</span>
+    <fieldset class="ai-workspace" data-hint-target="tool">
+      <legend class="sr-only">{copy.tools}</legend>
+      <div class="ai-tools">
+        {#each ['internal', 'commercial'] as value (value)}
+          {@const id = value as AiTool}
+          <label class="ai-tool" class:chosen={tool === id}>
+            <input type="radio" name="ai-tool" value={id} bind:group={tool} />
+            <span>{copy[id]}</span>
+          </label>
+        {/each}
+      </div>
+      <p class="text-muted mt-2 text-xs">{copy[`${tool}Note`]}</p>
+    </fieldset>
     <AiPolicy hintTarget />
   </header>
-  {#if !connected}
-    <div class="ai-connect">
-      <span class="app-icon" data-app="ai"><Icon name="ai" size={26} /></span>
-      <h2 class="mt-4 text-xl font-semibold">{copy.intro}</h2>
-      <p class="text-muted mt-2 text-sm leading-relaxed">{copy.task}</p>
-      <fieldset class="mt-6" data-hint-target="tool">
-        <legend class="mb-3 text-sm font-semibold">{copy.tools}</legend>
-        <div class="ai-tools">
-          {#each ['internal', 'commercial'] as value (value)}
-            {@const id = value as AiTool}
-            <label class="ai-tool" class:chosen={tool === id}>
-              <input type="radio" name="ai-tool" value={id} bind:group={tool} />
-              <span
-                ><strong>{copy[id]}</strong><span class="text-muted mt-1 block text-xs"
-                  >{copy[`${id}Note`]}</span
-                ></span
-              >
+  <div class="ai-content">
+    {#if guided}
+      <h2 class="ai-question">{i18n.challenges.ai.question}</h2>
+    {:else}
+      <div class="ai-greeting">
+        <span class="ai-avatar"><Icon name="ai" size={22} /></span>
+        <div>
+          <p>{copy.welcome}</p>
+          <span class="ai-waiting" aria-hidden="true"><i></i><i></i><i></i></span>
+        </div>
+      </div>
+    {/if}
+    <div class="ai-composer">
+      <fieldset>
+        <legend>{copy.choosePrompt}</legend>
+        <div class="ai-prompts">
+          {#each promptOptions as id, index (id)}
+            <label class="ai-prompt" class:chosen={prompt === id} data-choice={`${tool}-${id}`}>
+              <input
+                type="radio"
+                name="ai-prompt"
+                value={id}
+                bind:group={prompt}
+                aria-label={copy[id]}
+              />
+              {#if guided}<span class="ai-choice-index" aria-hidden="true">{index + 1}</span>{/if}
+              <span>
+                <span class="ai-prompt-label">{copy[id]}</span>
+                {#if guided}<span class="ai-prompt-detail">{copy[`${id}Prompt`]}</span>{/if}
+              </span>
             </label>
           {/each}
         </div>
       </fieldset>
-      <button class="button button-primary mt-5" onclick={() => (connected = true)}
-        >{copy.connect}<Icon name="arrow" size={17} /></button
-      >
-    </div>
-  {:else}
-    <div class="ai-conversation">
-      <div class="ai-workspace">
-        <span class="text-muted text-xs">{copy[`${tool}Note`]}</span>
+      {#if !guided}
+        <div class="ai-draft">
+          <p class="text-muted mb-2 text-xs font-semibold">{copy.preview}</p>
+          <p class="ai-preview" aria-live="polite">{preview || copy.empty}</p>
+        </div>
+      {/if}
+      <div class="ai-send-row">
+        <p class="text-muted text-xs">{copy.fiction}</p>
         <button
-          data-hint-target="tool"
-          class="text-link text-xs"
-          onclick={() => (connected = false)}>{copy.switch}</button
+          class="button button-primary"
+          disabled={prompt === null}
+          onclick={() => {
+            if (prompt !== null) dispatch({ type: 'send-ai', tool, prompt });
+          }}>{guided ? copy.confirm : copy.send}<Icon name="spoof" size={17} /></button
         >
       </div>
-      <div class="ai-greeting">
-        <Icon name="ai" size={22} />
-        <p>{copy.welcome}</p>
-      </div>
-      <fieldset>
-        <legend class="mb-3 text-sm font-semibold">{copy.choosePrompt}</legend>
-        <div class="ai-prompts">
-          {#each promptOptions as id (id)}
-            <label class="ai-prompt" class:chosen={prompt === id}>
-              <input type="radio" name="ai-prompt" value={id} bind:group={prompt} />{copy[id]}
-            </label>
-          {/each}
-        </div>
-      </fieldset>
-      <div class="ai-composer">
-        <p class="text-muted mb-2 text-xs font-semibold">{copy.preview}</p>
-        <p class="ai-preview" aria-live="polite">{preview || copy.empty}</p>
-        <div class="mt-4 flex justify-end">
-          <button
-            class="button button-primary"
-            disabled={prompt === null}
-            onclick={() => {
-              if (prompt !== null) dispatch({ type: 'send-ai', tool, prompt });
-            }}>{copy.send}<Icon name="spoof" size={17} /></button
-          >
-        </div>
-      </div>
     </div>
-  {/if}
-  <footer class="ai-footer">{copy.fiction}</footer>
+  </div>
 </section>
 
 <style>
   .ai-chat {
-    background: #f8fafb;
+    background: #f1f5f7;
     color: var(--ink);
-    min-height: 440px;
-  }
-  .ai-brand,
-  .ai-workspace {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
   }
   .ai-toolbar {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
+    display: flex;
     align-items: center;
+    flex-wrap: wrap;
     gap: 0.75rem;
+    padding: 0.75rem 1.25rem;
+    justify-content: space-between;
     border-bottom: 1px solid var(--line);
-    padding: 1rem 1.25rem;
-    background: white;
+    background: #fff;
   }
-  .ai-brand {
-    font-size: 0.875rem;
-    font-weight: 650;
+  .ai-toolbar :global(.ai-policy) {
+    flex-basis: 100%;
   }
-  .ai-connect,
-  .ai-conversation {
-    max-width: 800px;
+  .ai-content {
+    width: 100%;
+    max-width: 1120px;
     margin: auto;
-    padding: 1.5rem;
+    padding: 1rem;
   }
-  .ai-connect {
-    max-width: 640px;
+  fieldset {
+    min-width: 0;
+  }
+  legend {
+    margin-bottom: 0.625rem;
+    font-size: 0.8125rem;
+    font-weight: 650;
   }
   .ai-tools,
   .ai-prompts {
-    display: grid;
-    gap: 0.625rem;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
   }
   .ai-tool,
   .ai-prompt {
     display: flex;
     align-items: center;
-    gap: 0.6rem;
+    gap: 0.5rem;
+    padding: 0.625rem 0.75rem;
     border: 1px solid #9bafb9;
-    border-radius: 0.5rem;
-    padding: 0.8rem;
+    border-radius: 0.625rem;
     background: white;
     font-size: 0.8125rem;
     cursor: pointer;
   }
-  .ai-tool.chosen,
-  .ai-prompt.chosen {
-    background: #e4f0f4;
+  .chosen {
     border-color: var(--accent);
+    background: #e4f0f4;
     box-shadow: inset 0 0 0 1px var(--accent);
   }
   input {
     accent-color: var(--accent);
     flex: none;
   }
-  .ai-workspace {
-    justify-content: space-between;
-  }
   .ai-greeting {
     display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    margin: 1.5rem 0;
+    align-items: flex-start;
+    gap: 0.875rem;
+    padding: 1rem;
+    background: white;
+    border: 1px solid var(--line);
+    border-radius: 1rem 1rem 1rem 0.25rem;
     font-size: 0.9375rem;
   }
-  .ai-composer {
-    margin-top: 1rem;
-    padding: 1.1rem;
-    border: 1px solid var(--line);
+  .ai-avatar {
+    display: inline-flex;
+    padding: 0.5rem;
     border-radius: 0.75rem;
+    background: #e4f0f4;
+    color: var(--accent);
+  }
+  .ai-waiting {
+    display: flex;
+    gap: 0.25rem;
+    margin-top: 0.75rem;
+  }
+  .ai-waiting i {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: #607786;
+    animation: ai-wait 1.5s ease-in-out 3;
+  }
+  .ai-waiting i:nth-child(2) {
+    animation-delay: 0.15s;
+  }
+  .ai-waiting i:nth-child(3) {
+    animation-delay: 0.3s;
+  }
+  @keyframes ai-wait {
+    50% {
+      opacity: 0.35;
+      transform: translateY(-2px);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .ai-waiting i {
+      animation: none;
+    }
+  }
+  .ai-composer {
+    margin-top: 0.75rem;
+    padding: 1rem;
     background: white;
-    box-shadow: 0 2px 10px #17233008;
+    border: 1px solid var(--line);
+    border-radius: 1rem;
+    box-shadow: 0 3px 12px #17233008;
+  }
+  .ai-draft {
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--line);
   }
   .ai-preview {
-    min-height: 4.5rem;
+    min-height: 4rem;
     font-size: 0.875rem;
-    line-height: 1.7;
+    line-height: 1.6;
   }
-  .ai-footer {
-    padding: 0.5rem 1rem 1rem;
-    text-align: center;
-    font-size: 0.6875rem;
+  .ai-send-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    padding-top: 1rem;
+  }
+  .ai-question {
+    margin-top: 0;
+    font-size: 1.25rem;
+    line-height: 1.4;
+    font-weight: 650;
+  }
+  .ai-questionnaire .ai-composer {
+    padding: 0;
+    background: none;
+    border: 0;
+    box-shadow: none;
+  }
+  .ai-questionnaire .ai-content {
+    max-width: 1280px;
+  }
+  .ai-questionnaire .ai-prompts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr));
+  }
+  .ai-questionnaire .ai-prompt {
+    align-items: flex-start;
+    padding: 0.875rem;
+  }
+  .ai-questionnaire input {
+    margin-top: 0.2rem;
+  }
+  .ai-questionnaire .ai-prompt-label {
+    font-weight: 650;
+  }
+  .ai-prompt-detail {
+    display: block;
+    margin-top: 0.375rem;
     color: var(--muted);
+    font-size: 0.8125rem;
+    line-height: 1.5;
+  }
+  .ai-choice-index {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 0.375rem;
+    color: white;
+    background: #386c83;
+    font-size: 0.75rem;
+  }
+  .ai-questionnaire .ai-send-row {
+    position: sticky;
+    bottom: 0;
+    padding: 0.875rem 0;
+    background: #f1f5f7;
   }
   @media (max-width: 600px) {
-    .ai-toolbar {
-      grid-template-columns: minmax(0, 1fr);
+    .ai-content {
+      padding: 1rem;
     }
-    .ai-tools,
-    .ai-prompts {
-      grid-template-columns: 1fr;
-    }
-    .ai-connect,
-    .ai-conversation {
+    .ai-composer,
+    .ai-greeting {
       padding: 1rem;
     }
   }

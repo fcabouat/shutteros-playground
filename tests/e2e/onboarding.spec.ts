@@ -190,9 +190,8 @@ test('recap distinguishes viewed hints from guided choices and survives minimisa
       await page.getByRole('button', { name: fr.experience.next, exact: true }).click();
   }
   const chat = page.locator('.ai-chat');
-  await chat.getByRole('button', { name: fr.ai.connect, exact: true }).click();
   await chat.getByRole('radio', { name: fr.ai.generic, exact: true }).check();
-  await chat.getByRole('button', { name: fr.ai.send, exact: true }).click();
+  await chat.getByRole('button', { name: fr.ai.confirm, exact: true }).click();
   await page.getByRole('button', { name: fr.experience.next, exact: true }).click();
   await page.screenshot({ path: 'test-results/previews/guided-routines.png' });
   await page

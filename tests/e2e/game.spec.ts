@@ -73,7 +73,7 @@ async function openNext(page: Page, id: string, decision = true) {
 }
 
 async function beginDecision(page: Page, id: string) {
-  const panel = page.locator('.action-dock-panel');
+  const panel = page.locator(id === 'ai' ? '.ai-questionnaire' : '.action-dock-panel');
   if (!(await panel.isVisible())) await switchToGuided(page);
   await expect(panel, `answer choices for ${id}`).toBeVisible();
 }
@@ -85,9 +85,15 @@ async function chooseFromDock(page: Page, choiceId: string) {
 async function sendSafeAiPrompt(page: Page) {
   const chat = page.locator('.ai-chat');
   await expect(chat).toBeVisible();
-  await chat.getByRole('button', { name: fr.ai.connect, exact: true }).click();
   await chat.getByRole('radio', { name: fr.ai.generic, exact: true }).check();
-  await chat.getByRole('button', { name: fr.ai.send, exact: true }).click();
+  await chat
+    .getByRole('button', {
+      name: (await chat.getAttribute('class'))?.includes('ai-questionnaire')
+        ? fr.ai.confirm
+        : fr.ai.send,
+      exact: true,
+    })
+    .click();
 }
 
 async function advance(page: Page) {
@@ -674,10 +680,10 @@ test('the AI answer panel selects a tool and one of its five full prompts', asyn
   await enter(page);
   await openNext(page, 'ai', false);
   await beginDecision(page, 'ai');
-  const panel = page.locator('.action-dock-panel');
+  const panel = page.locator('.ai-questionnaire');
   await panel.getByRole('radio', { name: fr.ai.commercial, exact: false }).check();
   await panel.locator('[data-choice="commercial-generic"] input').check();
-  await panel.getByRole('button', { name: fr.ai.send, exact: true }).click();
+  await panel.getByRole('button', { name: fr.ai.confirm, exact: true }).click();
 
   const review = page.locator('.decision-review[data-activity="ai"]');
   await expect(review.locator('[data-choice]')).toHaveCount(5);
@@ -877,7 +883,6 @@ for (const viewport of [
       await expect(panel).toHaveCount(0);
     }
     await openNext(page, 'ai', false);
-    await page.getByRole('button', { name: fr.ai.connect, exact: true }).click();
     await page.getByRole('radio', { name: fr.ai.confidential, exact: true }).check();
     const send = page.getByRole('button', { name: fr.ai.send, exact: true });
     await send.focus();

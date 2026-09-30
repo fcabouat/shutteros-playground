@@ -348,18 +348,20 @@ test('the optional quiz uses the same explicit correct and incorrect feedback as
 test('guided mode keeps an AI draft across mode switches and minimisation', async ({ page }) => {
   await enter(page);
   await open(page, 'ai');
-  await choices(page);
-  const panel = page.locator('.action-dock-panel');
+  await switchToGuided(page);
+  const panel = page.locator('.ai-questionnaire');
   await panel.getByRole('radio', { name: fr.ai.commercial, exact: false }).check();
   await panel.locator('[data-choice="commercial-generic"] input').check();
   await switchToFree(page);
   await expect(panel).toHaveCount(0);
+  await expect(page.getByRole('radio', { name: fr.ai.generic, exact: true })).toBeChecked();
+  await expect(page.getByRole('radio', { name: fr.ai.commercial, exact: true })).toBeChecked();
   await switchToGuided(page);
   await expect(panel.locator('[data-choice="commercial-generic"] input')).toBeChecked();
   await page.getByRole('button', { name: fr.os.minimize, exact: true }).click();
   await page.locator('[data-taskbar-window="core-ai"]').click();
   await expect(panel.locator('[data-choice="commercial-generic"] input')).toBeChecked();
-  await panel.getByRole('button', { name: fr.ai.send, exact: true }).click();
+  await panel.getByRole('button', { name: fr.ai.confirm, exact: true }).click();
   await expect(page.locator('.decision-review [data-choice="commercial-generic"]')).toHaveAttribute(
     'aria-current',
     'true',

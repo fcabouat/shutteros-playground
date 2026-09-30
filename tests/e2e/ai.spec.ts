@@ -34,7 +34,6 @@ for (const locale of ['fr', 'en'] as const) {
       await expect(page.getByText(copy.ai.policyRules[0], { exact: true })).toBeVisible();
       await page.getByRole('button', { name: copy.ai.policy, exact: true }).click();
       await page.getByRole('radio', { name: copy.ai.commercial, exact: false }).check();
-      await page.getByRole('button', { name: copy.ai.connect, exact: true }).click();
       await expect(page.getByRole('button', { name: copy.ai.send, exact: true })).toBeDisabled();
       await page.getByRole('radio', { name: copy.ai.routine, exact: true }).check();
       await expect(scene.locator('.ai-preview')).toHaveText(copy.ai.routinePrompt);
@@ -77,7 +76,6 @@ for (const locale of ['fr', 'en'] as const) {
       await page.getByRole('button', { name: copy.intro.start, exact: true }).click();
       await openAiFromDesktop(page);
       await expect(page.getByRole('radio', { name: copy.ai.internal, exact: false })).toBeChecked();
-      await page.getByRole('button', { name: copy.ai.connect, exact: true }).click();
       await expect(page.getByRole('button', { name: copy.ai.send, exact: true })).toBeDisabled();
       await page.getByRole('radio', { name: copy.ai.routine, exact: true }).check();
       await page.getByRole('button', { name: copy.ai.send, exact: true }).click();
@@ -103,7 +101,6 @@ for (const locale of ['fr', 'en'] as const) {
 
       await page.getByRole('button', { name: copy.feedback.continue, exact: true }).click();
       await openAiFromDesktop(page);
-      await page.getByRole('button', { name: copy.ai.connect, exact: true }).click();
       await page.getByRole('radio', { name: copy.ai.confidential, exact: true }).check();
       await expect(page.locator('[data-challenge="ai"] .ai-preview')).toHaveText(
         copy.ai.confidentialPrompt,
@@ -169,7 +166,6 @@ for (const locale of ['fr', 'en'] as const) {
         await page.getByRole('button', { name: copy.feedback.continue, exact: true }).click();
         await openAiFromDesktop(page);
         await page.getByRole('radio', { name: replay.tool, exact: false }).check();
-        await page.getByRole('button', { name: copy.ai.connect, exact: true }).click();
         await page.getByRole('radio', { name: replay.prompt, exact: true }).check();
         await page.getByRole('button', { name: copy.ai.send, exact: true }).click();
         await expect(
@@ -193,7 +189,6 @@ for (const locale of ['fr', 'en'] as const) {
         .getByRole('button', { name: copy.desktop.ai, exact: true })
         .click();
       await page.getByRole('radio', { name: copy.ai.commercial, exact: false }).check();
-      await page.getByRole('button', { name: copy.ai.connect, exact: true }).click();
       await page.getByRole('radio', { name: copy.ai.generic, exact: true }).check();
       await page.getByRole('button', { name: copy.ai.send, exact: true }).click();
       await expect(page.locator('.feedback-card[data-outcome="safe"]')).toContainText(

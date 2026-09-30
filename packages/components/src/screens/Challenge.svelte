@@ -41,6 +41,6 @@
     />
   {:else if scene.id === 'mail' || scene.id === 'spoof'}<Mail {snapshot} {config} {dispatch} />
   {:else if scene.id === 'web'}<Web {dispatch} />
-  {:else if scene.id === 'ai'}<AiChat {dispatch} />
+  {:else if scene.id === 'ai'}<AiChat guided={snapshot.mode === 'guided'} {dispatch} />
   {:else if scene.id === 'mfa'}<Mfa {dispatch} />{/if}
 </div>
