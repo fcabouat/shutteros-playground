@@ -1,6 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 import { fr } from '@shutteros/core/data/fr';
-import { beginFree } from './helpers';
+import { beginFree, switchToFree, switchToGuided } from './helpers';
 import { pathToFileURL } from 'node:url';
 import { resolve } from 'node:path';
 
@@ -21,12 +21,9 @@ async function openStart(page: Page, id: string) {
 }
 
 async function chooseFromGuidance(page: Page, choiceId: string) {
-  const choices = page.locator('.choices-trigger');
-  if (await choices.isDisabled()) {
-    await page.locator('.activity-guidance .guidance-trigger').click();
-  }
-  await choices.click();
+  await switchToGuided(page);
   await page.locator(`.action-dock-panel [data-choice="${choiceId}"]`).click();
+  await switchToFree(page);
 }
 
 for (const delivery of ['http', 'file'] as const) {

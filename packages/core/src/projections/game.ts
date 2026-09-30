@@ -122,13 +122,13 @@ export function remainingSeconds(deadline: number, now: number): number {
 }
 
 /** Contextual help advances only with active, visible time on the unresolved stage. */
-export function guidanceLevel(state: GameState): 0 | 1 | 2 {
+export function guidanceLevel(state: GameState): 0 | 1 {
   if (state.phase !== 'session' || state.scene.kind !== 'challenge') return 0;
   const guidance = state.scene.guidance;
   const activeMs =
     guidance.activeElapsedMs +
     (guidance.activeSince === null ? 0 : Math.max(0, state.now - guidance.activeSince));
-  return Math.min(2, guidance.requestedLevel + Math.floor(activeMs / guidanceDelayMs)) as 0 | 1 | 2;
+  return Math.min(1, guidance.requestedLevel + Math.floor(activeMs / guidanceDelayMs)) as 0 | 1;
 }
 
 export function loginHintVisible(state: GameState): boolean {
@@ -140,10 +140,6 @@ export function loginHintVisible(state: GameState): boolean {
     guidance.activeElapsedMs +
     (guidance.activeSince === null ? 0 : Math.max(0, state.now - guidance.activeSince));
   return activeMs >= guidanceDelayMs;
-}
-
-export function loginHelpStarted(state: GameState): boolean {
-  return state.phase === 'login' && state.loginGuidance.started;
 }
 
 export function activityIsVisible(state: GameState): boolean {

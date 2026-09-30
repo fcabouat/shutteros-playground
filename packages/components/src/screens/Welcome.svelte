@@ -66,7 +66,7 @@
         role="radiogroup"
         aria-label={copy.welcome.choose}
       >
-        {#each ['guided', 'free'] as const as mode (mode)}
+        {#each ['free', 'guided'] as const as mode (mode)}
           <label class="mode-card text-left" class:selected={snapshot.mode === mode}>
             <input
               class="mode-selection"
@@ -77,7 +77,7 @@
               onchange={() => selectMode(mode)}
             />
             <span class="mode-icon"
-              ><Icon name={mode === 'guided' ? 'sparkles' : 'cursor'} size={24} /></span
+              ><Icon name={mode === 'guided' ? 'checkbox' : 'cursor'} size={24} /></span
             >
             <strong
               >{mode === 'guided' ? copy.welcome.guided.title : copy.welcome.free.title}</strong
@@ -105,18 +105,13 @@
 
       <aside class="topbar-explainer mt-5 rounded-2xl p-4" aria-label={copy.welcome.controls.title}>
         <p class="text-sm font-semibold">{copy.welcome.controls.title}</p>
-        <div class="mt-3 grid gap-3 sm:grid-cols-2">
+        <p class="text-muted mt-2 text-xs leading-relaxed">{copy.welcome.controls.introduction}</p>
+        <div class="mt-3 grid gap-3 sm:grid-cols-3">
           {#each copy.welcome.controls.items as item, index (item.title)}
             <div class="flex gap-3">
               <span class="explainer-icon"
                 ><Icon
-                  name={index === 0
-                    ? 'sparkles'
-                    : index === 1
-                      ? 'light'
-                      : index === 2
-                        ? 'checkbox'
-                        : 'hourglass'}
+                  name={index === 0 ? 'sparkles' : index === 1 ? 'light' : 'hourglass'}
                   size={17}
                 /></span
               >

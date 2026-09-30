@@ -30,7 +30,7 @@ export function initialState(now = 0): GameState {
     generation: 0,
     now: finiteTime(now, 0),
     reason: 'initial',
-    mode: 'guided',
+    mode: 'free',
   };
 }
 
@@ -87,8 +87,6 @@ export function transition(
       return requestHint(timed);
     case 'hint-viewed':
       return recordHintViewed(timed);
-    case 'request-choices':
-      return requestHint(timed, 2);
     case 'open-usb-readme':
       return openUsbReadme(timed);
     case 'send-ai':
@@ -151,7 +149,6 @@ function transitionWelcome(
     case 'open':
     case 'request-hint':
     case 'hint-viewed':
-    case 'request-choices':
     case 'open-usb-readme':
     case 'choose':
     case 'send-ai':
@@ -192,7 +189,6 @@ function transitionLogin(
           ...state,
           now,
           failedAttempts: Math.min(3, state.failedAttempts + 1),
-          loginGuidance: beginGuidance(state.loginGuidance, now),
         };
       }
       return startSession(state, now, config, loginCategory);
@@ -204,13 +200,8 @@ function transitionLogin(
     case 'logout':
       return welcomeState(state.generation + 1, now, 'logout');
     case 'tick':
-      return { ...state, now };
     case 'activity':
-      return {
-        ...state,
-        now,
-        loginGuidance: beginGuidance(state.loginGuidance, now),
-      };
+      return { ...state, now };
     case 'activity-visible':
       return {
         ...state,
@@ -222,7 +213,7 @@ function transitionLogin(
         ...state,
         now,
         loginGuidance: {
-          ...beginGuidance(state.loginGuidance, now),
+          ...state.loginGuidance,
           requestedLevel: 1,
         },
       };
@@ -233,7 +224,6 @@ function transitionLogin(
     case 'begin':
     case 'continue':
     case 'open':
-    case 'request-choices':
     case 'open-usb-readme':
     case 'choose':
     case 'send-ai':
@@ -339,7 +329,7 @@ function openChallenge(
       scene: resumeChallenge(paused, available.now, available.activityVisible),
     };
   }
-  const scene = newChallenge(id, available.now, available.activityVisible, 0);
+  const scene = newChallenge(id, available.now, available.activityVisible);
   return { ...available, scene };
 }
 
@@ -358,11 +348,7 @@ function setSessionMode(
     mode,
     journey: { ...state.journey, modes: [...state.journey.modes, mode] },
   };
-  if (mode === 'free') return changed;
-  if (state.scene.kind === 'challenge') {
-    return { ...changed, scene: revealChoices(state.scene) };
-  }
-  if (state.scene.kind !== 'desktop') return changed;
+  if (mode === 'free' || state.scene.kind !== 'desktop') return changed;
   const next = nextUnanswered(state);
   return next === null ? completeGuided(changed) : openGuidedChallenge(changed, next);
 }
@@ -374,7 +360,7 @@ function openGuidedChallenge(
   if (state.scene.kind === 'challenge' && state.scene.id === id) {
     return {
       ...state,
-      scene: revealChoices(resumeChallenge(state.scene, state.now, state.activityVisible)),
+      scene: resumeChallenge(state.scene, state.now, state.activityVisible),
     };
   }
   const paused = state.pausedActivities[id];
@@ -382,10 +368,10 @@ function openGuidedChallenge(
     return {
       ...state,
       pausedActivities: withoutPausedActivity(state.pausedActivities, id),
-      scene: revealChoices(resumeChallenge(paused, state.now, state.activityVisible)),
+      scene: resumeChallenge(paused, state.now, state.activityVisible),
     };
   }
-  return { ...state, scene: newChallenge(id, state.now, state.activityVisible, 2) };
+  return { ...state, scene: newChallenge(id, state.now, state.activityVisible) };
 }
 
 function advanceGuided(state: Extract<GameState, { phase: 'session' }>): GameState {
@@ -399,21 +385,17 @@ function completeGuided(
   return { ...state, scene: routinesComplete(state) ? { kind: 'debrief' } : { kind: 'routines' } };
 }
 
-function requestHint(
-  state: Extract<GameState, { phase: 'session' }>,
-  target?: GuidanceLevel,
-): GameState {
+function requestHint(state: Extract<GameState, { phase: 'session' }>): GameState {
   if (state.scene.kind !== 'challenge') return state;
   const currentLevel = elapsedGuidanceLevel(state.scene.guidance, state.now);
-  if (currentLevel === 2) return state;
-  const requestedLevel = target ?? ((currentLevel + 1) as GuidanceLevel);
+  if (currentLevel === 1) return state;
   return {
     ...state,
     scene: {
       ...state.scene,
       guidance: {
         ...state.scene.guidance,
-        requestedLevel,
+        requestedLevel: 1,
         activeElapsedMs: 0,
         activeSince: state.scene.guidance.visible ? state.now : null,
       },
@@ -461,8 +443,8 @@ function choose(state: Extract<GameState, { phase: 'session' }>, choiceId: strin
         startedAt: state.now,
         step: action.nextStep,
         priorChoiceId: choiceId,
-        // Each step has its own discovery time; only the guided finale opens choices immediately.
-        guidance: freshGuidance(state.now, scene.guidance.visible, state.mode === 'guided' ? 2 : 0),
+        // Each step has its own independent hint clock. Guided choices come from the mode.
+        guidance: freshGuidance(state.now, scene.guidance.visible),
       },
     };
   }
@@ -554,7 +536,6 @@ function transitionLocked(
     case 'open':
     case 'request-hint':
     case 'hint-viewed':
-    case 'request-choices':
     case 'open-usb-readme':
     case 'send-ai':
     case 'choose':
@@ -661,7 +642,7 @@ function welcomeState(
     generation,
     now,
     reason,
-    mode: 'guided',
+    mode: 'free',
   };
 }
 
@@ -679,7 +660,7 @@ function loginState(
     mode,
     journey: { modes: [mode], hints: [] },
     failedAttempts: 0,
-    loginGuidance: freshGuidance(now, true, 0),
+    loginGuidance: freshGuidance(now, true),
   };
 }
 
@@ -705,28 +686,21 @@ function newChallenge(
   id: ChallengeId,
   now: number,
   visible: boolean,
-  requestedLevel: GuidanceLevel,
 ): Extract<Scene, { kind: 'challenge' }> {
   return {
     kind: 'challenge',
     id,
     startedAt: now,
     step: activityDefinition(id).initialStep,
-    guidance: freshGuidance(now, visible, requestedLevel),
+    guidance: freshGuidance(now, visible),
   };
 }
 
-function freshGuidance(
-  now: number,
-  visible: boolean,
-  requestedLevel: GuidanceLevel,
-  start = true,
-): GuidanceClock {
+function freshGuidance(now: number, visible: boolean): GuidanceClock {
   return {
-    requestedLevel,
-    started: start,
+    requestedLevel: 0,
     activeElapsedMs: 0,
-    activeSince: start && visible ? now : null,
+    activeSince: visible ? now : null,
     visible,
   };
 }
@@ -740,7 +714,7 @@ function activeGuidanceMs(guidance: GuidanceClock, now: number): number {
 
 function elapsedGuidanceLevel(guidance: GuidanceClock, now: number): GuidanceLevel {
   return Math.min(
-    2,
+    1,
     guidance.requestedLevel + Math.floor(activeGuidanceMs(guidance, now) / guidanceDelayMs),
   ) as GuidanceLevel;
 }
@@ -754,13 +728,8 @@ function pauseGuidance(guidance: GuidanceClock, now: number): GuidanceClock {
   };
 }
 
-function beginGuidance(guidance: GuidanceClock, now: number): GuidanceClock {
-  if (guidance.started) return guidance;
-  return { ...guidance, started: true, activeSince: guidance.visible ? now : null };
-}
-
 function resumeGuidance(guidance: GuidanceClock, now: number): GuidanceClock {
-  if (!guidance.started || !guidance.visible || guidance.activeSince !== null) return guidance;
+  if (!guidance.visible || guidance.activeSince !== null) return guidance;
   return { ...guidance, activeSince: now };
 }
 
@@ -788,15 +757,6 @@ function resumeChallenge(
     guidance: visible
       ? resumeGuidance({ ...scene.guidance, visible: true }, now)
       : { ...scene.guidance, visible: false, activeSince: null },
-  };
-}
-
-function revealChoices(
-  scene: Extract<Scene, { kind: 'challenge' }>,
-): Extract<Scene, { kind: 'challenge' }> {
-  return {
-    ...scene,
-    guidance: { ...scene.guidance, requestedLevel: 2 },
   };
 }
 

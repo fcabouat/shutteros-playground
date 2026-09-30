@@ -27,6 +27,7 @@ describe('runtime lifecycle', () => {
       },
       (snapshot) => snapshots.push(snapshot),
     );
+    runtime.dispatch({ type: 'set-mode', mode: 'guided' });
     runtime.dispatch({ type: 'begin' });
     runtime.dispatch({ type: 'answer-login', choiceId: 'manager' });
     expect(snapshots.at(-1)?.phase).toBe('session');

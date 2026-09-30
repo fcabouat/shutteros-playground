@@ -57,7 +57,7 @@ describe('loadConfiguration', () => {
           sessionDurationMs: 300_000,
           idleReminderMs: 45_000,
           eventIntervalMs: 90_000,
-          passwordManagerName: 'KeePass',
+          passwordManagerName: 'KeePassXC',
         },
       },
     );

@@ -1,8 +1,7 @@
 import { test, expect, type Page } from '@playwright/test';
 import { fr } from '@shutteros/core/data/fr';
 import { guidanceDelayMs } from '@shutteros/core/model/game';
-import { beginFree } from './helpers';
-import config from '../../static/kiosk-config.json' with { type: 'json' };
+import { beginFree, switchToFree, switchToGuided } from './helpers';
 
 async function enter(page: Page) {
   await page.goto('./');
@@ -20,16 +19,17 @@ async function open(page: Page, id: 'usb' | 'incident' | 'mail' | 'web' | 'mfa' 
 async function choices(page: Page) {
   const originalWindow = await page.locator('.window-layer .os-window').boundingBox();
   await expect(page.locator('.primary-help-slot .guidance-trigger')).toHaveText(fr.guidance.first);
-  await expect(page.locator('.choices-trigger')).toBeDisabled();
   await expect(page.locator('.hint-window-layer')).toBeHidden();
-  await page.locator('.primary-help-slot .guidance-trigger').click();
-  await expect(page.locator('.choices-trigger')).toBeEnabled();
-  expect(await page.locator('.window-layer .os-window').boundingBox()).toEqual(originalWindow);
-  await page.locator('.choices-trigger').click();
+  await switchToGuided(page);
+  const window = page.locator('.window-layer .os-window');
+  await expect(window).not.toHaveClass(/maximized/);
+  const guidedWindow = await window.boundingBox();
+  // A new sidebar may need room; changing route must not force maximization.
+  expect(guidedWindow!.width).toBeGreaterThanOrEqual(originalWindow!.width);
+  expect(guidedWindow!.x).toBeGreaterThanOrEqual(0);
+  expect(guidedWindow!.x + guidedWindow!.width).toBeLessThanOrEqual(page.viewportSize()!.width);
   await expect(page.locator('.action-dock-panel')).toBeVisible();
-  await expect(page.locator('.primary-help-slot .guidance-trigger')).toHaveText(
-    fr.guidance.restore,
-  );
+  await expect(page.locator('.hint-window-layer')).toBeHidden();
 }
 
 async function advance(page: Page) {
@@ -63,15 +63,13 @@ test('welcome is unlimited; login reveals help after two minutes without startin
   await expect(page.locator('[role="timer"]')).toHaveCount(0);
 });
 
-test('hint and choice controls independently expose guidance and selected feedback', async ({
+test('free hints and guided choices independently expose guidance and selected feedback', async ({
   page,
 }) => {
   await enter(page);
   await open(page, 'usb');
   await expect(page.locator('.action-dock-panel')).toHaveCount(0);
-  await expect(page.locator('.choices-trigger')).toBeDisabled();
   await page.getByRole('button', { name: fr.guidance.first, exact: true }).click();
-  await expect(page.locator('.choices-trigger')).toBeEnabled();
   const sidebar = (await page.locator('.file-sidebar').boundingBox())!;
   const body = (await page.locator('.window-layer .window-body').boundingBox())!;
   expect(sidebar.y + sidebar.height).toBeCloseTo(body.y + body.height, 0);
@@ -91,7 +89,6 @@ test('hint and choice controls independently expose guidance and selected feedba
   await expect(page.locator('.primary-help-slot .guidance-trigger')).toHaveText(
     fr.challenge.hideHint,
   );
-  await expect(page.locator('.choices-trigger')).toHaveText(fr.guidance.choices);
   await page
     .locator('.hint-content')
     .evaluate((element) =>
@@ -99,12 +96,9 @@ test('hint and choice controls independently expose guidance and selected feedba
     );
   await page.screenshot({ path: 'test-results/previews/usb-first-hint.png' });
   await expect(page.locator('.action-dock-panel')).toHaveCount(0);
-  await page.locator('.choices-trigger').click();
-  await expect(page.locator('.hint-window-layer')).toBeHidden();
-  await expect(page.locator('.primary-help-slot .guidance-trigger')).toHaveText(
-    fr.guidance.restore,
-  );
-  await expect(page.locator('.choices-trigger')).toHaveText(fr.guidance.close);
+  await switchToGuided(page);
+  await expect(page.locator('.hint-window-layer')).toBeVisible();
+  await expect(page.locator('.action-dock-panel')).toBeVisible();
   for (const choice of await page.locator('.action-dock-panel [data-choice]').all()) {
     await expect(choice).not.toHaveCSS('outline-color', 'rgb(237, 186, 62)');
   }
@@ -117,7 +111,7 @@ test('hint and choice controls independently expose guidance and selected feedba
   await expect(review.getByRole('button')).toHaveCount(0);
 });
 
-test('repeated clicks cannot postpone automatic help; closing and reopening preserves it', async ({
+test('free mode never opens choices automatically or through hints; switching modes preserves them', async ({
   page,
 }) => {
   await page.clock.install();
@@ -141,12 +135,27 @@ test('repeated clicks cannot postpone automatic help; closing and reopening pres
   await expect(page.locator('.primary-help-slot .guidance-trigger')).toHaveText(
     fr.challenge.hideHint,
   );
-  await page.clock.fastForward(118_000);
+  await page.clock.fastForward(10 * 60_000);
   await expect(page.locator('.action-dock-panel')).toHaveCount(0);
-  await page.locator('#usb-file-2').click();
-  await page.getByRole('button', { name: fr.usb.closePreview }).click();
-  await page.clock.fastForward(2_100);
+  await page.locator('.primary-help-slot .guidance-trigger').click();
+  await expect(page.locator('.action-dock-panel')).toHaveCount(0);
+  await switchToGuided(page);
   await expect(page.locator('.action-dock-panel')).toBeVisible();
+  const frame = await page.locator('.window-layer .os-window').boundingBox();
+  await switchToFree(page);
+  await expect(page.locator('.action-dock-panel')).toHaveCount(0);
+  await expect(page.locator('[data-challenge="usb"][data-step="choose"]')).toBeVisible();
+  const freeWindow = page.locator('.window-layer .os-window');
+  await expect(freeWindow).not.toHaveClass(/maximized/);
+  const freeFrame = (await freeWindow.boundingBox())!;
+  expect(freeFrame.width).toBeLessThanOrEqual(frame!.width);
+  await switchToGuided(page);
+  await expect(page.locator('.action-dock-panel [data-choice="station"]')).toBeVisible();
+  const restoredGuidedWindow = (await page.locator('.window-layer .os-window').boundingBox())!;
+  expect(restoredGuidedWindow.width).toBeGreaterThanOrEqual(freeFrame.width);
+  expect(restoredGuidedWindow.x + restoredGuidedWindow.width).toBeLessThanOrEqual(
+    page.viewportSize()!.width,
+  );
 });
 
 test('minimizing pauses assistance, restoring resumes it, and notifications never interrupt the activity', async ({
@@ -197,9 +206,11 @@ for (const viewport of [
     expect(panel!.x).toBeGreaterThanOrEqual(frame!.x);
     expect(panel!.x + panel!.width).toBeLessThanOrEqual(frame!.x + frame!.width);
     await expect(page.locator('.hint-window-layer')).toBeHidden();
-    await expect(page.getByRole('button', { name: fr.guidance.close, exact: true })).toBeInViewport(
-      { ratio: 1 },
-    );
+    const lastChoice = page.locator('.action-dock-panel [data-choice]').last();
+    await lastChoice.scrollIntoViewIfNeeded();
+    await expect(lastChoice).toBeInViewport({
+      ratio: 1,
+    });
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(viewport.width);
   });
 }
@@ -214,6 +225,7 @@ test('questionnaire uses the device width and respects a manually resized applic
   await expect(device).not.toHaveClass(/maximized/);
   expect((await device.boundingBox())!.width).toBeCloseTo(800, 0);
 
+  await switchToFree(page);
   await page.locator('[data-taskbar-window="web"]').click();
   await expect(page.locator('[data-challenge="web"]')).toBeVisible();
   const application = page.locator('.window-layer .os-window');
@@ -225,7 +237,11 @@ test('questionnaire uses the device width and respects a manually resized applic
   expect(resized.width).toBeCloseTo(before.width + 10, 0);
   await choices(page);
   await expect(application).not.toHaveClass(/maximized/);
-  expect((await application.boundingBox())!.width).toBeCloseTo(resized.width, 0);
+  const guidedApplication = (await application.boundingBox())!;
+  expect(guidedApplication.width).toBeGreaterThanOrEqual(resized.width);
+  expect(guidedApplication.x + guidedApplication.width).toBeLessThanOrEqual(
+    page.viewportSize()!.width,
+  );
 });
 
 test('readme opens an editor; ZIP is a risky action; direct eject has the same reviewed result', async ({
@@ -294,7 +310,7 @@ test('a routine completed from Start suppresses its later reminder and is clearl
   );
   await page
     .getByRole('button', {
-      name: fr.routines.passwordAction(config.passwordManagerName),
+      name: fr.routines.passwordAction,
       exact: true,
     })
     .click();
@@ -329,18 +345,16 @@ test('the optional quiz uses the same explicit correct and incorrect feedback as
   await expect(alternative).toContainText(fr.feedback.alternative);
 });
 
-test('the choices control moves keyboard focus and keeps an AI draft across hiding', async ({
-  page,
-}) => {
+test('guided mode keeps an AI draft across mode switches and minimisation', async ({ page }) => {
   await enter(page);
   await open(page, 'ai');
   await choices(page);
   const panel = page.locator('.action-dock-panel');
-  await expect(panel.getByRole('radio').first()).toBeFocused();
   await panel.getByRole('radio', { name: fr.ai.commercial, exact: false }).check();
   await panel.locator('[data-choice="commercial-generic"] input').check();
-  await page.getByRole('button', { name: fr.guidance.close, exact: true }).click();
-  await page.getByRole('button', { name: fr.guidance.choices, exact: true }).click();
+  await switchToFree(page);
+  await expect(panel).toHaveCount(0);
+  await switchToGuided(page);
   await expect(panel.locator('[data-choice="commercial-generic"] input')).toBeChecked();
   await page.getByRole('button', { name: fr.os.minimize, exact: true }).click();
   await page.locator('[data-taskbar-window="core-ai"]').click();
@@ -361,13 +375,14 @@ test('short landscape viewports can scroll to the guided choice and continue', a
   await answer.scrollIntoViewIfNeeded();
   await expect(answer).toBeInViewport({ ratio: 1 });
   await answer.click();
+  await switchToFree(page);
   const next = page.getByRole('button', { name: fr.feedback.continue, exact: true });
   await expect(next).toBeInViewport({ ratio: 1 });
   await next.click();
   await expect(page.locator('[data-challenge]')).toHaveCount(0);
 });
 
-test('the remaining counter opens the guide and leaves both activity controls available', async ({
+test('the remaining counter opens an activity whose hint stays independent from guided choices', async ({
   page,
 }) => {
   await enter(page);
@@ -404,7 +419,7 @@ test('the remaining counter opens the guide and leaves both activity controls av
   await page.getByRole('button', { name: fr.guidance.first, exact: true }).click();
   await expect(page.locator('.hint-content')).toBeVisible();
   await expect(page.locator('.action-dock-panel')).toHaveCount(0);
-  await page.locator('.choices-trigger').click();
+  await switchToGuided(page);
   await expect(page.locator('.action-dock-panel')).toBeVisible();
 });
 
@@ -543,7 +558,7 @@ test('guided choices keep hint visibility independent from the restored window s
   page,
 }) => {
   await enter(page);
-  await page.getByRole('button', { name: fr.experience.finish, exact: true }).first().click();
+  await switchToGuided(page);
   const frame = page.locator('.window-layer .os-window');
   await expect(frame).toHaveClass(/maximized/);
   await expect(page.locator('.action-dock-panel')).toBeVisible();
@@ -579,12 +594,13 @@ test('activity windows and mode switches preserve only the state that belongs to
   await expect(frame).not.toHaveClass(/maximized/);
   await expect(page.locator('.action-dock-panel')).toBeVisible();
 
-  await page.getByRole('button', { name: fr.experience.finish, exact: true }).first().click();
-  await expect(page.locator('.finish-experience')).toHaveText(fr.experience.free);
+  await switchToFree(page);
+  await expect(page.locator('.finish-experience')).toHaveText(fr.experience.guided);
   await expect(page.locator('[data-challenge="web"][data-step="choose"]')).toBeVisible();
   await expect(frame).not.toHaveClass(/maximized/);
-  await expect(page.locator('.action-dock-panel')).toBeVisible();
+  await expect(page.locator('.action-dock-panel')).toHaveCount(0);
 
+  await switchToGuided(page);
   await page.locator('.action-dock-panel [data-choice="known-address"]').click();
   await expect(page.locator('.learning-takeaway')).toBeVisible();
   await expect(frame).not.toHaveClass(/maximized/);
@@ -595,15 +611,14 @@ test('activity windows and mode switches preserve only the state that belongs to
   const guidedId = await guidedActivity.getAttribute('data-challenge');
   await expect(frame).toHaveClass(/maximized/);
 
-  await page.getByRole('button', { name: fr.experience.free, exact: true }).first().click();
-  await expect(page.locator('.finish-experience')).toHaveText(fr.experience.finish);
+  await switchToFree(page);
+  await expect(page.locator('.finish-experience')).toHaveText(fr.experience.guided);
   await expect(page.locator(`[data-challenge="${guidedId}"][data-step="choose"]`)).toBeVisible();
-  await expect(page.locator('.action-dock-panel')).toBeVisible();
-  await expect(page.locator('.choices-trigger')).toBeEnabled();
+  await expect(page.locator('.action-dock-panel')).toHaveCount(0);
   await expect(frame).toHaveClass(/maximized/);
 
-  await page.locator('[data-taskbar-window="mail"]').click();
-  await expect(page.locator('[data-challenge="mail"]')).toBeVisible();
-  await expect(frame).not.toHaveClass(/maximized/);
-  await expect(page.locator('.choices-trigger')).toBeDisabled();
+  await switchToGuided(page);
+  await expect(page.locator(`[data-challenge="${guidedId}"][data-step="choose"]`)).toBeVisible();
+  await expect(page.locator('.action-dock-panel')).toBeVisible();
+  await expect(frame).toHaveClass(/maximized/);
 });

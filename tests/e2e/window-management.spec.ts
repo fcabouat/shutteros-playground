@@ -1,6 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 import { fr } from '@shutteros/core/data/fr';
-import { beginFree } from './helpers';
+import { beginFree, switchToFree, switchToGuided } from './helpers';
 import AxeBuilder from '@axe-core/playwright';
 
 async function login(page: Page) {
@@ -28,36 +28,48 @@ for (const viewport of [
       fr.guidance.first,
     );
     await expect(page.locator('.primary-help-slot .guidance-trigger')).toBeDisabled();
-    await expect(page.locator('.choices-trigger')).toBeDisabled();
     await expect(page.locator('.restore-hint')).toHaveCount(0);
     const mode = page.locator('.finish-experience');
     const timer = page.getByRole('timer');
     const initialTime = await timer.getAttribute('aria-label');
     await expect(mode).toBeEnabled();
-    await expect(mode).toHaveText(fr.experience.finish);
+    await expect(mode).toHaveText(fr.experience.guided);
     await mode.click();
     await expect(page.getByRole('heading', { name: fr.intro.title })).toBeVisible();
     await expect(mode).toHaveText(fr.experience.free);
     await expect(timer).toHaveAttribute('aria-label', initialTime!);
     await mode.click();
     await expect(page.getByRole('heading', { name: fr.intro.title })).toBeVisible();
-    await expect(mode).toHaveText(fr.experience.finish);
+    await expect(mode).toHaveText(fr.experience.guided);
     await expect(timer).toHaveAttribute('aria-label', initialTime!);
     const frame = page.locator('.window-layer .os-window');
-    if (viewport.width === 1440) {
-      const initial = (await frame.boundingBox())!;
-      const workspace = (await page.locator('.os-workspace').boundingBox())!;
-      expect(initial.height).toBeLessThan(workspace.height * 0.6);
-    }
+    await expect(frame).not.toHaveClass(/maximized/);
+    const initial = (await frame.boundingBox())!;
+    const initialWorkspace = (await page.locator('.os-workspace').boundingBox())!;
+    expect(initial.width).toBeLessThanOrEqual(initialWorkspace.width);
+    expect(initial.height).toBeLessThanOrEqual(initialWorkspace.height);
     await frame.getByRole('button', { name: fr.os.maximize, exact: true }).click();
     const workspace = (await page.locator('.os-workspace').boundingBox())!;
     expect(await frame.boundingBox()).toEqual(workspace);
-    const body = (await frame.locator('.window-body').boundingBox())!;
-    const reading = (await frame.locator('.reading-column').boundingBox())!;
-    expect(reading.y + reading.height / 2).toBeCloseTo(body.y + body.height / 2, 0);
-    await expect(page.getByRole('button', { name: fr.intro.start, exact: true })).toBeInViewport({
-      ratio: 1,
-    });
+    const scroll = frame.locator('.learning-scroll');
+    const scrollFits = await scroll.evaluate(
+      (element) => element.scrollHeight <= element.clientHeight + 1,
+    );
+    if (scrollFits) {
+      const scrollBox = (await scroll.boundingBox())!;
+      const reading = (await scroll.locator('.reading-column').boundingBox())!;
+      expect(reading.y + reading.height / 2).toBeCloseTo(scrollBox.y + scrollBox.height / 2, 0);
+    } else {
+      expect(await scroll.evaluate((element) => element.scrollHeight > element.clientHeight)).toBe(
+        true,
+      );
+    }
+    await expect(
+      frame.locator('.intro-card > footer').getByRole('button', {
+        name: fr.intro.start,
+        exact: true,
+      }),
+    ).toBeInViewport({ ratio: 1 });
     await frame.getByRole('button', { name: fr.os.minimize, exact: true }).click();
     const task = page.locator('[data-taskbar-window="core-intro"]');
     await expect(task).toBeInViewport({ ratio: 1 });
@@ -115,7 +127,6 @@ test('document and hint have independent taskbar entries and retain their state'
   await expect(hintControl).toHaveText(fr.challenge.hideHint);
   await expect(hintControl).toBeEnabled();
   await expect(page.locator('.action-dock-panel')).toHaveCount(0);
-  await expect(page.locator('.choices-trigger')).toHaveText(fr.guidance.choices);
   await hint
     .locator('.hint-content')
     .evaluate((element) =>
@@ -123,14 +134,12 @@ test('document and hint have independent taskbar entries and retain their state'
     );
   await page.screenshot({ path: 'test-results/previews/floating-hint.png' });
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
-  await page.locator('.choices-trigger').click();
-  await expect(hint).toBeHidden();
-  await page.getByRole('button', { name: fr.guidance.close, exact: true }).click();
-  await hintControl.click();
+  await switchToGuided(page);
   await expect(hint).toBeVisible();
-  await page.locator('.choices-trigger').click();
-  await expect(hint).toBeHidden();
   await expect(page.locator('.action-dock-panel')).toBeVisible();
+  await switchToFree(page);
+  await expect(hint).toBeVisible();
+  await expect(page.locator('.action-dock-panel')).toHaveCount(0);
 });
 
 test('settings remain listed after minimization and a switch to another application', async ({

@@ -1,6 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 import { fr } from '@shutteros/core/data/fr';
-import { beginFree } from './helpers';
+import { beginFree, switchToGuided } from './helpers';
 import { guidanceDelayMs } from '@shutteros/core/model/game';
 
 async function enter(page: Page) {
@@ -33,15 +33,11 @@ test('desktop help draws attention after waiting without moving the click target
   await expect(help).not.toHaveClass(/help-attention/);
 });
 
-test('both automatic assistance controls receive a nudge; using each control acknowledges it', async ({
-  page,
-}) => {
+test('only the hint receives an automatic nudge in free mode', async ({ page }) => {
   await enter(page);
   await page.locator('.desktop-icon:has([data-app="usb"])').click();
   const hint = page.locator('.primary-help-slot .guidance-trigger');
-  const choices = page.locator('.choices-trigger');
   await expect(hint).not.toHaveClass(/help-attention/);
-  await expect(choices).not.toHaveClass(/help-attention/);
   await page.clock.fastForward(guidanceDelayMs + 100);
   await expect(hint).toHaveAttribute('data-attention', '1');
   await expect(hint).toHaveClass(/help-attention/);
@@ -51,14 +47,8 @@ test('both automatic assistance controls receive a nudge; using each control ack
   await expect(hint).not.toHaveClass(/help-attention/);
   await page.clock.fastForward(guidanceDelayMs + 100);
   await expect(hint).not.toHaveClass(/help-attention/);
-  await expect(choices).toHaveAttribute('data-attention', '2');
-  await expect(choices).toHaveClass(/help-attention/);
-  await expect(page.locator('.action-dock-panel')).toBeVisible();
-  await expect(hint).toHaveText(fr.guidance.restore);
-  await choices.click();
-  await page.clock.fastForward(1_100);
-  await expect(choices).not.toHaveClass(/help-attention/);
   await expect(page.locator('.action-dock-panel')).toHaveCount(0);
+  await expect(hint).toHaveText(fr.guidance.restore);
 });
 
 test('manual hints stay calm and reduced motion keeps a static attention marker', async ({
@@ -77,6 +67,6 @@ test('manual hints stay calm and reduced motion keeps a static attention marker'
   await help.click();
   await expect(help).not.toHaveClass(/help-attention/);
   await expect(help).toHaveText(fr.guidance.restore);
-  await page.locator('.choices-trigger').click();
+  await switchToGuided(page);
   await expect(page.locator('.action-dock-panel')).toBeVisible();
 });

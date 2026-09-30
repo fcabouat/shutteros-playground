@@ -6,7 +6,7 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { mkdir } from 'node:fs/promises';
 import config from '../../static/kiosk-config.json' with { type: 'json' };
-import { beginFree } from './helpers';
+import { beginFree, switchToFree, switchToGuided } from './helpers';
 
 const portable = pathToFileURL(path.resolve('dist/portable/shutteros.html')).href;
 const sessionDurationMs = config.sessionMinutes * 60_000;
@@ -74,13 +74,7 @@ async function openNext(page: Page, id: string, decision = true) {
 
 async function beginDecision(page: Page, id: string) {
   const panel = page.locator('.action-dock-panel');
-  if (!(await panel.isVisible())) {
-    const choices = page.locator('.choices-trigger');
-    if (await choices.isDisabled()) {
-      await page.locator('.activity-guidance .guidance-trigger').click();
-    }
-    await choices.click();
-  }
+  if (!(await panel.isVisible())) await switchToGuided(page);
   await expect(panel, `answer choices for ${id}`).toBeVisible();
 }
 
@@ -97,11 +91,13 @@ async function sendSafeAiPrompt(page: Page) {
 }
 
 async function advance(page: Page) {
+  const freeMode = page.getByRole('button', { name: fr.experience.free, exact: true }).first();
+  if (await freeMode.isVisible()) await switchToFree(page);
   await page.getByRole('button', { name: 'Continuer l’exploration' }).click();
 }
 
 async function advanceGuided(page: Page) {
-  await page.getByRole('button', { name: 'Passer au réflexe suivant' }).click();
+  await page.getByRole('button', { name: fr.experience.next, exact: true }).click();
 }
 
 async function expectNoAxeViolations(page: Page) {
@@ -111,7 +107,7 @@ async function expectNoAxeViolations(page: Page) {
 test('guided completion sweeps remaining situations without local timers', async ({ page }) => {
   await page.goto('./');
   await enter(page);
-  await page.getByRole('button', { name: fr.experience.finish, exact: true }).first().click();
+  await switchToGuided(page);
   await expect(page.locator('[data-challenge="usb"][data-step="choose"]')).toBeVisible();
   await expect(page.locator('.ambient-notice')).toHaveCount(0);
   const frame = page.locator('.window-layer .os-window');
@@ -138,21 +134,38 @@ test('guided completion sweeps remaining situations without local timers', async
   await advanceGuided(page);
 
   await expect(page.getByRole('heading', { name: 'Les gestes du quotidien' })).toBeVisible();
+  await expect(page.locator('[data-routine]')).toHaveCount(3);
+  await expect(page.locator('.guided-routine-instruction')).toContainText(
+    fr.routines.guidedInstruction,
+  );
+  await expect(page.locator('[data-routine="password"]')).toHaveClass(/current/);
+  await expect(page.locator('.guided-routine-next')).toHaveText(
+    fr.routines.nextStep(fr.routines.steps.password),
+  );
   await page
     .getByRole('button', {
-      name: fr.routines.passwordAction(config.passwordManagerName),
+      name: fr.routines.passwordAction,
       exact: true,
     })
     .click();
+  await expect(page.locator('[data-routine="update"]')).toHaveClass(/current/);
+  await expect(page.locator('.guided-routine-next')).toHaveText(
+    fr.routines.nextStep(fr.routines.steps.update),
+  );
   await answerKnowledge(page, 'password', 'replace-now', 'Exact.');
   await expectNoAxeViolations(page);
   await page
     .getByRole('button', { name: 'Accepter la mise à jour prévue par le Service Informatique' })
     .click();
+  await expect(page.locator('[data-routine="lock"]')).toHaveClass(/current/);
+  await expect(page.locator('.guided-routine-next')).toHaveText(
+    fr.routines.nextStep(fr.routines.steps.lock),
+  );
   await page.getByRole('button', { name: 'Verrouiller la session simulée' }).click();
   await expect(page.getByRole('button', { name: 'Reprendre la simulation' })).toBeVisible();
   await expectNoAxeViolations(page);
   await page.getByRole('button', { name: 'Reprendre la simulation' }).click();
+  await expect(page.locator('.guided-routine-next')).toHaveText(fr.routines.steps.complete);
   await page.getByRole('button', { name: 'Voir mon bilan maintenant' }).click();
   await expect(page.getByRole('heading', { name: fr.debrief.summary.title })).toBeVisible();
   const recapViewports = [
@@ -298,7 +311,7 @@ for (const delivery of ['http', 'file'] as const) {
       .locator('.window-titlebar')
       .getByRole('button', { name: fr.shell.close, exact: true })
       .click();
-    await page.getByRole('button', { name: fr.experience.finish, exact: true }).first().click();
+    await switchToGuided(page);
     await expect(
       page.getByRole('button', { name: fr.experience.review, exact: true }),
     ).toBeDisabled();
@@ -639,7 +652,7 @@ test('native browser and MFA actions remain available before the optional answer
   const panel = await page.locator('.action-dock-panel').boundingBox();
   expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(panel!.x);
   await page.screenshot({ path: 'test-results/previews/browser-actions.png' });
-  await page.getByRole('button', { name: fr.guidance.close, exact: true }).click();
+  await switchToFree(page);
   await expect(page.locator('.action-dock-panel')).toHaveCount(0);
   await openNext(page, 'mfa', false);
   await expect(page.locator('.device-shell')).toBeVisible();
@@ -860,7 +873,7 @@ for (const viewport of [
       await expect(lastChoice).toBeInViewport({ ratio: 0.99 });
       expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(viewport.width);
       await expectNoAxeViolations(page);
-      await page.getByRole('button', { name: fr.guidance.close, exact: true }).click();
+      await switchToFree(page);
       await expect(panel).toHaveCount(0);
     }
     await openNext(page, 'ai', false);

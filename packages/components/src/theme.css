@@ -983,11 +983,11 @@ button:active:not(:disabled) {
   height: 100%;
   border-radius: 0;
 }
-/* A short welcome can breathe vertically; long lessons still scroll from the top. */
+/* Intro owns its vertical centring and scrolling so its fixed action row stays visible. */
 .window-layer .os-window .intro-card {
   min-height: 100%;
   display: flex;
-  align-items: center;
+  align-items: stretch;
 }
 /* Make room for choices without changing the window's maximized state.
    Explicit user resizing still takes precedence through the frame's inline width. */
@@ -1599,13 +1599,13 @@ button:active:not(:disabled) {
 }
 .session-controls {
   display: grid;
-  grid-template-columns: minmax(540px, 640px) minmax(160px, 200px) auto;
+  grid-template-columns: minmax(360px, 440px) minmax(210px, 240px) auto;
   align-items: center;
   gap: var(--shell-gap);
 }
 .session-help {
   display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, 0.9fr);
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
   align-items: center;
   gap: 8px;
 }

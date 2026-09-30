@@ -16,7 +16,7 @@ export type LoginChoiceId = 'manager' | 'note' | 'file';
 export type Journey = {
   /** Chronological modes selected after entering the experience. */
   modes: readonly PlayMode[];
-  /** Help actually shown, once per unresolved context. */
+  /** Help actually shown, once per context, including a first view during replay. */
   hints: readonly string[];
 };
 
@@ -65,15 +65,14 @@ export function challengeChoiceIds(id: ChallengeId, step: DecisionStep): readonl
   return Object.keys(activityDefinitions[id].steps[step].actions);
 }
 
-export type GuidanceLevel = 0 | 1 | 2;
+export type GuidanceLevel = 0 | 1;
 
-/** Each unresolved help level advances after two minutes of active, visible time. */
+/** The unresolved context reveals its single hint after two minutes of active, visible time. */
 export const guidanceDelayMs = 120_000;
 
 export type GuidanceClock = {
-  /** Highest level explicitly requested; elapsed active time may reveal more. */
+  /** Whether the single hint was explicitly requested; elapsed active time may also reveal it. */
   requestedLevel: GuidanceLevel;
-  started: boolean;
   activeElapsedMs: number;
   activeSince: number | null;
   visible: boolean;
@@ -178,7 +177,6 @@ export type Intent =
   | { type: 'open'; id: ChallengeId }
   | { type: 'request-hint' }
   | { type: 'hint-viewed' }
-  | { type: 'request-choices' }
   | { type: 'open-usb-readme' }
   | { type: 'choose'; choiceId: string }
   | { type: 'send-ai'; tool: AiTool; prompt: AiPrompt }

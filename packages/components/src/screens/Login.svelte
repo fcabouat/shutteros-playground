@@ -119,10 +119,7 @@
                 onclick={() =>
                   dispatch({ type: 'answer-login', choiceId: choice.id as LoginChoiceId })}
               >
-                <span>{choice.label(config.passwordManagerName)}</span><Icon
-                  name="arrow"
-                  size={17}
-                />
+                <span>{choice.label}</span><Icon name="arrow" size={17} />
               </button>
             {/each}
           </fieldset>

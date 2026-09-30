@@ -8,16 +8,16 @@ export const fr = {
       `Vous incarnez ${name}. Une clé USB retrouvée, des messages inattendus et la protection du poste vous attendent dans un bureau simulé.`,
     choose: 'Choisir un parcours',
     guided: {
-      title: 'Guidé',
-      description: 'Des QCM enchaînés, dans un ordre simple.',
-      detail: 'Idéal pour une première découverte.',
+      title: 'Parcours en douceur',
+      description: 'Avancez avec des QCM présentés dans un ordre simple.',
+      detail: 'Le jeu vous conduit d’une activité à la suivante.',
     },
     free: {
-      title: 'Libre',
-      description: 'Explorez le bureau, agissez et demandez des indices.',
-      detail: 'Vous choisissez votre chemin.',
+      title: 'Petit défi',
+      description: 'Explorez librement le bureau, agissez et demandez des indices.',
+      detail: 'À vous de repérer les situations.',
     },
-    begin: 'Commencer l’exercice',
+    begin: 'Commencer le parcours',
     duration: 'Durée habituelle : 10 à 20 min',
     expired: 'Le temps de la session est écoulé. Les réponses locales ont été effacées.',
     loggedOut: 'La partie précédente et ses réponses locales ont été effacées.',
@@ -28,7 +28,9 @@ export const fr = {
       protection: 'Protéger mon poste · vert : appliquer les gestes de protection courants.',
     },
     controls: {
-      title: 'La barre de jeu restera avec vous',
+      title: 'La barre de jeu, en haut de l’écran',
+      introduction:
+        'Elle reste accessible pendant tout le parcours. Passez du mode libre au mode guidé à tout moment, sans perdre votre progression.',
       progress: 'Progression',
       waiting: 'En attente',
       items: [
@@ -37,20 +39,18 @@ export const fr = {
           title: 'Indice',
           detail: 'affiche une piste liée à ce qui est visible, proposée aussi après 2 min.',
         },
-        { title: 'Choix', detail: 'ouvre les réponses quand elles sont disponibles.' },
         {
-          title: 'Parcours et sablier',
-          detail: 'permet de changer de mode ; le décompte commence seulement après la connexion.',
+          title: 'Sablier',
+          detail: 'le décompte commence seulement après la connexion.',
         },
       ],
     },
   },
   experience: {
-    free: 'Parcours libre',
-    guided: 'Parcours guidé',
+    free: 'Mode libre (exploration)',
+    guided: 'Mode guidé (QCM)',
     freeHint: 'Choisissez vous-même les activités. Votre progression est conservée.',
-    finish: 'Parcours guidé',
-    next: 'Passer au réflexe suivant',
+    next: 'Passer à l’activité suivante',
     finishHint:
       'Un parcours court reprend seulement ce qu’il reste à découvrir. Le sablier actuel continue.',
     explore: 'Observez, ouvrez les détails, essayez. Vous pouvez aussi revenir au bureau.',
@@ -65,11 +65,20 @@ export const fr = {
     updates: 'Mises à jour',
     title: 'Les gestes du quotidien',
     subtitle: 'Trois habitudes, dans les outils habituels de votre organisation.',
+    guidedInstruction:
+      'Pour continuer, effectuez ces trois gestes. Cliquez sur les boutons de chaque carte ; pour le verrouillage, reprenez ensuite la simulation.',
+    nextStep: (step: string) => `Prochain geste : ${step}`,
+    steps: {
+      password: 'créer un secret unique',
+      update: 'planifier la mise à jour',
+      lock: 'verrouiller puis reprendre la simulation',
+      complete: 'Les trois gestes sont terminés.',
+    },
     account: 'Mon compte',
     password: 'Renouvellement demandé par le Service Informatique',
     passwordBody:
       'Le centre de compte habituel demande un nouveau mot de passe. Une demande dans un mail inattendu ? Retrouvez vous-même le portail connu, sans suivre son lien.',
-    passwordAction: (manager: string) => `Créer un secret unique avec ${manager}`,
+    passwordAction: 'Créer un secret unique avec le gestionnaire approuvé',
     passwordDone: 'Renouvellement simulé effectué.',
     passwordEmphasis: 'Un secret long et unique par compte',
     passwordLesson:
@@ -147,15 +156,9 @@ export const fr = {
     guidedQuestion:
       'Où conserveriez-vous ce mot de passe pour éviter qu’il soit accessible à quelqu’un d’autre ?',
     guidedChoices: [
-      { id: 'manager', label: (manager: string) => `Dans le gestionnaire approuvé : ${manager}` },
-      {
-        id: 'note',
-        label: (manager: string) => `Sur une note sous le clavier, plutôt que dans ${manager}`,
-      },
-      {
-        id: 'file',
-        label: (manager: string) => `Dans un fichier sur le poste, plutôt que dans ${manager}`,
-      },
+      { id: 'manager', label: 'Dans un gestionnaire de mots de passe approuvé' },
+      { id: 'note', label: 'Sur une note sous le clavier' },
+      { id: 'file', label: 'Dans un fichier texte sur le poste' },
     ],
     guidedHelper:
       'Cherchez un endroit qui limite l’accès au secret et qui soit prévu par votre organisation.',
@@ -181,7 +184,7 @@ export const fr = {
     nextPlayer: 'Passer au joueur suivant',
     guide: 'Un coup de pouce',
     close: 'Fermer',
-    finish: 'Parcours guidé',
+    finish: 'Mode guidé (QCM)',
     resume: 'Retour au bureau',
     connected: 'Réseau connecté',
     isolated: 'Réseau isolé',
@@ -200,7 +203,7 @@ export const fr = {
     guidedRiskTitle: 'Ce secret resterait trop accessible.',
     guidedTitle: 'Vous avez identifié un meilleur endroit.',
     guidedSafe: (manager: string) =>
-      `${manager} est prévu pour conserver des secrets de façon protégée. Ce choix ne déverrouille pas réellement un poste : suivez le moyen d’authentification prévu par votre organisation.`,
+      `Un mot de passe long et unique peut être conservé dans le gestionnaire approuvé par votre organisation, ici ${manager}.`,
     guidedRiskNote: (manager: string) =>
       `Une note cachée reste lisible par une personne présente. Le gestionnaire approuvé, ${manager}, est conçu pour limiter cet accès.`,
     guidedRiskFile: (manager: string) =>
@@ -208,6 +211,12 @@ export const fr = {
     guidedTransition:
       'La réponse n’empêche pas de continuer : vous allez maintenant accéder au bureau simulé et mettre d’autres réflexes en pratique.',
     start: 'Explorer le bureau',
+    guidedStart: 'Passer à l’activité suivante',
+    managerUnlock: (manager: string) =>
+      `${manager} sert à conserver les mots de passe ; il ne remplace pas le moyen prévu par votre organisation pour déverrouiller le poste.`,
+    keepassxcCertification: 'Une version de KeePassXC a été certifiée par l’ANSSI.',
+    keepassdx:
+      'Pour un usage personnel sur Android, KeePassDX est une option possible. Pour un usage professionnel, suivez toujours la politique de votre organisation.',
   },
   ai: {
     app: 'Assistant IA',
@@ -396,8 +405,6 @@ export const fr = {
     minimize: 'Réduire l’indice',
     restore: 'Revoir l’indice',
     first: 'Un indice ?',
-    choices: 'Voir les choix',
-    close: 'Réduire les choix',
     families: {
       vigilance: 'Vigilance',
       protection: 'Protéger mon poste',

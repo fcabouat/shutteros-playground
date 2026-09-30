@@ -10,7 +10,6 @@
     hintVisible = false,
     hintSeen = false,
     hintDisabled = true,
-    choicesDisabled = true,
   }: {
     mode: PlayMode;
     onMode?: () => void;
@@ -18,7 +17,6 @@
     hintVisible?: boolean;
     hintSeen?: boolean;
     hintDisabled?: boolean;
-    choicesDisabled?: boolean;
   } = $props();
   const i18n = getI18n();
   const copy = $derived(i18n.text);
@@ -43,9 +41,6 @@
             ? copy.guidance.restore
             : copy.guidance.first}</span
       >
-    </button>
-    <button class="guidance-trigger choices-trigger" disabled={choicesDisabled}>
-      <Icon name="checkbox" size={20} /><span>{copy.guidance.choices}</span>
     </button>
   </div>
   <div class="session-finish">
