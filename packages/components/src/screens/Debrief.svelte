@@ -251,7 +251,7 @@
     <footer class="border-t border-[var(--line)] px-5 py-4 sm:px-7">
       <div class="debrief-footer">
         <div class="flex flex-wrap items-end justify-between gap-4">
-          <div class="min-w-0 flex-1">
+          <div class="debrief-footer-copy min-w-0 flex-1">
             <p class="font-semibold">{copy.debrief.thankYou}</p>
             <p class="text-muted mt-1 text-xs">{copy.debrief.privacy}</p>
             <p class="text-muted mt-1 text-xs leading-relaxed">{copy.debrief.source}</p>
@@ -503,9 +503,7 @@
     footer {
       padding-block: 0.75rem;
     }
-    footer :global(.font-semibold),
-    footer :global(.mt-1),
-    footer > div > p {
+    .debrief-footer-copy > p {
       display: none;
     }
   }
@@ -534,9 +532,7 @@
     }
     .debrief-heading > div > p,
     .summary-description,
-    footer :global(.font-semibold),
-    footer :global(.mt-1),
-    footer > div > p {
+    .debrief-footer-copy > p {
       display: none;
     }
     .summary-celebration {
