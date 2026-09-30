@@ -121,8 +121,8 @@
         </div>
       </div>
     </div>
-    <footer class="border-t border-[var(--line)] px-5 py-5 sm:px-7">
-      <div class="reading-column wide flex flex-wrap items-center justify-end gap-4">
+    <footer class="border-t border-[var(--line)] px-5 py-4 sm:px-7">
+      <div class="window-actions">
         <button class="button button-primary" onclick={() => void showDetailed(true)}>
           {copy.debrief.summary.detailed}<Icon name="arrow" size={17} />
         </button>
@@ -248,14 +248,15 @@
         </div>
       </div>
     </div>
-    <footer class="border-t border-[var(--line)] px-5 py-5 sm:px-7">
-      <div class="reading-column wide">
-        <div class="flex flex-wrap items-center justify-between gap-4">
-          <div>
+    <footer class="border-t border-[var(--line)] px-5 py-4 sm:px-7">
+      <div class="debrief-footer">
+        <div class="flex flex-wrap items-end justify-between gap-4">
+          <div class="min-w-0 flex-1">
             <p class="font-semibold">{copy.debrief.thankYou}</p>
             <p class="text-muted mt-1 text-xs">{copy.debrief.privacy}</p>
+            <p class="text-muted mt-1 text-xs leading-relaxed">{copy.debrief.source}</p>
           </div>
-          <div class="flex flex-wrap gap-3">
+          <div class="window-actions debrief-actions">
             <button class="button button-soft" onclick={() => dispatch({ type: 'close' })}
               >{copy.shell.resume}</button
             ><button class="button button-primary" onclick={() => dispatch({ type: 'logout' })}
@@ -263,13 +264,15 @@
             >
           </div>
         </div>
-        <p class="text-muted mt-5 text-xs leading-relaxed">{copy.debrief.source}</p>
       </div>
     </footer>
   </section>
 {/if}
 
 <style>
+  .debrief-actions {
+    margin-left: auto;
+  }
   :global(.os-window:has(.debrief-view)) {
     height: 100%;
   }
@@ -480,9 +483,6 @@
     background: #788b99;
     border: 2px solid #edf1f4;
     border-radius: 8px;
-  }
-  footer :global(.mt-5) {
-    margin-top: 0.5rem;
   }
   @media (max-width: 1023px) {
     .debrief-columns {

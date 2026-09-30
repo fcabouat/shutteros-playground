@@ -1107,6 +1107,14 @@ button:active:not(:disabled) {
 .device-shell .mfa-notch {
   background: #152c40;
 }
+/* Progression keeps the same trailing alignment across learning screens. */
+.window-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
 .reading-column {
   width: 100%;
   max-width: 850px;
