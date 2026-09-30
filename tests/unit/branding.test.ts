@@ -4,7 +4,7 @@ import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const execFileAsync = promisify(execFile);
 const script = fileURLToPath(new URL('../../scripts/prepare-branding.mjs', import.meta.url));
@@ -22,6 +22,28 @@ async function runBranding(branding: unknown, logo = true) {
 }
 
 describe('private branding preparation', () => {
+  beforeEach(() => vi.stubEnv('SHUTTEROS_PUBLIC_BUILD', '0'));
+  afterEach(() => vi.unstubAllEnvs());
+
+  it('verifies the public identity without reading or changing private configuration', async () => {
+    const fixture = await runBranding({ applicationName: 'Private identity' });
+    const input = resolve(fixture.root, 'private/branding.json');
+    // Even an invalid local configuration must not affect a public verification.
+    await writeFile(input, '{invalid private json');
+    vi.stubEnv('SHUTTEROS_PUBLIC_BUILD', '1');
+    try {
+      await execFileAsync(process.execPath, [
+        resolve(fixture.root, 'scripts/prepare-branding.mjs'),
+      ]);
+      const generated = await readFile(fixture.output, 'utf8');
+      expect(generated).toContain('"applicationName":"ShutterOS"');
+      expect(generated).not.toContain('organizationName');
+      expect(await readFile(input, 'utf8')).toBe('{invalid private json');
+    } finally {
+      await rm(fixture.root, { recursive: true, force: true });
+    }
+  });
+
   it('embeds a private PNG and keeps organisation and application names distinct', async () => {
     const fixture = await runBranding({
       applicationName: 'ShutterOS',

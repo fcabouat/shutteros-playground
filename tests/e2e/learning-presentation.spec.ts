@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { fr } from '@shutteros/core/data/fr';
+import { beginFree } from './helpers';
 import { en } from '@shutteros/core/data/en';
 import AxeBuilder from '@axe-core/playwright';
 
@@ -9,6 +10,7 @@ for (const [locale, copy] of [
 ] as const) {
   test(`learning highlights and stable disabled help in ${locale}`, async ({ page }) => {
     await page.goto(`./?lang=${locale}`);
+    await beginFree(page, locale);
     await page.getByLabel(copy.login.password, { exact: true }).fill('password');
     await page.getByRole('button', { name: copy.login.enter, exact: true }).click();
     await expect(page.locator('.intro-card mark')).toHaveText(copy.intro.principleEmphasis);
@@ -29,6 +31,7 @@ for (const [locale, copy] of [
 test('visual cues shine once without shifting and respect reduced motion', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   await page.goto('./');
+  await beginFree(page);
   await page.getByLabel(fr.login.password, { exact: true }).fill('password');
   await page.getByRole('button', { name: fr.login.enter, exact: true }).click();
   const mark = page.locator('.intro-card mark');

@@ -1,5 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 import { fr } from '@shutteros/core/data/fr';
+import { beginFree, switchToFree, switchToGuided } from './helpers';
 import { pathToFileURL } from 'node:url';
 import { resolve } from 'node:path';
 
@@ -7,6 +8,7 @@ const portable = pathToFileURL(resolve('dist/portable/shutteros.html')).href;
 
 async function enter(page: Page, delivery: 'http' | 'file') {
   await page.goto(delivery === 'http' ? './' : portable);
+  await beginFree(page);
   await page.getByLabel(fr.login.password, { exact: true }).fill('password');
   await page.getByRole('button', { name: fr.login.enter, exact: true }).click();
   await page.getByRole('button', { name: fr.intro.start, exact: true }).click();
@@ -19,12 +21,9 @@ async function openStart(page: Page, id: string) {
 }
 
 async function chooseFromGuidance(page: Page, choiceId: string) {
-  const choices = page.locator('.choices-trigger');
-  if (await choices.isDisabled()) {
-    await page.locator('.activity-guidance .guidance-trigger').click();
-  }
-  await choices.click();
+  await switchToGuided(page);
   await page.locator(`.action-dock-panel [data-choice="${choiceId}"]`).click();
+  await switchToFree(page);
 }
 
 for (const delivery of ['http', 'file'] as const) {

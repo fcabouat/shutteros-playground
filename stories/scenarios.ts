@@ -11,13 +11,27 @@ export const config: GameConfig = {
   caseSensitivePasswords: false,
   showPasswordHint: true,
   playerName: 'Camille Martin',
+  passwordManagerName: 'KeePassXC',
   supportLabel: 'Équipes de sécurité informatique (SSI)',
   supportContact: 'Annuaire interne · contact SSI',
   stationLabel: 'Station blanche',
   mailLegitimateAddress: 'alex.martin@organisation.example',
   mailImpersonatorAddress: 'planning@services-personnel.danger.com',
 };
-export const login = initialState(0);
+export const welcome = initialState(0);
+export const guidedLogin = transition(
+  transition(welcome, { type: 'set-mode', mode: 'guided' }, 0, config),
+  { type: 'begin' },
+  0,
+  config,
+);
+export const guidedIntro = transition(
+  guidedLogin,
+  { type: 'answer-login', choiceId: 'manager' },
+  0,
+  config,
+);
+export const login = transition(welcome, { type: 'begin' }, 0, config);
 function play(intents: Intent[]): GameState {
   return intents.reduce((snapshot, intent) => transition(snapshot, intent, 0, config), login);
 }

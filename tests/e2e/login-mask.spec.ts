@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { en } from '@shutteros/core/data/en';
 import { fr } from '@shutteros/core/data/fr';
+import { beginFree } from './helpers';
 
 for (const locale of ['fr', 'en'] as const) {
   const catalog = locale === 'fr' ? fr : en;
@@ -12,6 +13,7 @@ for (const locale of ['fr', 'en'] as const) {
 
   test(`login phrase masking keeps its value in ${locale}`, async ({ page }) => {
     await page.goto(`./?lang=${locale}`);
+    await beginFree(page, locale);
     const input = page.getByLabel(copy.password, { exact: true });
     const show = page.getByRole('button', { name: copy.show, exact: true });
     const hide = page.getByRole('button', { name: copy.hide, exact: true });
@@ -37,6 +39,7 @@ for (const locale of ['fr', 'en'] as const) {
 
   test(`login phrase resets masking after Enter submission in ${locale}`, async ({ page }) => {
     await page.goto(`./?lang=${locale}`);
+    await beginFree(page, locale);
     const input = page.getByLabel(copy.password, { exact: true });
     await input.fill('wrong phrase');
     await page.getByRole('button', { name: copy.show, exact: true }).click();
@@ -52,6 +55,28 @@ for (const locale of ['fr', 'en'] as const) {
       page.getByRole('heading', { name: catalog.intro.title, exact: true }),
     ).toBeVisible();
   });
+
+  test(`login hint can be hidden and restored in ${locale}`, async ({ page }) => {
+    await page.goto(`./?lang=${locale}`);
+    await beginFree(page, locale);
+
+    const first = page.getByRole('button', { name: catalog.guidance.first, exact: true });
+    const hide = page.getByRole('button', { name: catalog.challenge.hideHint, exact: true });
+    const restore = page.getByRole('button', { name: catalog.guidance.restore, exact: true });
+    const help = page.getByText(catalog.login.helper, { exact: true });
+
+    await first.click();
+    await expect(help).toBeVisible();
+    await expect(hide).toBeVisible();
+
+    await hide.click();
+    await expect(help).toBeHidden();
+    await expect(restore).toBeVisible();
+
+    await restore.click();
+    await expect(help).toBeVisible();
+    await expect(hide).toBeVisible();
+  });
 }
 
 test('login masking falls back to a password input when text security is unavailable', async ({
@@ -61,6 +86,7 @@ test('login masking falls back to a password input when text security is unavail
     Object.defineProperty(CSS, 'supports', { value: () => false, configurable: true });
   });
   await page.goto('./?lang=en');
+  await beginFree(page, 'en');
   const input = page.getByLabel('Password', { exact: true });
   await expect(input).toHaveAttribute('type', 'password');
   await page.getByRole('button', { name: 'Show password', exact: true }).click();

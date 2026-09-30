@@ -14,6 +14,12 @@ const baseline = JSON.parse(
 const validator = fileURLToPath(new URL('../validate-config.py', import.meta.url));
 const cases = [
   baseline,
+  { ...baseline, passwordManagerName: 'Coffre de mon organisation' },
+  { ...baseline, passwordManagerName: '' },
+  { ...baseline, passwordManagerName: ' \t ' },
+  { ...baseline, passwordManagerName: 'x'.repeat(81) },
+  { ...baseline, passwordManagerName: null },
+  { ...baseline, passwordManagerName: 42 },
   { ...baseline, partnerOrganizationName: 'Partner', partnerOrganizationLogo: 'logo-partner.svg' },
   { ...baseline, partnerOrganizationName: '' },
   { ...baseline, partnerOrganizationName: 'x'.repeat(81) },

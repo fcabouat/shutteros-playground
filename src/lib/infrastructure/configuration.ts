@@ -39,6 +39,7 @@ export function configure(value: unknown): ConfigurationResult {
       partnerOrganizationName: dto.partnerOrganizationName,
       partnerOrganizationLogo: dto.partnerOrganizationLogo,
       playerName: dto.playerName,
+      passwordManagerName: dto.passwordManagerName ?? 'KeePassXC',
       supportLabel: dto.supportLabel,
       supportContact: dto.supportContact,
       stationLabel: dto.stationLabel,

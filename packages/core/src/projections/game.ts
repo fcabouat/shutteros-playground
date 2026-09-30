@@ -1,10 +1,12 @@
 import type { GameConfig } from '../model/configuration';
 import {
+  challengeHintContexts,
   challengeOrder,
   guidanceDelayMs,
   type ChallengeId,
   type ChallengeResult,
   type GameState,
+  type PlayMode,
   type ResultAssessment,
 } from '../model/game';
 
@@ -83,36 +85,105 @@ export function assessedCount(state: GameState): number {
   return state.results.length;
 }
 
+/** First-result choices where reporting is the expected response in the activity. */
+const reportingChoices: Partial<Record<ChallengeId, string>> = {
+  incident: 'notify',
+  mail: 'report',
+  spoof: 'report',
+  mfa: 'deny-report',
+};
+
+/** Facts used by the recap; hints stay descriptive and never reduce result scores. */
+export function debriefStats(state: GameState): {
+  activitiesCompleted: number;
+  activitiesTotal: number;
+  dailyHabitsCompleted: number;
+  dailyHabitsTotal: number;
+  reportsMade: number;
+  reportsEligible: number;
+  workstationProtected: boolean;
+} {
+  if (state.phase !== 'session') {
+    return {
+      activitiesCompleted: 0,
+      activitiesTotal: challengeOrder.length,
+      dailyHabitsCompleted: 0,
+      dailyHabitsTotal: 3,
+      reportsMade: 0,
+      reportsEligible: 0,
+      workstationProtected: false,
+    };
+  }
+  const dailyHabitsCompleted = [
+    state.routines.password === 'done',
+    state.routines.update === 'scheduled',
+    state.routines.lockPracticed,
+  ].filter(Boolean).length;
+  return {
+    activitiesCompleted: state.results.length,
+    activitiesTotal: challengeOrder.length,
+    dailyHabitsCompleted,
+    dailyHabitsTotal: 3,
+    reportsMade: state.results.filter((result) => reportingChoices[result.id] === result.choiceId)
+      .length,
+    reportsEligible: Object.keys(reportingChoices).length,
+    workstationProtected: dailyHabitsCompleted === 3,
+  };
+}
+
 export function remainingSeconds(deadline: number, now: number): number {
   return Math.max(0, Math.ceil((deadline - now) / 1000));
 }
 
 /** Contextual help advances only with active, visible time on the unresolved stage. */
-export function guidanceLevel(state: GameState): 0 | 1 | 2 {
+export function guidanceLevel(state: GameState): 0 | 1 {
   if (state.phase !== 'session' || state.scene.kind !== 'challenge') return 0;
   const guidance = state.scene.guidance;
   const activeMs =
     guidance.activeElapsedMs +
     (guidance.activeSince === null ? 0 : Math.max(0, state.now - guidance.activeSince));
-  return Math.min(2, guidance.requestedLevel + Math.floor(activeMs / guidanceDelayMs)) as 0 | 1 | 2;
+  return Math.min(1, guidance.requestedLevel + Math.floor(activeMs / guidanceDelayMs)) as 0 | 1;
 }
 
 export function loginHintVisible(state: GameState): boolean {
   if (state.phase !== 'login') return false;
   if (state.failedAttempts >= 3) return true;
   const guidance = state.loginGuidance;
+  if (guidance.requestedLevel > 0) return true;
   const activeMs =
     guidance.activeElapsedMs +
     (guidance.activeSince === null ? 0 : Math.max(0, state.now - guidance.activeSince));
   return activeMs >= guidanceDelayMs;
 }
 
-export function loginHelpStarted(state: GameState): boolean {
-  return state.phase === 'login' && state.loginGuidance.started;
+export function activityIsVisible(state: GameState): boolean {
+  return state.phase === 'session'
+    ? state.activityVisible
+    : state.phase === 'login'
+      ? state.loginGuidance.visible
+      : true;
 }
 
-export function activityIsVisible(state: GameState): boolean {
-  return state.phase === 'session' ? state.activityVisible : state.loginGuidance.visible;
+export function journeySummary(state: GameState): {
+  mode: PlayMode | 'mixed';
+  modes: readonly PlayMode[];
+  hints: readonly string[];
+  hintCount: number;
+  challengeHintCount: number;
+  challengeHintTotal: number;
+} | null {
+  if (state.phase === 'welcome') return null;
+  const distinctModes = new Set(state.journey.modes);
+  return {
+    mode: distinctModes.size > 1 ? 'mixed' : (state.journey.modes[0] ?? state.mode),
+    modes: state.journey.modes,
+    hints: state.journey.hints,
+    hintCount: state.journey.hints.length,
+    challengeHintCount: state.journey.hints.filter((hint) =>
+      challengeHintContexts.includes(hint as (typeof challengeHintContexts)[number]),
+    ).length,
+    challengeHintTotal: challengeHintContexts.length,
+  };
 }
 
 export function idleReminderVisible(

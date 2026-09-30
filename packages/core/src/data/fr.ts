@@ -1,11 +1,55 @@
 export const fr = {
   product: 'ShutterOS',
   organizationPlaceholder: 'Votre organisation',
+  welcome: {
+    eyebrow: 'ENTRAÎNEMENT CYBERSÉCURITÉ',
+    title: 'Une journée de travail. Des choix qui comptent.',
+    description: (name: string) =>
+      `Vous incarnez ${name}, agente dans un service public. La journée commence : des messages à traiter, une réunion à préparer… et une clé USB retrouvée près du bureau. Au fil des demandes et des imprévus, à vous de décider à quoi faire confiance, quand demander de l’aide et comment protéger votre poste et les informations du service.`,
+    choose: 'Choisir un parcours',
+    guided: {
+      title: 'Parcours en douceur',
+      description: 'Avancez avec des QCM présentés dans un ordre simple.',
+      detail: 'Le jeu vous conduit d’une activité à la suivante.',
+    },
+    free: {
+      title: 'Petit défi',
+      description: 'Explorez librement le bureau, agissez et demandez des indices.',
+      detail: 'À vous de repérer les situations.',
+    },
+    begin: 'Commencer le parcours',
+    duration: 'Durée habituelle : 10 à 20 min',
+    expired: 'Le temps de la session est écoulé. Les réponses locales ont été effacées.',
+    reset: (minutes: number) =>
+      `Après la connexion, un sablier de ${minutes} min réinitialise la session. Vos réponses ne sont ni enregistrées ni envoyées et disparaissent en fin de partie. Le bilan n’est pas conservé.`,
+    families: {
+      vigilance: 'Vigilance · orange : repérer et traiter les situations inhabituelles.',
+      protection: 'Protéger mon poste · vert : appliquer les gestes de protection courants.',
+    },
+    controls: {
+      title: 'La barre de jeu, en haut de l’écran',
+      introduction:
+        'Elle reste accessible pendant tout le parcours. Passez du mode libre au mode guidé à tout moment, sans perdre votre progression.',
+      progress: 'Progression',
+      waiting: 'En attente',
+      items: [
+        { title: 'Progression', detail: 'vous guide vers une situation encore à découvrir.' },
+        {
+          title: 'Indice',
+          detail: 'affiche une piste liée à ce qui est visible, proposée aussi après 2 min.',
+        },
+        {
+          title: 'Sablier',
+          detail: 'le décompte commence seulement après la connexion.',
+        },
+      ],
+    },
+  },
   experience: {
-    free: 'Parcours libre',
+    free: 'Mode libre (exploration)',
+    guided: 'Mode guidé (QCM)',
     freeHint: 'Choisissez vous-même les activités. Votre progression est conservée.',
-    finish: 'Parcours guidé',
-    next: 'Passer au réflexe suivant',
+    next: 'Passer à l’activité suivante',
     finishHint:
       'Un parcours court reprend seulement ce qu’il reste à découvrir. Le sablier actuel continue.',
     explore: 'Observez, ouvrez les détails, essayez. Vous pouvez aussi revenir au bureau.',
@@ -20,6 +64,15 @@ export const fr = {
     updates: 'Mises à jour',
     title: 'Les gestes du quotidien',
     subtitle: 'Trois habitudes, dans les outils habituels de votre organisation.',
+    guidedInstruction:
+      'Pour continuer, effectuez ces trois gestes. Cliquez sur les boutons de chaque carte ; pour le verrouillage, reprenez ensuite la simulation.',
+    nextStep: (step: string) => `Prochain geste : ${step}`,
+    steps: {
+      password: 'créer un secret unique',
+      update: 'planifier la mise à jour',
+      lock: 'verrouiller puis reprendre la simulation',
+      complete: 'Les trois gestes sont terminés.',
+    },
     account: 'Mon compte',
     password: 'Renouvellement demandé par le Service Informatique',
     passwordBody:
@@ -97,6 +150,17 @@ export const fr = {
     hidePassword: 'Masquer le mot de passe',
     placeholder: 'Mot de passe',
     enter: 'Ouvrir la session',
+    guidedIntro:
+      'Avant d’accéder au bureau simulé, observez la phrase visible sur la note puis choisissez une façon plus sûre de la conserver.',
+    guidedQuestion:
+      'Où conserveriez-vous ce mot de passe pour éviter qu’il soit accessible à quelqu’un d’autre ?',
+    guidedChoices: [
+      { id: 'manager', label: 'Dans un gestionnaire de mots de passe approuvé' },
+      { id: 'note', label: 'Sur une note sous le clavier' },
+      { id: 'file', label: 'Dans un fichier texte sur le poste' },
+    ],
+    guidedHelper:
+      'Cherchez un endroit qui limite l’accès au secret et qui soit prévu par votre organisation.',
     helper:
       'Un indice ? Regardez la note près de l’écran. Un mot de passe simple peut aussi fonctionner ici.',
     error: 'Mot de passe incorrect. Réessayez.',
@@ -119,7 +183,7 @@ export const fr = {
     nextPlayer: 'Passer au joueur suivant',
     guide: 'Un coup de pouce',
     close: 'Fermer',
-    finish: 'Parcours guidé',
+    finish: 'Mode guidé (QCM)',
     resume: 'Retour au bureau',
     connected: 'Réseau connecté',
     isolated: 'Réseau isolé',
@@ -129,25 +193,38 @@ export const fr = {
   intro: {
     title: 'Une session trop facile à ouvrir.',
     description:
-      'Le mot de passe était à portée de regard. La première faille ne demandait aucune compétence technique.',
+      'Vous avez retrouvé la note prévue pour cet exercice. Elle illustre un mot de passe laissé à la vue de tous.',
     guessedDescription:
       'La phrase faible acceptée ici pouvait aussi être devinée : les secrets courts ou prévisibles se testent facilement.',
-    principleEmphasis: 'Gardez-le dans un gestionnaire approuvé.',
-    principle:
-      'Un mot de passe long et unique par compte : jamais le même au travail et à la maison. Gardez-le dans un gestionnaire approuvé.',
+    principleEmphasis: 'Un mot de passe long et unique',
+    principle: (manager: string) =>
+      `Un mot de passe long et unique par compte, avec des caractères variés : jamais le même au travail et à la maison. Gardez-le dans le gestionnaire approuvé : ${manager}.`,
+    guidedRiskTitle: 'Ce secret resterait trop accessible.',
+    guidedTitle: 'Vous avez identifié un meilleur endroit.',
+    guidedSafe: (manager: string) =>
+      `Un mot de passe long et unique, avec des caractères variés, peut être conservé dans le gestionnaire approuvé par votre organisation, ici ${manager}.`,
+    guidedRiskNote: (manager: string) =>
+      `Une note cachée reste lisible par une personne présente. Le gestionnaire approuvé, ${manager}, est conçu pour limiter cet accès.`,
+    guidedRiskFile: (manager: string) =>
+      `Un fichier texte peut être trouvé, copié ou exposé si le poste est compromis. Le gestionnaire approuvé, ${manager}, protège mieux ce secret.`,
+    guidedTransition:
+      'La réponse n’empêche pas de continuer : vous allez maintenant accéder au bureau simulé et mettre d’autres réflexes en pratique.',
     start: 'Explorer le bureau',
+    guidedStart: 'Passer à l’activité suivante',
+    managerUnlock: (manager: string) =>
+      `${manager} sert à conserver les mots de passe ; il ne remplace pas le moyen prévu par votre organisation pour déverrouiller le poste.`,
+    keepassxcCertification: 'Une version de KeePassXC a été certifiée par l’ANSSI.',
+    keepassdx:
+      'Pour un usage personnel sur Android, KeePassDX est une option possible. Pour un usage professionnel, suivez toujours la politique de votre organisation.',
   },
   ai: {
     app: 'Assistant IA',
-    intro: 'Des comptes rendus à préparer',
-    task: 'Vous avez plusieurs notes de réunion et voulez gagner du temps. Choisissez un outil, puis le message à lui confier.',
     tools: 'Choisir un espace de travail',
     internal: 'Assistant interne',
     commercial: 'Service d’IA commercial',
     internalNote: 'Espace de votre organisation',
     commercialNote: 'Service hébergé par un prestataire',
-    connect: 'Ouvrir le chat',
-    switch: 'Changer d’outil',
+    confirm: 'Valider mon choix',
     policy: 'Charte IA de cet exercice',
     policyReview: 'Relire la charte IA de l’exercice',
     policyIntro: 'Pour cette simulation, l’organisation a défini ces règles :',
@@ -324,15 +401,14 @@ export const fr = {
     minimize: 'Réduire l’indice',
     restore: 'Revoir l’indice',
     first: 'Un indice ?',
-    choices: 'Voir les choix',
-    close: 'Réduire les choix',
     families: {
       vigilance: 'Vigilance',
       protection: 'Protéger mon poste',
     },
     hints: {
       usb: 'Regardez les commandes du lecteur',
-      incident: 'Par où l’infection pourrait-elle se propager ?',
+      incident:
+        'Par où l’infection pourrait-elle se propager ? Où pouvez-vous agir sur la connexion de ce poste ?',
       notify: 'Quel contact connaissiez-vous avant de voir cette alerte ?',
       mail: 'Que révèlent l’adresse complète et le type de pièce jointe ? Comment traiter ce mail ?',
       spoof: 'Cette demande correspond-elle à vos habitudes de travail ? Comment traiter ce mail ?',
@@ -498,7 +574,8 @@ export const fr = {
       `${safe} bon${safe > 1 ? 's' : ''} réflexe${safe > 1 ? 's' : ''}${caution > 0 ? `, ${caution} prise${caution > 1 ? 's' : ''} de risque puis bonne${caution > 1 ? 's' : ''} réaction${caution > 1 ? 's' : ''}` : ''} sur ${total} situation${total > 1 ? 's' : ''} explorée${total > 1 ? 's' : ''}`,
     notGrade: 'Un point de départ, pas une note.',
     password: 'Protéger l’accès',
-    passwordNote: 'Un secret visible n’est plus un secret.',
+    passwordNote: (manager: string) =>
+      `Un secret visible n’est plus un secret ; ${manager} aide à le conserver de façon protégée.`,
     discovered: 'Découvert',
     safe: 'Bon réflexe',
     caution: 'Prise de risque, puis bonne réaction',
@@ -514,7 +591,29 @@ export const fr = {
     routine:
       'Au quotidien, suivez la politique de votre organisation pour les mots de passe et appliquez les mises à jour prévues. En cas de compromission ou de doute, signalez-le immédiatement et suivez la procédure établie.',
     thankYou: 'Merci d’avoir joué.',
-    privacy: 'Votre partie sera effacée en quittant cette session.',
+    privacy:
+      'Aucune réponse n’est transmise. Les données de cette partie restent en mémoire locale et sont effacées en quittant la session.',
     source: 'Conseils inspirés des recommandations ANSSI, CERT-FR et Cybermalveillance.gouv.fr.',
+    summary: {
+      eyebrow: 'VOTRE PARCOURS',
+      title: (name: string, complete: boolean) =>
+        complete ? `Parcours terminé, ${name}.` : `Merci pour ce parcours, ${name}.`,
+      description:
+        'Ce récapitulatif décrit votre parcours. Il ne vous attribue aucune note et l’usage des indices ne vous pénalise pas.',
+      situations: (count: number, total: number) => `Activités : ${count}/${total}`,
+      habits: (count: number, total: number) => `Gestes du quotidien : ${count}/${total}`,
+      hints: (count: number, total: number) => `Indices d’activité consultés : ${count}/${total}`,
+      journey: 'Parcours suivi',
+      modes: { guided: 'Guidé', free: 'Libre', mixed: 'Mixte' },
+      badges: 'Repères de votre parcours',
+      activityBadge: 'Situations mises en pratique',
+      reportBadge: (count: number, total: number) =>
+        `Signalements : ${count}/${total} situations à signaler`,
+      firstAttempt:
+        'Ce repère compte les premières réponses conservées pour l’incident, les deux messages suspects et la demande de connexion.',
+      protectedBadge: 'Poste protégé',
+      detailed: 'Lire mon bilan détaillé',
+    },
+    backToSummary: 'Retour au récapitulatif',
   },
 } as const;

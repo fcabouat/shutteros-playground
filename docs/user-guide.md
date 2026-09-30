@@ -1,41 +1,46 @@
-# Playing and running a ShutterOS session
+# Playing and facilitating a ShutterOS session
 
-ShutterOS is a cybersecurity awareness game on a fictional desktop. Allow five to fifteen minutes. All accounts, messages and files are simulated: use the game’s login phrase, never a real password or personal information.
+You play Camille Martin at a fictional workstation: a found USB drive, messages to examine and everyday steps to protect the computer. Allow ten to twenty minutes. Accounts, files and messages are simulated: never use a real password or personal information.
 
-## Play
+## Getting started
 
-1. **Explore the desktop.** Click an application or open it from Start. Read the messages, inspect the details and try the controls before deciding what to do.
-2. **Ask for a hint when needed.** In the top bar, the remaining-activity counter comes before two dedicated buttons. **Need a hint?** displays a question to consider, sometimes with a visual cue; it becomes **Hide hint**, then **Show hint again** once hidden. **View choices** opens the questionnaire. In free exploration, this button stays disabled until you have actually viewed the hint. Help is also offered automatically after two minutes without progress for the hint, then after another two minutes for the choices. There is no response countdown.
-3. **Choose how to finish.** Keep exploring, or select **Guided journey** to work through the remaining situations and reach the recap. Select **Free exploration** to leave the guided journey without losing the current activity or your progress; you can then choose what to open next.
+The [welcome screen](images/welcome.png) introduces the **game bar**, visible throughout the journey, and offers two routes:
 
-In free exploration, each new activity opens in a normal window, regardless of the size of the previous activity. Opening the questionnaire may widen the window to keep both panes readable, without maximizing it. In guided mode, activities follow one another; each new activity opens maximized with the questionnaire visible, but you can restore it. The result keeps the current activity maximized or restored as you chose.
+- **Free mode (exploration)**, selected by default: take on the challenge by exploring applications and finding the controls to act. At login, find the fictional password; a hint helps after three failed attempts or two minutes of searching.
+- **Guided mode (Q&A)**: take it gently, one situation at a time, with choices displayed. Login starts with a question about where to keep a password, followed by an explanation of each option.
 
-The hourglass allows thirty minutes by default to explore and read the explanations. It keeps running during the guided journey. You can finish earlier and sign out for the next player. At zero, the game returns to the login screen and clears your progress.
+Switch routes at any time without losing progress. Using the sticky note to enter the simulation is not a player mistake: it illustrates a poorly protected secret. Explanations name the manager configured for the exercise, KeePassXC by default.
 
-You can replay completed situations to try another approach. The recap keeps your first result; it is for discussion, not a saved assessment. An amber result recognises a good response after taking a risk, such as stopping exploration of a USB drive after opening the `READ-ME.txt` text file.
+Windows labelled **Vigilance** ask you to examine a situation; **Protect my workstation** windows offer protective actions. Labels accompany the colours so you do not need to guess a window’s purpose.
 
-The remaining-activity counter is always visible to the left of the hint and questionnaire buttons. On the desktop, when no activity is displayed during free exploration, it is enabled: open it to read the help dialog, then select **Take me there** to reach the next activity. This action neither reveals nor consumes its hint. The journey includes seven scenarios and one **Protect my workstation** activity with three steps: password, updates and locking. Complete all three steps to access the recap, even if their notifications were never opened. The extra password question remains optional.
+## Finding your way
 
-In the recap, scroll the activity list; the buttons to resume or leave remain visible. If you minimise this window, **View my recap now** appears in the top bar to restore it.
+The game bar shows remaining activities, **Need a hint?**, the route switch and time available. Controls that do not apply to the current step are disabled. From the desktop, the activity counter can take you to the next activity without revealing its hint.
 
-The exercise AI policy is available in the assistant and can be reviewed from its feedback screen.
+A hint offers a question to consider and sometimes a visual cue. Hide it and read it again as needed. In free mode, find how to act inside the applications: the questionnaire never opens automatically. Switch to guided mode to display choices without losing your place; switching back hides them. Hints remain independent of the route and are also offered after two minutes without progress. No local countdown rushes your answer.
+
+The journey includes seven scenarios and one activity with three steps: passwords, updates and locking. Guided mode identifies the next step and the controls to use. Try all three before the recap; the extra password question is optional. In the mailbox, continuing after the first email opens the remaining one.
+
+In the AI assistant, free mode offers a simulated chat: choose the tool, read the policy and prepare the message before sending. Guided mode presents the five messages as a questionnaire. Switching modes keeps your selection.
+
+## Reading your recap
+
+A first screen summarises your route, activities completed out of seven, everyday habits out of three and activity hints viewed out of eight. Its badges describe actions taken; asking for help never subtracts points. The detailed review then explains the outcomes. There is no grade, recording or transmission of your answers.
+
+An orange result recognises a good response after a risk, such as ejecting a USB drive after opening its text file. Replay to compare without replacing the first recorded result. The exercise’s AI policy remains available from the assistant’s answer screen.
+
+The hourglass starts after the login exercise and allows thirty minutes by default. Finish earlier to pass to the next player. At zero or after signing out, welcome returns and progress is erased. A minimised recap can be restored through the game bar.
 
 ## Useful controls
 
-- **Login:** the fictional password is masked while you type; use the eye button to check it.
-- **Language:** choose FR or EN on the login screen or taskbar.
-- **Windows:** drag the title bar to move one, or any edge or corner to resize a main window. Maximise to cover the desktop. Minimise and restore from the taskbar without losing your place. The USB text file and hints have their own movable windows; **Hide hint** minimises the hint and hides its visual cues; **Show hint again** lets you read the hint again.
-- **Keyboard:** Tab moves between controls; Enter or Space activates buttons. Sound is not required.
-- **Leave the session:** asks for confirmation before clearing progress. Cancel to keep playing.
+- **Language**: choose FR or EN at welcome, then on the taskbar.
+- **Windows**: drag their title bars, resize main windows by their edges, minimise them and find them again on the taskbar. Hints and the USB text file have independent windows.
+- **Size**: new activities open maximised in guided mode and at normal size in free exploration. Restore them if preferred; switching to guided mode can widen the current window to accommodate choices without maximising it.
+- **Keyboard**: Tab moves between controls; Enter or Space activates buttons. The fictional password is masked; the eye button reveals it.
+- **Sign out**: confirmation prevents accidental resets. The operator shortcut `Ctrl+Alt+Home` resets the game immediately.
 
-## Run a session
+## Facilitating a session
 
-Let the participant explore before offering help. Ask “What made you choose that?” and discuss the consequence together. An incorrect choice is a chance to practise the next action, not a reason to stop.
+Let the participant look around, then ask “What made you choose that action?” Mistakes and hints create useful discussion. For real work, follow your organisation’s procedures and policies rather than the fictional exercise rules.
 
-The mailbox contains two messages; open either first. Continuing after one automatically opens the other unfinished message. The title-bar label distinguishes situations requiring vigilance from tools for protecting the workstation. Use Start to access your account, updates and screen locking. Their reminders wait until you return to the desktop.
-
-Use the password, update and screen-locking exercises to discuss your organisation’s procedures. For real work, follow those procedures and the AI usage policy rather than the fictional exercise rules.
-
-Before welcoming participants, test a complete session on the actual screen, including the language selector, logout and automatic reset. Check readability and the organisation’s security contact. If needed, `Ctrl+Alt+Home` resets the game immediately, without confirmation.
-
-For preparation, see [organisation branding](branding.md), [kiosk setup](kiosk.md) and the [Ubuntu installation kit](ubuntu-kiosk.md). The [educational notes](content.md) explain the scenarios and their sources **with spoilers**. These technical and editorial documents are in English.
+Before the event, try both routes on the actual workstation, including language changes, signing out and automatic reset. Check the displayed security contacts. For deployment, see [branding](branding.md), [kiosk setup](kiosk.md) and [Ubuntu installation](ubuntu-kiosk.md). The [content notes](content.md) explain the scenarios **and reveal their solutions**.

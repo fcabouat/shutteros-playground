@@ -25,9 +25,9 @@ function fail(message) {
 }
 
 let branding = fallback;
-// Absence means a generic public build; a present but invalid private file fails
-// below so a deployment mistake cannot silently ship the wrong organisation identity.
-if (existsSync(inputPath)) {
+// Verification explicitly selects the public identity without touching private files.
+// Normal builds still reject invalid private configuration.
+if (process.env.SHUTTEROS_PUBLIC_BUILD !== '1' && existsSync(inputPath)) {
   const source = readFileSync(inputPath);
   if (source.byteLength > maxJsonBytes) fail('private/branding.json must be at most 32 KiB');
   try {

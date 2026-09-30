@@ -14,6 +14,7 @@ const session = (scene: Extract<GameState, { phase: 'session' }>['scene']): Game
   deadline: 60_000,
   loginCategory: 'displayed',
   mode: 'free',
+  journey: { modes: ['free'], hints: [] },
   scene,
   results: [],
   knowledge: [],
@@ -42,7 +43,6 @@ describe('knowledge service', () => {
           step: 'choose',
           guidance: {
             requestedLevel: 0,
-            started: true,
             activeElapsedMs: 0,
             activeSince: 0,
             visible: true,
@@ -119,7 +119,7 @@ it('keeps editorial highlights inside their translated lessons', () => {
     }
   }
   for (const copy of [fr, en]) {
-    expect(copy.intro.principle).toContain(copy.intro.principleEmphasis);
+    expect(copy.intro.principle('KeePass')).toContain(copy.intro.principleEmphasis);
     for (const id of ['password', 'update'] as const) {
       expect(copy.routines[`${id}Lesson`]).toContain(copy.routines[`${id}Emphasis`]);
     }

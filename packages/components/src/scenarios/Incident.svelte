@@ -19,7 +19,7 @@
 </script>
 
 <div
-  class="incident-scene flex h-full flex-col justify-center p-6 sm:p-9"
+  class="incident-scene flex flex-col justify-center p-6 sm:p-9"
   class:contained={step === 'notify'}
 >
   <div class="mb-6 flex items-center gap-3">

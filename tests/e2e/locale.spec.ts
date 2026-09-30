@@ -4,6 +4,7 @@ import { pathToFileURL } from 'node:url';
 import { en } from '@shutteros/core/data/en';
 import { fr } from '@shutteros/core/data/fr';
 import config from '../../static/kiosk-config.json' with { type: 'json' };
+import { beginFree } from './helpers';
 
 test.use({ locale: 'en-GB' });
 
@@ -15,6 +16,7 @@ for (const delivery of ['http', 'file'] as const) {
       delivery === 'file' ? pathToFileURL(resolve('dist/portable/shutteros.html')).href : './',
     );
     await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+    await beginFree(page, 'en');
     await expect(page.locator('.post-it')).toHaveText('Office2026');
     await page.getByLabel(en.login.password, { exact: true }).fill('Office2026');
     await page.getByRole('button', { name: en.login.enter, exact: true }).click();
@@ -24,9 +26,10 @@ for (const delivery of ['http', 'file'] as const) {
     await page.getByRole('button', { name: fr.shell.logout, exact: true }).click();
     await page.getByRole('button', { name: fr.shell.exitConfirm, exact: true }).click();
     await expect(page.locator('html')).toHaveAttribute('lang', 'fr');
-    await expect(page.locator('.post-it')).toHaveText('Bureau2026');
+    await expect(page.getByRole('heading', { name: fr.welcome.title })).toBeVisible();
     await page.reload();
-    await expect(page.locator('.post-it')).toHaveText('Office2026');
+    await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+    await expect(page.getByRole('heading', { name: en.welcome.title })).toBeVisible();
   });
 }
 
@@ -35,6 +38,7 @@ test('a custom note stays literal when the browser selects English', async ({ pa
     route.fulfill({ json: { ...config, acceptedPasswords: ['Invitation2026', 'password'] } }),
   );
   await page.goto('./');
+  await beginFree(page, 'en');
   await expect(page.locator('.post-it')).toHaveText('Invitation2026');
   await page.getByLabel(en.login.password, { exact: true }).fill('Invitation2026');
   await page.getByRole('button', { name: en.login.enter, exact: true }).click();
@@ -49,6 +53,7 @@ for (const delivery of ['http', 'file'] as const) {
       `${delivery === 'file' ? pathToFileURL(resolve('dist/portable/shutteros.html')).href : './'}?lang=fr`,
     );
     await expect(page.locator('html')).toHaveAttribute('lang', 'fr');
+    await beginFree(page);
     await expect(page.getByLabel(fr.login.password, { exact: true })).toBeVisible();
     await page.getByLabel(fr.login.password, { exact: true }).fill('Bureau2026');
     await page.getByRole('button', { name: fr.login.enter, exact: true }).click();
@@ -56,5 +61,6 @@ for (const delivery of ['http', 'file'] as const) {
     await page.getByRole('button', { name: fr.shell.logout, exact: true }).click();
     await page.getByRole('button', { name: fr.shell.exitConfirm, exact: true }).click();
     await expect(page.locator('html')).toHaveAttribute('lang', 'fr');
+    await expect(page.getByRole('heading', { name: fr.welcome.title })).toBeVisible();
   });
 }

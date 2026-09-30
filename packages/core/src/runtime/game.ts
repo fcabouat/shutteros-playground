@@ -7,7 +7,7 @@ import {
   pendingRoutines,
 } from '../projections/game';
 import { currentKnowledgeId, knowledgeAnswer } from '../services/knowledge';
-import { passwordCategory } from '../services/passwords';
+import { isLoginChoiceId, passwordCategory } from '../services/passwords';
 import {
   challengeOrder,
   choiceOutcome,
@@ -18,18 +18,19 @@ import {
   type GuidanceClock,
   type GuidanceLevel,
   type Intent,
+  type Journey,
+  type PlayMode,
   type Scene,
 } from '../model/game';
 
 /** The zero-time default lets the static shell render without consulting a browser clock. */
 export function initialState(now = 0): GameState {
   return {
-    phase: 'login',
+    phase: 'welcome',
     generation: 0,
     now: finiteTime(now, 0),
     reason: 'initial',
-    failedAttempts: 0,
-    loginGuidance: freshGuidance(finiteTime(now, 0), true, 0, false),
+    mode: 'free',
   };
 }
 
@@ -51,37 +52,41 @@ export function transition(
 ): GameState {
   const currentNow = monotonicNow(state.now, now);
 
+  if (state.phase === 'welcome') {
+    return transitionWelcome(state, intent, currentNow);
+  }
   if (state.phase === 'login') {
     return transitionLogin(state, intent, currentNow, config);
   }
 
   if (currentNow >= state.deadline) {
-    return loginState(state.generation + 1, currentNow, 'expired');
+    return welcomeState(state.generation + 1, currentNow, 'expired');
   }
 
   const timed = { ...state, now: currentNow } as const;
   if (intent.type === 'logout') {
-    return loginState(timed.generation + 1, currentNow, 'logout');
+    return welcomeState(timed.generation + 1, currentNow, 'logout');
+  }
+  if (intent.type === 'set-mode') {
+    return setSessionMode(timed, intent.mode);
   }
   if (timed.locked) {
     return transitionLocked(timed, intent);
   }
   switch (intent.type) {
     case 'login':
+    case 'answer-login':
+    case 'begin':
     case 'tick':
       return timed;
     case 'continue':
       return continueScene(timed);
     case 'open':
       return openChallenge(timed, intent.id);
-    case 'finish-experience':
-      return finishExperience(timed);
-    case 'explore-freely':
-      return timed.mode === 'free' ? timed : { ...timed, mode: 'free' };
     case 'request-hint':
       return requestHint(timed);
-    case 'request-choices':
-      return requestHint(timed, 2);
+    case 'hint-viewed':
+      return recordHintViewed(timed);
     case 'open-usb-readme':
       return openUsbReadme(timed);
     case 'send-ai':
@@ -125,6 +130,43 @@ export function transition(
   }
 }
 
+function transitionWelcome(
+  state: Extract<GameState, { phase: 'welcome' }>,
+  intent: Intent,
+  now: number,
+): GameState {
+  switch (intent.type) {
+    case 'begin':
+      return loginState(state.generation, now, state.reason, state.mode);
+    case 'set-mode':
+      return isPlayMode(intent.mode) ? { ...state, now, mode: intent.mode } : { ...state, now };
+    case 'logout':
+      return welcomeState(state.generation + 1, now, 'logout');
+    case 'tick':
+    case 'login':
+    case 'answer-login':
+    case 'continue':
+    case 'open':
+    case 'request-hint':
+    case 'hint-viewed':
+    case 'open-usb-readme':
+    case 'choose':
+    case 'send-ai':
+    case 'close':
+    case 'debrief':
+    case 'answer-check':
+    case 'activity':
+    case 'activity-visible':
+    case 'routine':
+    case 'practice-lock':
+    case 'resume-lock':
+    case 'dismiss-idle':
+      return { ...state, now };
+    default:
+      return assertNever(intent);
+  }
+}
+
 function transitionLogin(
   state: Extract<GameState, { phase: 'login' }>,
   intent: Intent,
@@ -132,6 +174,14 @@ function transitionLogin(
   config: GameConfig,
 ): GameState {
   switch (intent.type) {
+    case 'set-mode':
+      if (!isPlayMode(intent.mode) || intent.mode === state.mode) return { ...state, now };
+      return {
+        ...state,
+        now,
+        mode: intent.mode,
+        journey: { ...state.journey, modes: [...state.journey.modes, intent.mode] },
+      };
     case 'login': {
       const loginCategory = passwordCategory(intent.password, config);
       if (loginCategory === null) {
@@ -139,55 +189,41 @@ function transitionLogin(
           ...state,
           now,
           failedAttempts: Math.min(3, state.failedAttempts + 1),
-          loginGuidance: beginGuidance(state.loginGuidance, now),
         };
       }
-      return {
-        phase: 'session',
-        generation: state.generation,
-        now,
-        startedAt: now,
-        deadline: now + config.sessionDurationMs,
-        loginCategory,
-        mode: 'free',
-        scene: { kind: 'intro' },
-        results: [],
-        knowledge: [],
-        usbInfected: false,
-        routines: {
-          password: 'pending',
-          update: 'pending',
-          lockPracticed: false,
-          lastActivityAt: now,
-          idleDismissed: false,
-        },
-        locked: false,
-        activityVisible: true,
-        pausedActivities: {},
-      };
+      return startSession(state, now, config, loginCategory);
     }
+    case 'answer-login':
+      return state.mode === 'guided' && isLoginChoiceId(intent.choiceId)
+        ? startSession(state, now, config, 'guided', intent.choiceId)
+        : { ...state, now };
     case 'logout':
-      return loginState(state.generation + 1, now, 'logout');
+      return welcomeState(state.generation + 1, now, 'logout');
     case 'tick':
-      return { ...state, now };
     case 'activity':
-      return {
-        ...state,
-        now,
-        loginGuidance: beginGuidance(state.loginGuidance, now),
-      };
+      return { ...state, now };
     case 'activity-visible':
       return {
         ...state,
         now,
         loginGuidance: setGuidanceVisible(state.loginGuidance, intent.visible, now),
       };
+    case 'request-hint':
+      return {
+        ...state,
+        now,
+        loginGuidance: {
+          ...state.loginGuidance,
+          requestedLevel: 1,
+        },
+      };
+    case 'hint-viewed':
+      return loginHintIsVisible(state, now)
+        ? { ...state, now, journey: appendHint(state.journey, 'login') }
+        : { ...state, now };
+    case 'begin':
     case 'continue':
     case 'open':
-    case 'finish-experience':
-    case 'explore-freely':
-    case 'request-hint':
-    case 'request-choices':
     case 'open-usb-readme':
     case 'choose':
     case 'send-ai':
@@ -202,6 +238,40 @@ function transitionLogin(
     default:
       return assertNever(intent);
   }
+}
+
+function startSession(
+  state: Extract<GameState, { phase: 'login' }>,
+  now: number,
+  config: GameConfig,
+  loginCategory: Extract<GameState, { phase: 'session' }>['loginCategory'],
+  loginChoiceId?: Extract<GameState, { phase: 'session' }>['loginChoiceId'],
+): Extract<GameState, { phase: 'session' }> {
+  return {
+    phase: 'session',
+    generation: state.generation,
+    now,
+    startedAt: now,
+    deadline: now + config.sessionDurationMs,
+    loginCategory,
+    ...(loginChoiceId === undefined ? {} : { loginChoiceId }),
+    mode: state.mode,
+    journey: state.journey,
+    scene: { kind: 'intro' },
+    results: [],
+    knowledge: [],
+    usbInfected: false,
+    routines: {
+      password: 'pending',
+      update: 'pending',
+      lockPracticed: false,
+      lastActivityAt: now,
+      idleDismissed: false,
+    },
+    locked: false,
+    activityVisible: true,
+    pausedActivities: {},
+  };
 }
 
 function continueScene(state: Extract<GameState, { phase: 'session' }>): GameState {
@@ -259,7 +329,7 @@ function openChallenge(
       scene: resumeChallenge(paused, available.now, available.activityVisible),
     };
   }
-  const scene = newChallenge(id, available.now, available.activityVisible, 0);
+  const scene = newChallenge(id, available.now, available.activityVisible);
   return { ...available, scene };
 }
 
@@ -268,24 +338,29 @@ function openChallenge(
  * Preserve an incident's isolation progress so the player is asked to report it,
  * rather than repeating isolation. Switching mode never extends the session.
  */
-function finishExperience(state: Extract<GameState, { phase: 'session' }>): GameState {
-  if (state.mode === 'guided') return state;
-  const preferred =
-    state.scene.kind === 'challenge' && !hasResult(state, state.scene.id)
-      ? state.scene.id
-      : nextUnanswered(state);
-  const guided = { ...state, mode: 'guided' as const };
-  return preferred === null ? completeGuided(guided) : openGuidedChallenge(guided, preferred);
+function setSessionMode(
+  state: Extract<GameState, { phase: 'session' }>,
+  mode: PlayMode,
+): Extract<GameState, { phase: 'session' }> {
+  if (!isPlayMode(mode) || mode === state.mode) return state;
+  const changed = {
+    ...state,
+    mode,
+    journey: { ...state.journey, modes: [...state.journey.modes, mode] },
+  };
+  if (mode === 'free' || state.scene.kind !== 'desktop') return changed;
+  const next = nextUnanswered(state);
+  return next === null ? completeGuided(changed) : openGuidedChallenge(changed, next);
 }
 
 function openGuidedChallenge(
   state: Extract<GameState, { phase: 'session' }>,
   id: ChallengeId,
-): GameState {
+): Extract<GameState, { phase: 'session' }> {
   if (state.scene.kind === 'challenge' && state.scene.id === id) {
     return {
       ...state,
-      scene: revealChoices(resumeChallenge(state.scene, state.now, state.activityVisible)),
+      scene: resumeChallenge(state.scene, state.now, state.activityVisible),
     };
   }
   const paused = state.pausedActivities[id];
@@ -293,10 +368,10 @@ function openGuidedChallenge(
     return {
       ...state,
       pausedActivities: withoutPausedActivity(state.pausedActivities, id),
-      scene: revealChoices(resumeChallenge(paused, state.now, state.activityVisible)),
+      scene: resumeChallenge(paused, state.now, state.activityVisible),
     };
   }
-  return { ...state, scene: newChallenge(id, state.now, state.activityVisible, 2) };
+  return { ...state, scene: newChallenge(id, state.now, state.activityVisible) };
 }
 
 function advanceGuided(state: Extract<GameState, { phase: 'session' }>): GameState {
@@ -304,29 +379,38 @@ function advanceGuided(state: Extract<GameState, { phase: 'session' }>): GameSta
   return next === null ? completeGuided(state) : openGuidedChallenge(state, next);
 }
 
-function completeGuided(state: Extract<GameState, { phase: 'session' }>): GameState {
+function completeGuided(
+  state: Extract<GameState, { phase: 'session' }>,
+): Extract<GameState, { phase: 'session' }> {
   return { ...state, scene: routinesComplete(state) ? { kind: 'debrief' } : { kind: 'routines' } };
 }
 
-function requestHint(
-  state: Extract<GameState, { phase: 'session' }>,
-  target?: GuidanceLevel,
-): GameState {
+function requestHint(state: Extract<GameState, { phase: 'session' }>): GameState {
   if (state.scene.kind !== 'challenge') return state;
   const currentLevel = elapsedGuidanceLevel(state.scene.guidance, state.now);
-  if (currentLevel === 2) return state;
-  const requestedLevel = target ?? ((currentLevel + 1) as GuidanceLevel);
+  if (currentLevel === 1) return state;
   return {
     ...state,
     scene: {
       ...state.scene,
       guidance: {
         ...state.scene.guidance,
-        requestedLevel,
+        requestedLevel: 1,
         activeElapsedMs: 0,
         activeSince: state.scene.guidance.visible ? state.now : null,
       },
     },
+  };
+}
+
+function recordHintViewed(
+  state: Extract<GameState, { phase: 'session' }>,
+): Extract<GameState, { phase: 'session' }> {
+  if (state.scene.kind !== 'challenge') return state;
+  if (elapsedGuidanceLevel(state.scene.guidance, state.now) < 1) return state;
+  return {
+    ...state,
+    journey: appendHint(state.journey, `${state.scene.id}:${state.scene.step}`),
   };
 }
 
@@ -359,8 +443,8 @@ function choose(state: Extract<GameState, { phase: 'session' }>, choiceId: strin
         startedAt: state.now,
         step: action.nextStep,
         priorChoiceId: choiceId,
-        // Each step has its own discovery time; only the guided finale opens choices immediately.
-        guidance: freshGuidance(state.now, scene.guidance.visible, state.mode === 'guided' ? 2 : 0),
+        // Each step has its own independent hint clock. Guided choices come from the mode.
+        guidance: freshGuidance(state.now, scene.guidance.visible),
       },
     };
   }
@@ -404,7 +488,7 @@ function closeScene(state: Extract<GameState, { phase: 'session' }>): GameState 
     state.scene.kind === 'debrief' ||
     (state.mode === 'free' && state.scene.kind === 'routines')
   ) {
-    return { ...state, mode: 'free', scene: { kind: 'desktop' } };
+    return { ...setSessionMode(state, 'free'), scene: { kind: 'desktop' } };
   }
   return state;
 }
@@ -443,14 +527,15 @@ function transitionLocked(
             : state.scene,
       };
     case 'logout':
-      return loginState(state.generation + 1, state.now, 'logout');
+      return welcomeState(state.generation + 1, state.now, 'logout');
+    case 'begin':
+    case 'set-mode':
+    case 'answer-login':
     case 'login':
     case 'continue':
     case 'open':
-    case 'finish-experience':
-    case 'explore-freely':
     case 'request-hint':
-    case 'request-choices':
+    case 'hint-viewed':
     case 'open-usb-readme':
     case 'send-ai':
     case 'choose':
@@ -547,47 +632,75 @@ function monotonicNow(previous: number, candidate: number): number {
   return Math.max(safePrevious, finiteTime(candidate, safePrevious));
 }
 
+function welcomeState(
+  generation: number,
+  now: number,
+  reason: Extract<GameState, { phase: 'welcome' }>['reason'],
+): Extract<GameState, { phase: 'welcome' }> {
+  return {
+    phase: 'welcome',
+    generation,
+    now,
+    reason,
+    mode: 'free',
+  };
+}
+
 function loginState(
   generation: number,
   now: number,
   reason: Extract<GameState, { phase: 'login' }>['reason'],
-): GameState {
+  mode: PlayMode,
+): Extract<GameState, { phase: 'login' }> {
   return {
     phase: 'login',
     generation,
     now,
     reason,
+    mode,
+    journey: { modes: [mode], hints: [] },
     failedAttempts: 0,
-    loginGuidance: freshGuidance(now, true, 0, false),
+    loginGuidance: freshGuidance(now, true),
   };
+}
+
+function isPlayMode(value: unknown): value is PlayMode {
+  return value === 'free' || value === 'guided';
+}
+
+function appendHint(journey: Journey, context: string): Journey {
+  return journey.hints.includes(context)
+    ? journey
+    : { ...journey, hints: [...journey.hints, context] };
+}
+
+function loginHintIsVisible(state: Extract<GameState, { phase: 'login' }>, now: number): boolean {
+  return (
+    state.loginGuidance.requestedLevel > 0 ||
+    state.failedAttempts >= 3 ||
+    activeGuidanceMs(state.loginGuidance, now) >= guidanceDelayMs
+  );
 }
 
 function newChallenge(
   id: ChallengeId,
   now: number,
   visible: boolean,
-  requestedLevel: GuidanceLevel,
 ): Extract<Scene, { kind: 'challenge' }> {
   return {
     kind: 'challenge',
     id,
     startedAt: now,
     step: activityDefinition(id).initialStep,
-    guidance: freshGuidance(now, visible, requestedLevel),
+    guidance: freshGuidance(now, visible),
   };
 }
 
-function freshGuidance(
-  now: number,
-  visible: boolean,
-  requestedLevel: GuidanceLevel,
-  start = true,
-): GuidanceClock {
+function freshGuidance(now: number, visible: boolean): GuidanceClock {
   return {
-    requestedLevel,
-    started: start,
+    requestedLevel: 0,
     activeElapsedMs: 0,
-    activeSince: start && visible ? now : null,
+    activeSince: visible ? now : null,
     visible,
   };
 }
@@ -601,7 +714,7 @@ function activeGuidanceMs(guidance: GuidanceClock, now: number): number {
 
 function elapsedGuidanceLevel(guidance: GuidanceClock, now: number): GuidanceLevel {
   return Math.min(
-    2,
+    1,
     guidance.requestedLevel + Math.floor(activeGuidanceMs(guidance, now) / guidanceDelayMs),
   ) as GuidanceLevel;
 }
@@ -615,13 +728,8 @@ function pauseGuidance(guidance: GuidanceClock, now: number): GuidanceClock {
   };
 }
 
-function beginGuidance(guidance: GuidanceClock, now: number): GuidanceClock {
-  if (guidance.started) return guidance;
-  return { ...guidance, started: true, activeSince: guidance.visible ? now : null };
-}
-
 function resumeGuidance(guidance: GuidanceClock, now: number): GuidanceClock {
-  if (!guidance.started || !guidance.visible || guidance.activeSince !== null) return guidance;
+  if (!guidance.visible || guidance.activeSince !== null) return guidance;
   return { ...guidance, activeSince: now };
 }
 
@@ -649,15 +757,6 @@ function resumeChallenge(
     guidance: visible
       ? resumeGuidance({ ...scene.guidance, visible: true }, now)
       : { ...scene.guidance, visible: false, activeSince: null },
-  };
-}
-
-function revealChoices(
-  scene: Extract<Scene, { kind: 'challenge' }>,
-): Extract<Scene, { kind: 'challenge' }> {
-  return {
-    ...scene,
-    guidance: { ...scene.guidance, requestedLevel: 2 },
   };
 }
 

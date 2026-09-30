@@ -97,8 +97,8 @@
           <button
             class="start-tool flex w-full items-center gap-3 rounded-lg p-2 text-left"
             disabled={snapshot.mode === 'guided'}
-            onclick={() => run({ type: 'finish-experience' })}
-            ><Icon name="secure" size={19} /><span class="text-sm">{copy.shell.finish}</span
+            onclick={() => run({ type: 'set-mode', mode: 'guided' })}
+            ><Icon name="secure" size={19} /><span class="text-sm">{copy.experience.guided}</span
             ></button
           >
         </div>

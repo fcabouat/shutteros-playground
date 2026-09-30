@@ -9,6 +9,17 @@ export type AiPrompt =
 
 export type Outcome = 'safe' | 'risky';
 
+export type PlayMode = 'free' | 'guided';
+
+export type LoginChoiceId = 'manager' | 'note' | 'file';
+
+export type Journey = {
+  /** Chronological modes selected after entering the experience. */
+  modes: readonly PlayMode[];
+  /** Help actually shown, once per context, including a first view during replay. */
+  hints: readonly string[];
+};
+
 /** A safe final choice can still carry a caution about an earlier risk. */
 export type ResultAssessment = Outcome | 'caution';
 
@@ -24,6 +35,18 @@ export const challengeOrder = [
   'mfa',
   'ai',
 ] as const satisfies readonly ChallengeId[];
+
+/** Distinct activity-help contexts offered by the complete journey. */
+export const challengeHintContexts = [
+  'usb:choose',
+  'incident:choose',
+  'incident:notify',
+  'mail:choose',
+  'spoof:choose',
+  'web:choose',
+  'mfa:choose',
+  'ai:choose',
+] as const;
 
 /**
  * Authoritative domain actions. Labels and explanations remain in the content
@@ -54,15 +77,14 @@ export function challengeChoiceIds(id: ChallengeId, step: DecisionStep): readonl
   return Object.keys(activityDefinitions[id].steps[step].actions);
 }
 
-export type GuidanceLevel = 0 | 1 | 2;
+export type GuidanceLevel = 0 | 1;
 
-/** Each unresolved help level advances after two minutes of active, visible time. */
+/** The unresolved context reveals its single hint after two minutes of active, visible time. */
 export const guidanceDelayMs = 120_000;
 
 export type GuidanceClock = {
-  /** Highest level explicitly requested; elapsed active time may reveal more. */
+  /** Whether the single hint was explicitly requested; elapsed active time may also reveal it. */
   requestedLevel: GuidanceLevel;
-  started: boolean;
   activeElapsedMs: number;
   activeSince: number | null;
   visible: boolean;
@@ -106,10 +128,19 @@ export type Scene =
  */
 export type GameState =
   | {
+      phase: 'welcome';
+      generation: number;
+      now: number;
+      reason: 'initial' | 'logout' | 'expired';
+      mode: PlayMode;
+    }
+  | {
       phase: 'login';
       generation: number;
       now: number;
       reason: 'initial' | 'logout' | 'expired';
+      mode: PlayMode;
+      journey: Journey;
       failedAttempts: number;
       loginGuidance: GuidanceClock;
     }
@@ -120,8 +151,10 @@ export type GameState =
       startedAt: number;
       deadline: number;
       // Category only: player input is never retained after a successful login.
-      loginCategory: 'displayed' | 'weak';
-      mode: 'free' | 'guided';
+      loginCategory: 'displayed' | 'weak' | 'guided';
+      loginChoiceId?: LoginChoiceId;
+      mode: PlayMode;
+      journey: Journey;
       scene: Scene;
       // First outcomes are retained by recordResult; optional knowledge answers are separate.
       results: readonly ChallengeResult[];
@@ -146,15 +179,16 @@ export type GameState =
  * a command is available. External configuration has a separate decoder.
  */
 export type Intent =
+  | { type: 'begin' }
+  | { type: 'set-mode'; mode: PlayMode }
   | { type: 'login'; password: string }
+  | { type: 'answer-login'; choiceId: LoginChoiceId }
   | { type: 'tick' }
   | { type: 'logout' }
   | { type: 'continue' }
   | { type: 'open'; id: ChallengeId }
-  | { type: 'finish-experience' }
-  | { type: 'explore-freely' }
   | { type: 'request-hint' }
-  | { type: 'request-choices' }
+  | { type: 'hint-viewed' }
   | { type: 'open-usb-readme' }
   | { type: 'choose'; choiceId: string }
   | { type: 'send-ai'; tool: AiTool; prompt: AiPrompt }

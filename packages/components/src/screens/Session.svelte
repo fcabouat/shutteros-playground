@@ -29,7 +29,7 @@
   import TaskbarApps, { type TaskbarAppEntry } from '../commons/TaskbarApps.svelte';
   import ReadmeWindow from '../scenarios/ReadmeWindow.svelte';
   import ActionDock from '../commons/ActionDock.svelte';
-  import Organizations from '../commons/Organizations.svelte';
+  import GameTopbar from '../commons/GameTopbar.svelte';
   import WallpaperCurtain from '../commons/WallpaperCurtain.svelte';
   import { hintTarget } from './guidance';
   import { focusScreen } from '../commons/focus';
@@ -71,7 +71,6 @@
   // come from snapshot. Game.svelte's generation key resets both lifetimes together.
   let guideOpen = $state(false);
   let exitOpen = $state(false);
-  let helpExpanded = $state(true);
   let minimized = $state(false);
   const guidedMode = $derived(snapshot.mode === 'guided');
   let settings = $state<'routines' | 'updates' | 'about' | null>(null);
@@ -85,8 +84,15 @@
   );
   // An activity and its feedback share the player's size choice; another activity
   // gets the default for its exploration mode.
-  const windowDefaultsKey = $derived(`${snapshot.mode}:${taskbarId ?? snapshot.scene.kind}`);
-  let coreMaximized = $derived(windowDefaultsKey.startsWith('guided:'));
+  const windowDefaultsKey = $derived(`${taskbarId ?? snapshot.scene.kind}`);
+  let previousWindowDefaultsKey = $state('');
+  let coreMaximized = $state(false);
+  $effect(() => {
+    if (windowDefaultsKey !== previousWindowDefaultsKey) {
+      previousWindowDefaultsKey = windowDefaultsKey;
+      coreMaximized = snapshot.mode === 'guided';
+    }
+  });
   const coreUsesPinnedTaskbar = $derived(
     taskbarId !== null && ['usb', 'mail', 'spoof', 'web'].includes(taskbarId),
   );
@@ -172,25 +178,9 @@
     if (activityIsVisible(snapshot) !== activityVisible)
       dispatch({ type: 'activity-visible', visible: activityVisible });
   });
-  $effect(() => {
-    void activeId;
-    void helpLevel;
-    helpExpanded = true;
-  });
-  async function focusChoices() {
-    await tick();
-    document.getElementById(actionPanelId)?.querySelector<HTMLElement>('input, button')?.focus();
-  }
   let hintMinimized = $state(false);
   let seenHints = $state<string[]>([]);
-  const choicesAvailable = $derived(
-    guidedMode ||
-      (snapshot.scene.kind === 'challenge' && snapshot.scene.guidance.requestedLevel === 2) ||
-      (hintKey !== null && seenHints.includes(hintKey)),
-  );
-  const actionOpen = $derived(
-    activityVisible && choicesAvailable && helpLevel === 2 && helpExpanded,
-  );
+  const actionOpen = $derived(activityVisible && guidedMode && activeId !== 'ai');
   const hintButtonLabel = $derived(
     activityVisible && helpLevel > 0 && !hintMinimized
       ? copy.challenge.hideHint
@@ -201,8 +191,7 @@
   $effect(() => {
     void activeId;
     void hintKey;
-    // At level two the guided choices are the assistance; keep the text window
-    // available in the taskbar without covering those choices.
+    // The hint has its own visibility; switching route only changes the choices.
     hintMinimized = helpLevel !== 1;
   });
   $effect(() => {
@@ -212,8 +201,10 @@
       !hintMinimized &&
       hintKey &&
       !seenHints.includes(hintKey)
-    )
+    ) {
       seenHints = [...seenHints, hintKey];
+      dispatch({ type: 'hint-viewed' });
+    }
   });
   function toggleHint() {
     acknowledgedHelpLevel = helpLevel;
@@ -229,17 +220,6 @@
     void tick().then(() =>
       document.querySelector<HTMLElement>('.hint-window-layer')?.focus({ preventScroll: true }),
     );
-  }
-  function toggleChoices() {
-    if (!choicesAvailable) return;
-    acknowledgedHelpLevel = helpLevel;
-    const opening = !actionOpen;
-    if (opening && helpLevel < 2) dispatch({ type: 'request-choices' });
-    helpExpanded = opening;
-    if (opening) {
-      hintMinimized = true;
-      void focusChoices();
-    }
   }
   // Focus/scroll follow presentation changes. Window identity is deliberately coarser:
   // advancing a challenge step should not reconstruct its local form fields.
@@ -458,19 +438,7 @@
   <div class="wallpaper-orbit" aria-hidden="true"></div>
   <WallpaperCurtain />
   <a href="#session-main" class="skip-link">{copy.shell.skip}</a>
-  <header class="os-topbar" inert={snapshot.locked}>
-    <div class="desktop-organization">
-      <Organizations
-        name={branding.organizationName ?? config.organizationName}
-        logo={branding.organizationLogo ?? embeddedOrganizationLogo ?? config.organizationLogo}
-        partnerName={branding.partnerOrganizationName ?? config.partnerOrganizationName}
-        partnerLogo={branding.partnerOrganizationLogo ??
-          embeddedPartnerOrganizationLogo ??
-          config.partnerOrganizationLogo}
-        campaign={branding.campaignName}
-      />
-    </div>
-    <span class="sr-only">{copy.simulation}</span>
+  {#snippet controls()}
     <div class="session-controls">
       <div class="session-help">
         <div class="progress-slot">
@@ -522,28 +490,13 @@
             </button>
           {/if}
         </div>
-        <button
-          class="guidance-trigger choices-trigger"
-          class:offered={activityVisible && helpLevel === 2}
-          class:help-attention={activityAttention > 0 && helpLevel === 2}
-          data-attention={activityAttention > 0 && helpLevel === 2 ? helpLevel : undefined}
-          disabled={!activityVisible || !choicesAvailable}
-          aria-expanded={actionOpen}
-          aria-controls={actionPanelId}
-          onclick={toggleChoices}
-        >
-          <Icon name="checkbox" size={20} /><span
-            >{actionOpen ? copy.guidance.close : copy.guidance.choices}</span
-          >
-        </button>
       </div>
       <div class="session-finish">
         <button
           class="finish-experience rounded-lg px-3 py-2 text-xs"
           title={guidedMode ? copy.experience.freeHint : copy.experience.finishHint}
-          disabled={snapshot.scene.kind === 'intro' || snapshot.scene.kind === 'debrief'}
-          onclick={() => execute({ type: guidedMode ? 'explore-freely' : 'finish-experience' })}
-          >{guidedMode ? copy.experience.free : copy.experience.finish}<Icon
+          onclick={() => execute({ type: 'set-mode', mode: guidedMode ? 'free' : 'guided' })}
+          >{guidedMode ? copy.experience.free : copy.experience.guided}<Icon
             name="arrow"
             size={14}
             class="ml-2 inline"
@@ -560,8 +513,16 @@
         ><Icon name="hourglass" size={17} /><span aria-hidden="true">{formattedTime}</span></span
       >
     </div>
-    {#if seconds <= 30}<p class="sr-only" role="status">{copy.shell.lowTime}</p>{/if}
-  </header>
+  {/snippet}
+  <GameTopbar
+    {config}
+    {branding}
+    {embeddedOrganizationLogo}
+    {embeddedPartnerOrganizationLogo}
+    {controls}
+    inert={snapshot.locked}
+  />
+  {#if seconds <= 30}<p class="sr-only" role="status">{copy.shell.lowTime}</p>{/if}
   <main
     id="session-main"
     class="os-workspace relative z-10 outline-none"
@@ -593,7 +554,11 @@
               inert={minimized || settingsVisible}
             >
               {#snippet currentView()}
-                {#if snapshot.scene.kind === 'intro'}<Intro {snapshot} dispatch={execute} />
+                {#if snapshot.scene.kind === 'intro'}<Intro
+                    {snapshot}
+                    {config}
+                    dispatch={execute}
+                  />
                 {:else if snapshot.scene.kind === 'challenge'}<Challenge
                     {snapshot}
                     scene={snapshot.scene}

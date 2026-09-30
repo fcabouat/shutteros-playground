@@ -15,6 +15,7 @@ export type GameConfig = {
   partnerOrganizationName?: string;
   partnerOrganizationLogo?: string;
   playerName: string;
+  passwordManagerName: string;
   supportLabel: string;
   supportContact: string;
   stationLabel: string;

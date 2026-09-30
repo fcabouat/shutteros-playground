@@ -2,8 +2,8 @@ export const content = {
   fr: {
     title: 'ShutterOS Playground — la cybersécurité se pratique',
     description:
-      'Un jeu de sensibilisation à la cybersécurité, gratuit et libre. Explorez un faux bureau en 5 à 15 minutes, en ligne ou sur un poste kiosk.',
-    nav: ['Démo', 'Guide', 'Architecture · EN', 'API · EN', 'Storybook', 'GitHub'],
+      'Un jeu de sensibilisation à la cybersécurité, gratuit et libre. Explorez un faux bureau en 10 à 20 minutes, en ligne ou sur un poste kiosk.',
+    nav: ['Démo', 'Déployer', 'Architecture · EN', 'API · EN', 'Storybook', 'GitHub'],
     navigation: 'Navigation du site',
     language: 'Langue',
     skip: 'Aller au contenu',
@@ -14,7 +14,7 @@ export const content = {
     download: 'Télécharger la version autonome',
     note: 'Sans inscription. Données fictives. Aucun message réellement envoyé.',
     stats: [
-      ['5–15 min', 'une courte session'],
+      ['10–20 min', 'une courte session'],
       ['8 activités', 'à explorer'],
       ['FR / EN', 'au choix'],
       ['MIT', 'libre et personnalisable'],
@@ -37,16 +37,16 @@ export const content = {
     stepsTitle: 'Observer, essayer, comprendre.',
     steps: [
       [
-        'Explorez librement',
-        'Ouvrez les applications, inspectez les détails et essayez vos idées. Repérez les activités restantes et demandez un indice, puis des choix si besoin.',
+        'Choisissez votre parcours',
+        'Relevez le défi en mode libre, proposé par défaut, ou avancez en douceur avec les QCM du mode guidé. Changez de mode à tout moment.',
       ],
       [
         'Terminez à votre rythme',
-        'Un parcours guidé reprend les situations restantes. La session laisse 30 minutes pour explorer et échanger, sans chrono par réponse.',
+        'La barre de jeu indique les activités restantes et donne accès aux indices. La session laisse 30 minutes, sans chrono par réponse.',
       ],
       [
         'Gardez un réflexe utile',
-        'Chaque choix a une conséquence expliquée. Rejouez pour comparer, sans modifier le premier résultat du bilan.',
+        'Retrouvez votre parcours et les indices consultés, puis les explications de chaque situation. Aucune note : le bilan sert à échanger.',
       ],
     ],
     deploymentEyebrow: 'CYBERMOIS · ATELIERS · KIOSK',
@@ -58,13 +58,13 @@ export const content = {
       'Configurez le contact de sécurité et la durée de session. Le poste se réinitialise pour la personne suivante.',
       'Hébergez les fichiers statiques ou préparez un poste Ubuntu avec le kit Cage + Chromium.',
     ],
-    deployLink: 'Préparer un poste kiosk · EN',
+    deployLink: 'Préparer un poste de démonstration',
     resourcesTitle: 'Pour jouer, déployer ou contribuer.',
     resources: [
       [
-        'Guide utilisateur',
-        'Les gestes du jeu et les repères pour animer une session.',
-        'guide/fr.html',
+        'Personnalisation',
+        'Votre identité, vos logos et les paramètres de votre organisation.',
+        'docs/branding.fr.html',
       ],
       [
         'Architecture',
@@ -92,8 +92,8 @@ export const content = {
   en: {
     title: 'ShutterOS Playground — practise cybersecurity',
     description:
-      'A free, open-source cybersecurity awareness game. Explore a fictional desktop in 5 to 15 minutes, online or on a shared kiosk.',
-    nav: ['Demo', 'User guide', 'Architecture', 'API', 'Storybook', 'GitHub'],
+      'A free, open-source cybersecurity awareness game. Explore a fictional desktop in 10 to 20 minutes, online or on a shared kiosk.',
+    nav: ['Demo', 'Deploy', 'Architecture', 'API', 'Storybook', 'GitHub'],
     navigation: 'Site navigation',
     language: 'Language',
     skip: 'Skip to content',
@@ -104,7 +104,7 @@ export const content = {
     download: 'Download the standalone edition',
     note: 'No sign-up. Fictional data. No messages actually sent.',
     stats: [
-      ['5–15 min', 'a short session'],
+      ['10–20 min', 'a short session'],
       ['8 activities', 'to explore'],
       ['FR / EN', 'your choice'],
       ['MIT', 'open and customisable'],
@@ -126,16 +126,16 @@ export const content = {
     stepsTitle: 'Observe, try, understand.',
     steps: [
       [
-        'Explore freely',
-        'Open applications, inspect the details and try your ideas. See what remains to explore, ask for a hint, then open the choices if needed.',
+        'Choose your route',
+        'Take on the challenge in free exploration, selected by default, or follow a gentler guided questionnaire. Switch routes at any time without losing progress.',
       ],
       [
         'Finish at your own pace',
-        'A guided journey covers the remaining situations. The session allows 30 minutes to explore and discuss, with no countdown for each answer.',
+        'The game bar shows remaining activities and gives access to hints. The session allows 30 minutes, with no countdown for each answer.',
       ],
       [
         'Take away a useful habit',
-        'Each choice has an explained consequence. Replay to compare without changing the first result in your recap.',
+        'Review your route and hints consulted, then the explanations for each situation. There is no grade: the recap starts a conversation.',
       ],
     ],
     deploymentEyebrow: 'CYBERSECURITY MONTH · WORKSHOPS · KIOSK',
@@ -150,7 +150,11 @@ export const content = {
     deployLink: 'Prepare a kiosk workstation',
     resourcesTitle: 'Play, deploy or contribute.',
     resources: [
-      ['User guide', 'How to play and how to facilitate an awareness session.', 'guide/en.html'],
+      [
+        'Organisation branding',
+        'Your identity, logos and organisation settings.',
+        'docs/branding.html',
+      ],
       ['Architecture', 'A pure core, a session loop and verifiable boundaries.', 'overview.html'],
       [
         'API reference',

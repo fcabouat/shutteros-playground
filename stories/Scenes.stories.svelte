@@ -3,6 +3,9 @@
   import ScreenPreview from './ScreenPreview.svelte';
   import {
     config,
+    welcome,
+    guidedLogin,
+    guidedIntro,
     login,
     intro,
     desktop,
@@ -22,6 +25,10 @@
   });
 </script>
 
+<Story name="Welcome" args={{ initial: welcome }} />
+<Story name="English welcome" args={{ initial: welcome, locale: 'en' }} />
+<Story name="Guided login" args={{ initial: guidedLogin }} />
+<Story name="Guided login feedback" args={{ initial: guidedIntro }} />
 <Story name="Login" args={{ initial: login }} />
 <Story name="First insight" args={{ initial: intro }} />
 <Story name="Desktop" args={{ initial: desktop }} />

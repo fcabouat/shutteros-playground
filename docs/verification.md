@@ -35,6 +35,10 @@ Only the session deadline limits play; there is no countdown for individual answ
 
 The browser fixture serves `dist/` by default, or the directory selected by `BUILD_ROOT`, on loopback port 4183. It has no development-server fallback and does not reuse an interactive preview. Keep that port available while running the suite.
 
+The `pnpm verify` command always builds with the generic public identity, even when
+`private/branding.json` exists. It leaves private files untouched. Normal `pnpm dev`
+and `pnpm build` commands continue to use the local branding.
+
 ## GitHub Pages path
 
 CI checks the assembled product site in `dist/site/` and its nested demo under the repository’s deployment path. To check the project path locally:
@@ -49,7 +53,7 @@ Use the repository's actual base path for a fork. Run `pnpm build` without `BASE
 
 ## Deployment acceptance
 
-- Exercise the deployed URL after an Actions run: login, one situation, language switching, About notices and logout. Check the browser console and asset paths.
+- Exercise the deployed URL after an Actions run: welcome, both login routes, one situation, language switching, About notices and logout. Check the browser console and asset paths.
 - Rehearse with representative participants. Verify reading pace, guided duration, keyboard use, screen-reader behavior, zoom, touch input and the target screen resolution. Chromium automation and Axe scans do not establish accessibility conformance or test every browser.
 - Test session expiry, cancelled logout and process recovery on the kiosk. Confirm that the facilitator can reach the organisation's support contact through its usual channel.
 - The Ubuntu kit has been exercised in a resource-limited KVM guest, including PAM/logind, Cage, Chromium Snap, recovery and uninstall. Complete its [hardware acceptance and recovery checks](ubuntu-kiosk.md#install-and-verify) on the target machine; virtual graphics and keyboard tests do not qualify its GPU, peripherals or firmware controls.

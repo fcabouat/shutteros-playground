@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { fr } from '@shutteros/core/data/fr';
+import { beginFree } from './helpers';
 
 for (const kiosk of [false, true]) {
   test(`kiosk keyboard guard is opt-in (${kiosk}) and preserves game navigation`, async ({
@@ -20,6 +21,7 @@ for (const kiosk of [false, true]) {
       };
     });
     await page.goto(kiosk ? './?kiosk=1' : './');
+    await beginFree(page);
     await page.getByLabel('Mot de passe', { exact: true }).fill('Bureau2026');
     await page.getByRole('button', { name: 'Ouvrir la session' }).click();
     await expect(page.getByRole('heading', { name: fr.intro.title })).toBeVisible();
@@ -42,6 +44,6 @@ for (const kiosk of [false, true]) {
     await page.keyboard.press('Enter');
     await expect(page.getByRole('button', { name: 'Démarrer', exact: true })).toBeVisible();
     await page.keyboard.press('Control+Alt+Home');
-    await expect(page.getByLabel('Mot de passe', { exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: fr.welcome.title })).toBeVisible();
   });
 }

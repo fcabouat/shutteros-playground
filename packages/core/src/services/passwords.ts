@@ -1,6 +1,18 @@
 import type { Locale } from '../data/catalog';
 import type { GameConfig } from '../model/configuration';
-import type { GameState } from '../model/game';
+import type { GameState, LoginChoiceId, Outcome } from '../model/game';
+
+const loginChoiceIds = ['manager', 'note', 'file'] as const;
+
+export function isLoginChoiceId(value: unknown): value is LoginChoiceId {
+  return loginChoiceIds.includes(value as LoginChoiceId);
+}
+
+/** The manager is the safe storage choice; exposed notes and ordinary files are risky. */
+export function loginChoiceOutcome(value: unknown): Outcome | null {
+  if (!isLoginChoiceId(value)) return null;
+  return value === 'manager' ? 'safe' : 'risky';
+}
 
 const demoHints = { fr: 'Bureau2026', en: 'Office2026' } as const;
 
