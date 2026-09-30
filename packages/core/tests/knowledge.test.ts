@@ -43,7 +43,6 @@ describe('knowledge service', () => {
           step: 'choose',
           guidance: {
             requestedLevel: 0,
-            started: true,
             activeElapsedMs: 0,
             activeSince: 0,
             visible: true,

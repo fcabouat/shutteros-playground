@@ -71,7 +71,6 @@
   // come from snapshot. Game.svelte's generation key resets both lifetimes together.
   let guideOpen = $state(false);
   let exitOpen = $state(false);
-  let helpExpanded = $state(true);
   let minimized = $state(false);
   const guidedMode = $derived(snapshot.mode === 'guided');
   let settings = $state<'routines' | 'updates' | 'about' | null>(null);
@@ -179,25 +178,9 @@
     if (activityIsVisible(snapshot) !== activityVisible)
       dispatch({ type: 'activity-visible', visible: activityVisible });
   });
-  $effect(() => {
-    void activeId;
-    void helpLevel;
-    helpExpanded = true;
-  });
-  async function focusChoices() {
-    await tick();
-    document.getElementById(actionPanelId)?.querySelector<HTMLElement>('input, button')?.focus();
-  }
   let hintMinimized = $state(false);
   let seenHints = $state<string[]>([]);
-  const choicesAvailable = $derived(
-    guidedMode ||
-      (snapshot.scene.kind === 'challenge' && snapshot.scene.guidance.requestedLevel === 2) ||
-      (hintKey !== null && seenHints.includes(hintKey)),
-  );
-  const actionOpen = $derived(
-    activityVisible && choicesAvailable && helpLevel === 2 && helpExpanded,
-  );
+  const actionOpen = $derived(activityVisible && guidedMode);
   const hintButtonLabel = $derived(
     activityVisible && helpLevel > 0 && !hintMinimized
       ? copy.challenge.hideHint
@@ -208,8 +191,7 @@
   $effect(() => {
     void activeId;
     void hintKey;
-    // At level two the guided choices are the assistance; keep the text window
-    // available in the taskbar without covering those choices.
+    // The hint has its own visibility; switching route only changes the choices.
     hintMinimized = helpLevel !== 1;
   });
   $effect(() => {
@@ -238,17 +220,6 @@
     void tick().then(() =>
       document.querySelector<HTMLElement>('.hint-window-layer')?.focus({ preventScroll: true }),
     );
-  }
-  function toggleChoices() {
-    if (!choicesAvailable) return;
-    acknowledgedHelpLevel = helpLevel;
-    const opening = !actionOpen;
-    if (opening && helpLevel < 2) dispatch({ type: 'request-choices' });
-    helpExpanded = opening;
-    if (opening) {
-      hintMinimized = true;
-      void focusChoices();
-    }
   }
   // Focus/scroll follow presentation changes. Window identity is deliberately coarser:
   // advancing a challenge step should not reconstruct its local form fields.
@@ -519,20 +490,6 @@
             </button>
           {/if}
         </div>
-        <button
-          class="guidance-trigger choices-trigger"
-          class:offered={activityVisible && helpLevel === 2}
-          class:help-attention={activityAttention > 0 && helpLevel === 2}
-          data-attention={activityAttention > 0 && helpLevel === 2 ? helpLevel : undefined}
-          disabled={!activityVisible || !choicesAvailable}
-          aria-expanded={actionOpen}
-          aria-controls={actionPanelId}
-          onclick={toggleChoices}
-        >
-          <Icon name="checkbox" size={20} /><span
-            >{actionOpen ? copy.guidance.close : copy.guidance.choices}</span
-          >
-        </button>
       </div>
       <div class="session-finish">
         <button
@@ -616,7 +573,6 @@
                   />
                 {:else if snapshot.scene.kind === 'routines'}<Routines
                     {snapshot}
-                    {config}
                     dispatch={execute}
                   />
                 {:else if snapshot.scene.kind === 'debrief'}<Debrief
@@ -708,7 +664,7 @@
                 />{:else if settings === 'about'}<About
                   {legalNotices}
                   {legalNoticesFailed}
-                />{:else}<Routines {snapshot} {config} {dispatch} />{/if}</WindowFrame
+                />{:else}<Routines {snapshot} {dispatch} />{/if}</WindowFrame
             >
           </div>{/if}
       </div>

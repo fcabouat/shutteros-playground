@@ -1,6 +1,12 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, expectTypeOf, it } from 'vitest';
 import type { GameConfig } from '../src/model/configuration';
-import type { GameState, Intent, PlayMode } from '../src/model/game';
+import {
+  guidanceDelayMs,
+  type GameState,
+  type GuidanceLevel,
+  type Intent,
+  type PlayMode,
+} from '../src/model/game';
 import { debriefStats, guidanceLevel, journeySummary, safeCount } from '../src/projections/game';
 import { initialState, transition } from '../src/runtime/game';
 import { loginChoiceOutcome } from '../src/services/passwords';
@@ -12,7 +18,7 @@ const config: GameConfig = {
   acceptedPasswords: ['Bureau2026'],
   caseSensitivePasswords: false,
   showPasswordHint: true,
-  passwordManagerName: 'KeePass',
+  passwordManagerName: 'KeePassXC',
   organizationName: 'Org',
   playerName: 'Jules',
   supportLabel: 'Support',
@@ -39,7 +45,12 @@ function session(mode: PlayMode = 'free', now = 0): Extract<GameState, { phase: 
   return state;
 }
 
-describe('guided onboarding', () => {
+describe('play mode onboarding', () => {
+  it('exposes one optional hint level and no questionnaire request intent', () => {
+    expectTypeOf<GuidanceLevel>().toEqualTypeOf<0 | 1>();
+    expectTypeOf<Extract<Intent, { type: 'request-choices' }>>().toEqualTypeOf<never>();
+  });
+
   it('starts at an unlimited welcome and requires begin before either login path', () => {
     const welcome = apply(initialState(10), { type: 'tick' }, 9_000_000);
     expect(welcome).toEqual({
@@ -47,7 +58,7 @@ describe('guided onboarding', () => {
       generation: 0,
       now: 9_000_000,
       reason: 'initial',
-      mode: 'guided',
+      mode: 'free',
     });
     expect(apply(welcome, { type: 'login', password: 'Bureau2026' }, 9_000_001)).toMatchObject({
       phase: 'welcome',
@@ -119,7 +130,7 @@ describe('guided onboarding', () => {
     }
   });
 
-  it('opens guided choices in place and preserves revealed choices when returning free', () => {
+  it('changes choice presentation through mode without changing the step or hint', () => {
     let state = apply(
       apply(session('free'), { type: 'continue' }, 1),
       { type: 'open', id: 'incident' },
@@ -128,9 +139,11 @@ describe('guided onboarding', () => {
     state = apply(state, { type: 'choose', choiceId: 'isolate' }, 3);
     state = apply(state, { type: 'set-mode', mode: 'guided' }, 4);
     expect(state).toMatchObject({ scene: { kind: 'challenge', id: 'incident', step: 'notify' } });
-    expect(guidanceLevel(state)).toBe(2);
-    state = apply(state, { type: 'set-mode', mode: 'free' }, 5);
-    expect(guidanceLevel(state)).toBe(2);
+    expect(guidanceLevel(state)).toBe(0);
+    state = apply(state, { type: 'request-hint' }, 5);
+    expect(guidanceLevel(state)).toBe(1);
+    state = apply(state, { type: 'set-mode', mode: 'free' }, 6);
+    expect(guidanceLevel(state)).toBe(1);
     expect(journeySummary(state)).toEqual({
       mode: 'mixed',
       modes: ['free', 'guided', 'free'],
@@ -161,8 +174,7 @@ describe('guided onboarding', () => {
       { type: 'open', id: 'incident' },
       2,
     );
-    state = apply(state, { type: 'request-choices' }, 3);
-    expect(state).toMatchObject({ journey: { hints: [] } });
+    state = apply(state, { type: 'request-hint' }, 3);
     state = apply(state, { type: 'hint-viewed' }, 4);
     expect(state).toMatchObject({ journey: { hints: ['incident:choose'] } });
     state = apply(state, { type: 'set-mode', mode: 'free' }, 5);
@@ -177,24 +189,29 @@ describe('guided onboarding', () => {
     let guided: GameState = apply(session('guided'), { type: 'continue' }, 1);
     expect(guided).toMatchObject({ journey: { hints: [] } });
     guided = apply(guided, { type: 'hint-viewed' }, 2);
+    expect(guided).toMatchObject({ journey: { hints: [] } });
+    guided = apply(guided, { type: 'request-hint' }, 3);
+    guided = apply(guided, { type: 'hint-viewed' }, 4);
     expect(guided).toMatchObject({ journey: { hints: ['usb:choose'] } });
   });
 
-  it('counts a hint first viewed during replay without replacing the first result', () => {
+  it('times and deduplicates a hint first viewed during replay without replacing the result', () => {
     const firstResults = [{ id: 'usb' as const, outcome: 'safe' as const, choiceId: 'eject' }];
     let state: GameState = {
       ...apply(session('free'), { type: 'continue' }, 1),
       results: firstResults,
     };
     state = apply(state, { type: 'open', id: 'usb' }, 2);
-    state = apply(state, { type: 'request-hint' }, 3);
-    state = apply(state, { type: 'hint-viewed' }, 4);
-    state = apply(state, { type: 'hint-viewed' }, 5);
+    expect(guidanceLevel(apply(state, { type: 'tick' }, 2 + guidanceDelayMs - 1))).toBe(0);
+    state = apply(state, { type: 'tick' }, 2 + guidanceDelayMs);
+    expect(guidanceLevel(state)).toBe(1);
+    state = apply(state, { type: 'hint-viewed' }, 2 + guidanceDelayMs + 1);
+    state = apply(state, { type: 'hint-viewed' }, 2 + guidanceDelayMs + 2);
     expect(state).toMatchObject({
       journey: { hints: ['usb:choose'] },
       results: firstResults,
     });
-    state = apply(state, { type: 'choose', choiceId: 'open' }, 6);
+    state = apply(state, { type: 'choose', choiceId: 'open' }, 2 + guidanceDelayMs + 3);
     expect(state).toMatchObject({
       results: firstResults,
       scene: { kind: 'feedback', replay: true, result: { outcome: 'risky' } },
@@ -225,21 +242,21 @@ describe('guided onboarding', () => {
     });
   });
 
-  it('returns to a clean guided welcome on logout and expiry', () => {
+  it('returns to a clean free welcome on logout and expiry', () => {
     const active = session('free', 100);
     expect(apply(active, { type: 'logout' }, 200)).toEqual({
       phase: 'welcome',
       generation: 1,
       now: 200,
       reason: 'logout',
-      mode: 'guided',
+      mode: 'free',
     });
     expect(apply(active, { type: 'tick' }, 1_800_100)).toEqual({
       phase: 'welcome',
       generation: 1,
       now: 1_800_100,
       reason: 'expired',
-      mode: 'guided',
+      mode: 'free',
     });
   });
 });

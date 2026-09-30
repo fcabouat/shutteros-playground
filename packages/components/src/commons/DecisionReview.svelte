@@ -7,7 +7,7 @@
     type DecisionStep,
   } from '@shutteros/core/model/game';
   import { getI18n } from '../i18n/context';
-  import Icon from './Icon.svelte';
+  import ChoiceReview from './ChoiceReview.svelte';
 
   let {
     id,
@@ -20,7 +20,6 @@
   } = $props();
 
   const i18n = getI18n();
-  const titleId = $props.id();
   const copy = $derived(i18n.text);
   const catalogChoices = $derived(
     step === 'notify' && id === 'incident'
@@ -84,158 +83,36 @@
           after: label.slice(index + marker.length),
         };
   }
+
+  const reviewChoices = $derived(
+    choiceIds.map((choiceId) => {
+      const correct = choiceOutcome(id, step, choiceId) === 'safe';
+      const selected = choiceId === selectedChoiceId;
+      return {
+        id: choiceId,
+        label: choiceLabel(choiceId),
+        correct,
+        note: otherToolNote(choiceId),
+        highlight: highlightedLabel(choiceId),
+        status: selected
+          ? `${correct ? copy.feedback.correct : copy.feedback.incorrect} — ${copy.feedback.selected}`
+          : correct
+            ? `${copy.feedback.correct} — ${copy.feedback.alternative}`
+            : copy.feedback.incorrect,
+      };
+    }),
+  );
+  const context = $derived(
+    id === 'ai'
+      ? { title: copy.ai[selectedAiTool], detail: copy.ai[`${selectedAiTool}Note`] }
+      : undefined,
+  );
 </script>
 
-<section class="decision-review" data-activity={id} aria-labelledby={titleId}>
-  <h2 id={titleId} class="decision-review-title">{copy.feedback.yourAction}</h2>
-  {#if id === 'ai'}
-    <p class="decision-review-context">
-      <strong>{copy.ai[selectedAiTool]}</strong>
-      <span>{copy.ai[`${selectedAiTool}Note`]}</span>
-    </p>
-  {/if}
-  <ul class="decision-review-list">
-    {#each choiceIds as choiceId (choiceId)}
-      {@const outcome = choiceOutcome(id, step, choiceId)}
-      {@const selected = choiceId === selectedChoiceId}
-      {@const toolNote = otherToolNote(choiceId)}
-      {@const highlighted = highlightedLabel(choiceId)}
-      {@const correct = outcome === 'safe'}
-      <li
-        class="decision-review-choice"
-        class:selected
-        data-choice={choiceId}
-        data-outcome={correct ? 'correct' : 'incorrect'}
-        aria-current={selected ? 'true' : undefined}
-      >
-        <span class="decision-review-icon">
-          <Icon name={correct ? 'check' : 'close'} size={17} />
-        </span>
-        <span class="decision-review-label">
-          {#if highlighted}{highlighted.before}<span class="decision-review-security"
-              >{highlighted.match}</span
-            >{highlighted.after}{:else}{choiceLabel(choiceId)}{/if}
-          {#if toolNote}<span class="decision-review-tool-note">{toolNote}</span>{/if}
-        </span>
-        <span class="decision-review-status">
-          {selected
-            ? `${correct ? copy.feedback.correct : copy.feedback.incorrect} — ${copy.feedback.selected}`
-            : correct
-              ? `${copy.feedback.correct} — ${copy.feedback.alternative}`
-              : copy.feedback.incorrect}
-        </span>
-      </li>
-    {/each}
-  </ul>
-</section>
-
-<style>
-  .decision-review {
-    margin-top: 1.25rem;
-  }
-
-  .decision-review-title {
-    margin-bottom: 0.625rem;
-    font-size: 0.75rem;
-    font-weight: 750;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--muted);
-  }
-
-  .decision-review-list {
-    display: grid;
-    gap: 0.4rem;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-  }
-
-  .decision-review-context {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.25rem 0.6rem;
-    margin: 0 0 0.625rem;
-    font-size: 0.8125rem;
-  }
-
-  .decision-review-context span {
-    color: var(--muted);
-  }
-
-  .decision-review-choice {
-    display: grid;
-    grid-template-columns: 1.5rem minmax(0, 1fr) auto;
-    align-items: center;
-    gap: 0.5rem;
-    min-height: 2.75rem;
-    padding: 0.55rem 0.7rem;
-    border: 1px solid transparent;
-    border-radius: 0.55rem;
-  }
-
-  .decision-review-choice[data-outcome='correct'] {
-    border-color: #a8d2b5;
-    background: var(--success-soft);
-    color: var(--success);
-  }
-
-  .decision-review-choice[data-outcome='incorrect'] {
-    border-color: #efb5b5;
-    background: #fff0f0;
-    color: #922e2e;
-  }
-
-  .decision-review-choice.selected {
-    border-width: 2px;
-    border-color: currentColor;
-    padding: calc(0.55rem - 1px) calc(0.7rem - 1px);
-    box-shadow: 0 0 0 1px #ffffffb8 inset;
-  }
-
-  .decision-review-icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .decision-review-label {
-    min-width: 0;
-    color: var(--ink);
-    font-size: 0.875rem;
-    font-weight: 650;
-    line-height: 1.3;
-  }
-
-  .decision-review-tool-note {
-    display: block;
-    margin-top: 0.3rem;
-    font-weight: 400;
-    font-size: 0.8125rem;
-  }
-
-  .decision-review-security {
-    color: #a32924;
-    text-decoration: underline;
-    text-decoration-thickness: 2px;
-    text-underline-offset: 0.14em;
-  }
-
-  .decision-review-status {
-    font-size: 0.75rem;
-    font-weight: 750;
-    line-height: 1.25;
-    text-align: right;
-  }
-
-  @media (max-width: 520px) {
-    .decision-review-choice {
-      grid-template-columns: 1.5rem minmax(0, 1fr);
-    }
-
-    .decision-review-status {
-      grid-column: 2;
-      text-align: left;
-    }
-  }
-</style>
+<ChoiceReview
+  title={copy.feedback.yourAction}
+  choices={reviewChoices}
+  {selectedChoiceId}
+  {context}
+  activity={id}
+/>

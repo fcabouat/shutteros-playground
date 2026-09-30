@@ -10,16 +10,16 @@ export const en: Catalog = {
       `You play as ${name}. A found USB drive, unexpected messages and workstation protection await in a simulated desktop.`,
     choose: 'Choose a journey',
     guided: {
-      title: 'Guided',
-      description: 'A clear sequence of multiple-choice situations.',
-      detail: 'Ideal for a first visit.',
+      title: 'Gentle walkthrough',
+      description: 'Move through a clear sequence of multiple-choice situations.',
+      detail: 'The game takes you from one activity to the next.',
     },
     free: {
-      title: 'Free exploration',
-      description: 'Explore the desktop, take action and ask for hints.',
-      detail: 'You choose your route.',
+      title: 'Small challenge',
+      description: 'Explore the desktop freely, take action and ask for hints.',
+      detail: 'It is up to you to spot the situations.',
     },
-    begin: 'Start exercise',
+    begin: 'Start the journey',
     duration: 'Typical duration: 10 to 20 min',
     expired: 'The session time ended. Local answers have been erased.',
     loggedOut: 'The previous game and its local answers have been erased.',
@@ -30,7 +30,9 @@ export const en: Catalog = {
       protection: 'Protect my workstation · green: apply everyday protection habits.',
     },
     controls: {
-      title: 'The game bar stays with you',
+      title: 'Your game bar, at the top of the screen',
+      introduction:
+        'It stays with you throughout the journey. Switch between free exploration and guided mode at any time, keeping your progress.',
       progress: 'Progress',
       waiting: 'Waiting',
       items: [
@@ -39,20 +41,18 @@ export const en: Catalog = {
           title: 'Hint',
           detail: 'shows a clue about what is currently visible, also offered after 2 min.',
         },
-        { title: 'Choices', detail: 'opens the answers when they are available.' },
         {
-          title: 'Journey and hourglass',
-          detail: 'lets you switch mode; the countdown only starts after sign-in.',
+          title: 'Hourglass',
+          detail: 'the countdown only starts after sign-in.',
         },
       ],
     },
   },
   experience: {
-    free: 'Free exploration',
-    guided: 'Guided journey',
+    free: 'Free mode (exploration)',
+    guided: 'Guided mode (multiple choice)',
     freeHint: 'Choose activities yourself. Your progress is kept.',
-    finish: 'Guided journey',
-    next: 'Next reflex',
+    next: 'Go to the next activity',
     finishHint:
       'A short guided route covers only what remains. The current hourglass keeps running.',
     explore: 'Look around, open details, try things out. You can also return to the desktop.',
@@ -66,11 +66,20 @@ export const en: Catalog = {
     updates: 'Updates',
     title: 'Everyday habits',
     subtitle: 'Three habits, using your organisation’s familiar tools.',
+    guidedInstruction:
+      'To continue, complete these three actions. Use the button on each card; after locking, resume the simulation.',
+    nextStep: (step: string) => `Next action: ${step}`,
+    steps: {
+      password: 'create a unique secret',
+      update: 'schedule the update',
+      lock: 'lock and then resume the simulation',
+      complete: 'All three actions are complete.',
+    },
     account: 'My account',
     password: 'Password renewal requested by IT',
     passwordBody:
       'Your usual account centre requests a new password. An unexpected email asks for one? Find the known portal yourself instead of following its link.',
-    passwordAction: (manager: string) => `Create a unique secret with ${manager}`,
+    passwordAction: 'Create a unique secret with the approved manager',
     passwordDone: 'Simulated password renewal completed.',
     passwordEmphasis: 'Use a long, unique secret for each account',
     passwordLesson:
@@ -146,18 +155,9 @@ export const en: Catalog = {
       'Before entering the simulated desktop, look at the phrase on the note and choose a safer place to keep it.',
     guidedQuestion: 'Where would you keep this password so that somebody else cannot access it?',
     guidedChoices: [
-      {
-        id: 'manager',
-        label: (manager: string) => `In the approved password manager: ${manager}`,
-      },
-      {
-        id: 'note',
-        label: (manager: string) => `On a note under the keyboard, rather than in ${manager}`,
-      },
-      {
-        id: 'file',
-        label: (manager: string) => `In a file on the workstation, rather than in ${manager}`,
-      },
+      { id: 'manager', label: 'In an approved password manager' },
+      { id: 'note', label: 'On a note under the keyboard' },
+      { id: 'file', label: 'In a text file on the workstation' },
     ],
     guidedHelper:
       'Look for a place designed by your organisation to restrict access to the secret.',
@@ -182,7 +182,7 @@ export const en: Catalog = {
     nextPlayer: 'Next player',
     guide: 'A hint',
     close: 'Close',
-    finish: 'Guided journey',
+    finish: 'Guided mode (multiple choice)',
     resume: 'Back to the desk',
     connected: 'Network connected',
     isolated: 'Network isolated',
@@ -201,7 +201,7 @@ export const en: Catalog = {
     guidedRiskTitle: 'This secret would remain too exposed.',
     guidedTitle: 'You identified a better place.',
     guidedSafe: (manager: string) =>
-      `${manager} is designed to store secrets securely. This choice does not actually unlock a workstation: use the authentication method required by your organisation.`,
+      `A long, unique password can be kept in your organisation’s approved password manager, here ${manager}.`,
     guidedRiskNote: (manager: string) =>
       `A hidden note can still be read by somebody nearby. The approved manager, ${manager}, is designed to restrict that access.`,
     guidedRiskFile: (manager: string) =>
@@ -209,6 +209,12 @@ export const en: Catalog = {
     guidedTransition:
       'Your answer does not stop the exercise: you will now enter the simulated desktop and practise other habits.',
     start: 'Explore the desk',
+    guidedStart: 'Go to the next activity',
+    managerUnlock: (manager: string) =>
+      `${manager} stores passwords; it does not replace the method required by your organisation to unlock the workstation.`,
+    keepassxcCertification: 'A version of KeePassXC has been security-certified by ANSSI.',
+    keepassdx:
+      'For personal use on Android, KeePassDX is one possible option. For professional use, always follow your organisation’s policy.',
   },
   ai: {
     app: 'AI assistant',
@@ -397,8 +403,6 @@ export const en: Catalog = {
     minimize: 'Minimise hint',
     restore: 'Show hint again',
     first: 'Need a hint?',
-    choices: 'View choices',
-    close: 'Collapse choices',
     families: {
       vigilance: 'Vigilance',
       protection: 'Protect my workstation',

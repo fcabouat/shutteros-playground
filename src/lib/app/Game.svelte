@@ -9,7 +9,7 @@
   import { browserClock } from '../infrastructure/clock';
   import { createKioskInput } from '../infrastructure/kiosk-input';
   import { createRuntime } from './runtime';
-  import { activityIsVisible, loginHelpStarted } from '@shutteros/core/projections/game';
+  import { activityIsVisible } from '@shutteros/core/projections/game';
   import { initialState } from '@shutteros/core/runtime/game';
   import { getI18n } from '@shutteros/components/i18n/context';
   import { preferredLocale } from '@shutteros/components/i18n/locale';
@@ -95,9 +95,6 @@
   function activity() {
     // Pointer movement is noisy; a second-level activity timestamp is enough for
     // the idle reminder and avoids reducing/publishing on every movement event.
-    if (runtime && game.phase === 'login' && !loginHelpStarted(game)) {
-      dispatch({ type: 'activity' });
-    }
     if (game.phase === 'session' && game.now - game.routines.lastActivityAt >= 1000)
       dispatch({ type: 'activity' });
   }
