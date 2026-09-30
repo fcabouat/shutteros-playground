@@ -180,7 +180,7 @@
   });
   let hintMinimized = $state(false);
   let seenHints = $state<string[]>([]);
-  const actionOpen = $derived(activityVisible && guidedMode);
+  const actionOpen = $derived(activityVisible && guidedMode && activeId !== 'ai');
   const hintButtonLabel = $derived(
     activityVisible && helpLevel > 0 && !hintMinimized
       ? copy.challenge.hideHint
