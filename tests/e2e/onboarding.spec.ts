@@ -204,11 +204,17 @@ test('recap distinguishes viewed hints from guided choices and survives minimisa
   await page.getByRole('button', { name: fr.routines.lockAction, exact: true }).click();
   await page.getByRole('button', { name: fr.routines.unlock, exact: true }).click();
   await page.getByRole('button', { name: fr.experience.review, exact: true }).click();
-  await expect(page.getByRole('heading', { name: fr.debrief.summary.title })).toBeVisible();
-  await expect(page.getByText(fr.debrief.summary.hints(1), { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: fr.debrief.summary.title(config.playerName, true) }),
+  ).toBeVisible();
+  await expect(page.getByText(fr.debrief.summary.hints(1, 8), { exact: true })).toBeVisible();
   await expect(page.getByText(fr.debrief.summary.modes.mixed, { exact: true })).toBeVisible();
-  await expect(page.getByText(fr.debrief.summary.situations(7), { exact: true })).toBeVisible();
-  await expect(page.getByText(fr.debrief.summary.habits(3), { exact: true })).toBeVisible();
+  await expect(page.getByText(fr.debrief.summary.situations(7, 7), { exact: true })).toBeVisible();
+  await expect(page.getByText(fr.debrief.summary.habits(3, 3), { exact: true })).toBeVisible();
+  await expect(page.locator('.summary-fact').first()).toContainText(fr.debrief.summary.journey);
+  await expect(page.getByRole('button', { name: fr.shell.nextPlayer, exact: true })).toHaveCount(0);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await expect(page.locator('.summary-fact').first()).toHaveCSS('animation-name', 'none');
   await page.screenshot({ path: 'test-results/previews/journey-summary.png' });
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   await page.getByRole('button', { name: fr.debrief.summary.detailed, exact: true }).click();
@@ -221,5 +227,5 @@ test('recap distinguishes viewed hints from guided choices and survives minimisa
   await page.getByRole('button', { name: fr.experience.review, exact: true }).click();
   await expect(page.getByRole('heading', { name: fr.debrief.title })).toBeVisible();
   await page.getByRole('button', { name: fr.debrief.backToSummary, exact: true }).click();
-  await expect(page.getByText(fr.debrief.summary.hints(1), { exact: true })).toBeVisible();
+  await expect(page.getByText(fr.debrief.summary.hints(1, 8), { exact: true })).toBeVisible();
 });

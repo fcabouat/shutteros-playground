@@ -149,7 +149,9 @@ test('API and Storybook artifacts load as runnable pages', async ({ request, pag
   await expect(page.locator('[data-challenge="spoof"]')).toBeVisible();
   await expect(page.locator('.mail-list-message')).toHaveCount(2);
   await page.goto('storybook/iframe.html?id=game-scenes--personal-recap&viewMode=story');
-  await expect(page.getByRole('heading', { name: fr.debrief.summary.title })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: fr.debrief.summary.title('Camille Martin', false) }),
+  ).toBeVisible();
   await page.getByRole('button', { name: fr.debrief.summary.detailed, exact: true }).click();
   await expect(page.locator('.debrief-list')).toBeVisible();
 });

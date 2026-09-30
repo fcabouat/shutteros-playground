@@ -595,17 +595,21 @@ export const en: Catalog = {
     source: 'Advice inspired by ANSSI, CERT-FR and Cybermalveillance.gouv.fr.',
     summary: {
       eyebrow: 'YOUR JOURNEY',
-      title: 'Thank you for taking the time to try.',
+      title: (name: string, complete: boolean) =>
+        complete ? `Journey complete, ${name}.` : `Thank you for your journey, ${name}.`,
       description:
         'This recap describes your journey. It gives no grade, and using hints carries no penalty.',
-      situations: (count: number) => `${count} situation${count === 1 ? '' : 's'} completed`,
-      habits: (count: number) => `${count} everyday habit${count === 1 ? '' : 's'} completed`,
-      hints: (count: number) => `${count} unique hint${count === 1 ? '' : 's'} viewed`,
+      situations: (count: number, total: number) => `Activities: ${count}/${total}`,
+      habits: (count: number, total: number) => `Everyday habits: ${count}/${total}`,
+      hints: (count: number, total: number) => `Activity hints viewed: ${count}/${total}`,
       journey: 'Journey followed',
       modes: { guided: 'Guided', free: 'Free exploration', mixed: 'Mixed' },
       badges: 'Your journey markers',
       activityBadge: 'Situations practised',
-      reportBadge: 'Reports on first attempts',
+      reportBadge: (count: number, total: number) =>
+        `Reports: ${count}/${total} situations to report`,
+      firstAttempt:
+        'This marker counts the first responses kept for the incident, the two suspicious messages and the sign-in request.',
       protectedBadge: 'Workstation protected',
       detailed: 'Read my detailed recap',
     },

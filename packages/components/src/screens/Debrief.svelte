@@ -30,6 +30,10 @@
   let view = $state<HTMLElement>();
   const stats = $derived(debriefStats(snapshot));
   const journey = $derived(journeySummary(snapshot));
+  const journeyComplete = $derived(
+    stats.activitiesCompleted === stats.activitiesTotal &&
+      stats.dailyHabitsCompleted === stats.dailyHabitsTotal,
+  );
   async function showDetailed(next: boolean) {
     detailed = next;
     await tick();
@@ -39,40 +43,57 @@
 
 {#if !detailed}
   <section class="debrief-view summary-view w-full" bind:this={view}>
-    <div class="debrief-heading px-5 py-5 sm:px-7">
-      <div class="reading-column wide">
-        <p class="eyebrow">{copy.debrief.summary.eyebrow}</p>
-        <h1 class="mt-2 text-2xl leading-tight font-semibold tracking-tight" tabindex="-1">
-          {copy.debrief.summary.title}
-        </h1>
-        <p class="mt-3 max-w-[700px] text-sm leading-relaxed opacity-85">
-          {copy.debrief.summary.description}
-        </p>
+    <div class="debrief-heading summary-heading px-5 py-5 sm:px-7">
+      <div class="summary-heading-grid reading-column wide">
+        <div>
+          <p class="eyebrow">{copy.debrief.summary.eyebrow}</p>
+          <h1 class="mt-2 text-2xl leading-tight font-semibold tracking-tight" tabindex="-1">
+            {copy.debrief.summary.title(config.playerName, journeyComplete)}
+          </h1>
+          <p class="summary-description mt-3 max-w-[700px] text-sm leading-relaxed">
+            {copy.debrief.summary.description}
+          </p>
+        </div>
+        <div class="summary-celebration" aria-hidden="true">
+          <span class="celebration-spark"><Icon name="sparkles" size={18} /></span>
+          <span class="celebration-check"
+            ><Icon name={journeyComplete ? 'check' : 'sparkles'} size={30} /></span
+          >
+        </div>
       </div>
     </div>
     <div class="debrief-content p-5 sm:p-7">
       <div class="reading-column wide">
         <div class="summary-facts grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <div class="summary-fact">
-            <Icon name="checkbox" size={22} /><strong
-              >{copy.debrief.summary.situations(stats.activitiesCompleted)}</strong
-            >
-          </div>
-          <div class="summary-fact">
-            <Icon name="secure" size={22} /><strong
-              >{copy.debrief.summary.habits(stats.dailyHabitsCompleted)}</strong
-            >
-          </div>
-          <div class="summary-fact">
-            <Icon name="light" size={22} /><strong
-              >{copy.debrief.summary.hints(journey?.hintCount ?? 0)}</strong
-            >
-          </div>
-          <div class="summary-fact">
-            <Icon name="cursor" size={22} /><span
+          <div class="summary-fact summary-fact-journey">
+            <span class="summary-fact-icon"><Icon name="cursor" size={22} /></span><span
               ><small>{copy.debrief.summary.journey}</small><strong
                 >{copy.debrief.summary.modes[journey?.mode ?? snapshot.mode]}</strong
               ></span
+            >
+          </div>
+          <div class="summary-fact">
+            <span class="summary-fact-icon"><Icon name="checkbox" size={22} /></span><strong
+              >{copy.debrief.summary.situations(
+                stats.activitiesCompleted,
+                stats.activitiesTotal,
+              )}</strong
+            >
+          </div>
+          <div class="summary-fact">
+            <span class="summary-fact-icon"><Icon name="light" size={22} /></span><strong
+              >{copy.debrief.summary.hints(
+                journey?.challengeHintCount ?? 0,
+                journey?.challengeHintTotal ?? 0,
+              )}</strong
+            >
+          </div>
+          <div class="summary-fact">
+            <span class="summary-fact-icon"><Icon name="secure" size={22} /></span><strong
+              >{copy.debrief.summary.habits(
+                stats.dailyHabitsCompleted,
+                stats.dailyHabitsTotal,
+              )}</strong
             >
           </div>
         </div>
@@ -80,12 +101,16 @@
         <section class="mt-7" aria-labelledby="journey-badges">
           <h2 id="journey-badges" class="text-base font-semibold">{copy.debrief.summary.badges}</h2>
           <div class="mt-3 flex flex-wrap gap-3">
-            {#if stats.activitiesCompleted > 0}<span class="journey-badge"
-                ><Icon name="checkbox" size={18} />{copy.debrief.summary.activityBadge} · {stats.activitiesCompleted}</span
-              >{/if}
-            {#if stats.reportsMade > 0}<span class="journey-badge"
-                ><Icon name="shield" size={18} />{copy.debrief.summary.reportBadge} · {stats.reportsMade}</span
-              >{/if}
+            <span class="journey-badge report-badge"
+              ><span class="badge-icon"><Icon name="shield" size={18} /></span><span
+                ><strong
+                  >{copy.debrief.summary.reportBadge(
+                    stats.reportsMade,
+                    stats.reportsEligible,
+                  )}</strong
+                ><small>{copy.debrief.summary.firstAttempt}</small></span
+              ></span
+            >
             {#if stats.workstationProtected}<span class="journey-badge" data-family="protection"
                 ><Icon name="secure" size={18} />{copy.debrief.summary.protectedBadge}</span
               >{/if}
@@ -97,12 +122,9 @@
       </div>
     </div>
     <footer class="border-t border-[var(--line)] px-5 py-5 sm:px-7">
-      <div class="reading-column wide flex flex-wrap items-center justify-between gap-4">
+      <div class="reading-column wide flex flex-wrap items-center justify-end gap-4">
         <button class="button button-primary" onclick={() => void showDetailed(true)}>
           {copy.debrief.summary.detailed}<Icon name="arrow" size={17} />
-        </button>
-        <button class="button button-soft" onclick={() => dispatch({ type: 'logout' })}>
-          {copy.shell.nextPlayer}
         </button>
       </div>
     </footer>
@@ -284,6 +306,133 @@
     padding-block: 1rem;
     overflow-y: auto;
   }
+  .summary-view {
+    background: linear-gradient(180deg, #f8fbfc 0%, #ffffff 55%);
+  }
+  .summary-heading {
+    position: relative;
+    overflow: hidden;
+    color: #f8ffff;
+    background:
+      radial-gradient(circle at 82% 12%, #8ed7c52b 0 12%, transparent 38%),
+      linear-gradient(128deg, #174a55 0%, #17666a 58%, #1e7771 100%);
+  }
+  .summary-heading-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 2rem;
+  }
+  .summary-heading .eyebrow {
+    color: #c7f3e9;
+  }
+  .summary-description {
+    color: #e2f3f1;
+  }
+  .summary-celebration {
+    position: relative;
+    display: grid;
+    width: 76px;
+    height: 76px;
+    place-items: center;
+    flex: none;
+    border: 1px solid #c8fff34d;
+    border-radius: 24px;
+    background: #ffffff14;
+    box-shadow:
+      inset 0 1px #ffffff26,
+      0 16px 30px #082f3338;
+  }
+  .celebration-check {
+    display: grid;
+    width: 48px;
+    height: 48px;
+    place-items: center;
+    color: #194e50;
+    background: #d5fff0;
+    border-radius: 50%;
+  }
+  .celebration-spark {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    display: grid;
+    width: 30px;
+    height: 30px;
+    place-items: center;
+    color: #725411;
+    background: #ffe3a3;
+    border-radius: 50%;
+    box-shadow: 0 5px 14px #082f3330;
+  }
+  .summary-fact {
+    gap: 0.8rem;
+    min-height: 90px;
+    color: #174e57;
+    background: #ffffff;
+    border-color: #dbe8eb;
+    border-radius: 1rem;
+    box-shadow: 0 7px 20px #174e570d;
+  }
+  .summary-fact-journey {
+    color: #174e57;
+    background: linear-gradient(145deg, #e8f7f3, #f4fbf9);
+    border-color: #bcded7;
+  }
+  .summary-fact-icon,
+  .badge-icon {
+    display: grid;
+    flex: none;
+    width: 38px;
+    height: 38px;
+    place-items: center;
+    color: #17666a;
+    background: #e2f4f0;
+    border-radius: 0.75rem;
+  }
+  .summary-fact strong {
+    line-height: 1.35;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .summary-celebration,
+    .summary-fact {
+      animation: recap-arrive 450ms ease-out both;
+    }
+    .summary-fact:nth-child(2) {
+      animation-delay: 60ms;
+    }
+    .summary-fact:nth-child(3) {
+      animation-delay: 120ms;
+    }
+    .summary-fact:nth-child(4) {
+      animation-delay: 180ms;
+    }
+  }
+  @keyframes recap-arrive {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  .report-badge {
+    align-items: flex-start;
+    max-width: 590px;
+    padding: 0.8rem 0.9rem;
+    border-radius: 0.9rem;
+  }
+  .report-badge > span:last-child {
+    display: grid;
+    gap: 0.15rem;
+  }
+  .report-badge small {
+    color: #725b38;
+    font-weight: 500;
+    line-height: 1.35;
+  }
   .debrief-columns {
     height: 100%;
     min-height: 240px;
@@ -345,6 +494,9 @@
     .debrief-heading > div > p {
       display: none;
     }
+    .summary-description {
+      display: none;
+    }
     .debrief-heading h1 {
       font-size: 1.25rem;
     }
@@ -354,6 +506,14 @@
     footer :global(.font-semibold),
     footer :global(.mt-1),
     footer > div > p {
+      display: none;
+    }
+  }
+  @media (max-width: 639px) {
+    .summary-heading-grid {
+      grid-template-columns: 1fr;
+    }
+    .summary-celebration {
       display: none;
     }
   }
@@ -373,9 +533,13 @@
       padding-block: 0;
     }
     .debrief-heading > div > p,
+    .summary-description,
     footer :global(.font-semibold),
     footer :global(.mt-1),
     footer > div > p {
+      display: none;
+    }
+    .summary-celebration {
       display: none;
     }
   }

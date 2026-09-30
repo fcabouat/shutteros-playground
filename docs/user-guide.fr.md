@@ -21,9 +21,11 @@ Un indice donne une piste, parfois un repère visuel. Vous pouvez le masquer pui
 
 Le parcours comprend sept scénarios et une activité en trois étapes : mot de passe, mises à jour et verrouillage. En mode guidé, une consigne indique le prochain geste à effectuer et les boutons à utiliser. Ces trois gestes doivent être essayés avant le bilan ; la question complémentaire sur le mot de passe est facultative. Dans la messagerie, continuer après un premier courriel conduit à celui qui reste.
 
+Dans l’assistant IA, le [mode libre propose un chat simulé](images/ai-free.fr.png) : choisissez l’outil, relisez la charte et préparez le message avant de l’envoyer. Le [mode guidé présente directement les cinq messages sous forme de QCM](images/ai-guided.fr.png). Le changement de mode conserve votre sélection.
+
 ## Lire son bilan
 
-Un [premier écran récapitule votre parcours](images/journey-summary.fr.png), les situations explorées et les indices consultés. Ses badges décrivent les gestes réalisés ; demander de l’aide ne retire aucun point. Le bilan détaillé explique ensuite les résultats. Il n’y a pas de note, d’enregistrement ni d’envoi de vos réponses.
+Un [premier écran récapitule votre parcours](images/journey-summary.fr.png), les activités réalisées sur sept, les gestes de sécurisation sur trois et les indices d’activité consultés sur huit. Ses badges décrivent les gestes réalisés ; demander de l’aide ne retire aucun point. Le bilan détaillé explique ensuite les résultats. Il n’y a pas de note, d’enregistrement ni d’envoi de vos réponses.
 
 Un résultat orange indique une bonne réaction après une prise de risque, par exemple éjecter une clé après avoir ouvert son fichier texte. Rejouer permet de comparer sans remplacer le premier résultat. La charte IA de l’exercice reste accessible depuis la réponse de l’assistant.
 

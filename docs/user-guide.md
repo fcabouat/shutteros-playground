@@ -21,9 +21,11 @@ A hint offers a question to consider and sometimes a visual cue. Hide it and rea
 
 The journey includes seven scenarios and one activity with three steps: passwords, updates and locking. Guided mode identifies the next step and the controls to use. Try all three before the recap; the extra password question is optional. In the mailbox, continuing after the first email opens the remaining one.
 
+In the AI assistant, free mode offers a simulated chat: choose the tool, read the policy and prepare the message before sending. Guided mode presents the five messages as a questionnaire. Switching modes keeps your selection.
+
 ## Reading your recap
 
-A first screen summarises your route, situations explored and hints consulted. Its badges describe actions taken; asking for help never subtracts points. The detailed review then explains the outcomes. There is no grade, recording or transmission of your answers.
+A first screen summarises your route, activities completed out of seven, everyday habits out of three and activity hints viewed out of eight. Its badges describe actions taken; asking for help never subtracts points. The detailed review then explains the outcomes. There is no grade, recording or transmission of your answers.
 
 An orange result recognises a good response after a risk, such as ejecting a USB drive after opening its text file. Replay to compare without replacing the first recorded result. The exercise’s AI policy remains available from the assistant’s answer screen.
 
