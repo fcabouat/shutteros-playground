@@ -20,7 +20,6 @@ export const fr = {
     begin: 'Commencer le parcours',
     duration: 'Durée habituelle : 10 à 20 min',
     expired: 'Le temps de la session est écoulé. Les réponses locales ont été effacées.',
-    loggedOut: 'La partie précédente et ses réponses locales ont été effacées.',
     reset: (minutes: number) =>
       `Après la connexion, un sablier de ${minutes} min réinitialise la session. Vos réponses ne sont ni enregistrées ni envoyées et disparaissent en fin de partie. Le bilan n’est pas conservé.`,
     families: {
@@ -197,13 +196,13 @@ export const fr = {
       'Vous avez retrouvé la note prévue pour cet exercice. Elle illustre un mot de passe laissé à la vue de tous.',
     guessedDescription:
       'La phrase faible acceptée ici pouvait aussi être devinée : les secrets courts ou prévisibles se testent facilement.',
-    principleEmphasis: (manager: string) => `Gardez-le dans le gestionnaire approuvé : ${manager}.`,
+    principleEmphasis: 'Un mot de passe long et unique',
     principle: (manager: string) =>
-      `Un mot de passe long et unique par compte : jamais le même au travail et à la maison. Gardez-le dans le gestionnaire approuvé : ${manager}.`,
+      `Un mot de passe long et unique par compte, avec des caractères variés : jamais le même au travail et à la maison. Gardez-le dans le gestionnaire approuvé : ${manager}.`,
     guidedRiskTitle: 'Ce secret resterait trop accessible.',
     guidedTitle: 'Vous avez identifié un meilleur endroit.',
     guidedSafe: (manager: string) =>
-      `Un mot de passe long et unique peut être conservé dans le gestionnaire approuvé par votre organisation, ici ${manager}.`,
+      `Un mot de passe long et unique, avec des caractères variés, peut être conservé dans le gestionnaire approuvé par votre organisation, ici ${manager}.`,
     guidedRiskNote: (manager: string) =>
       `Une note cachée reste lisible par une personne présente. Le gestionnaire approuvé, ${manager}, est conçu pour limiter cet accès.`,
     guidedRiskFile: (manager: string) =>

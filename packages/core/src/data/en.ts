@@ -22,7 +22,6 @@ export const en: Catalog = {
     begin: 'Start the journey',
     duration: 'Typical duration: 10 to 20 min',
     expired: 'The session time ended. Local answers have been erased.',
-    loggedOut: 'The previous game and its local answers have been erased.',
     reset: (minutes: number) =>
       `After sign-in, a ${minutes}-minute hourglass resets the session. Your answers are neither saved nor sent and disappear at the end. The recap is not retained.`,
     families: {
@@ -195,13 +194,13 @@ export const en: Catalog = {
       'You found the note provided for this exercise. It illustrates a password left in plain sight.',
     guessedDescription:
       'The weak phrase accepted here could also have been guessed: short or predictable secrets are easy to try.',
-    principleEmphasis: (manager: string) => `Keep it in the approved password manager: ${manager}.`,
+    principleEmphasis: 'A long, unique password',
     principle: (manager: string) =>
-      `A long, unique password for every account: never the same at work and at home. Keep it in the approved password manager: ${manager}.`,
+      `A long, unique password for every account, using varied characters: never the same at work and at home. Keep it in the approved password manager: ${manager}.`,
     guidedRiskTitle: 'This secret would remain too exposed.',
     guidedTitle: 'You identified a better place.',
     guidedSafe: (manager: string) =>
-      `A long, unique password can be kept in your organisation’s approved password manager, here ${manager}.`,
+      `A long, unique password, using varied characters, can be kept in your organisation’s approved password manager, here ${manager}.`,
     guidedRiskNote: (manager: string) =>
       `A hidden note can still be read by somebody nearby. The approved manager, ${manager}, is designed to restrict that access.`,
     guidedRiskFile: (manager: string) =>
