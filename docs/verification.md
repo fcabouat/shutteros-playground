@@ -35,6 +35,10 @@ Only the session deadline limits play; there is no countdown for individual answ
 
 The browser fixture serves `dist/` by default, or the directory selected by `BUILD_ROOT`, on loopback port 4183. It has no development-server fallback and does not reuse an interactive preview. Keep that port available while running the suite.
 
+The `pnpm verify` command always builds with the generic public identity, even when
+`private/branding.json` exists. It leaves private files untouched. Normal `pnpm dev`
+and `pnpm build` commands continue to use the local branding.
+
 ## GitHub Pages path
 
 CI checks the assembled product site in `dist/site/` and its nested demo under the repository’s deployment path. To check the project path locally:
