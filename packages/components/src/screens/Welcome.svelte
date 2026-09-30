@@ -121,9 +121,9 @@
           <Icon name="secure" size={18} />{copy.welcome.families.protection}
         </p>
       </div>
-      {#if snapshot.reason !== 'initial'}
+      {#if snapshot.reason === 'expired'}
         <p class="welcome-reset mt-5 text-sm" role="status">
-          {snapshot.reason === 'expired' ? copy.welcome.expired : copy.welcome.loggedOut}
+          {copy.welcome.expired}
         </p>
       {/if}
       <div class="welcome-start mt-5 border-t border-[var(--line)] pt-5">

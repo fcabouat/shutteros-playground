@@ -3,7 +3,6 @@ import { fr } from '@shutteros/core/data/fr';
 import { beginFree } from './helpers';
 import { en } from '@shutteros/core/data/en';
 import AxeBuilder from '@axe-core/playwright';
-import config from '../../static/kiosk-config.json' with { type: 'json' };
 
 for (const [locale, copy] of [
   ['fr', fr],
@@ -14,9 +13,7 @@ for (const [locale, copy] of [
     await beginFree(page, locale);
     await page.getByLabel(copy.login.password, { exact: true }).fill('password');
     await page.getByRole('button', { name: copy.login.enter, exact: true }).click();
-    await expect(page.locator('.intro-card mark')).toHaveText(
-      copy.intro.principleEmphasis(config.passwordManagerName),
-    );
+    await expect(page.locator('.intro-card mark')).toHaveText(copy.intro.principleEmphasis);
     await page.screenshot({ path: `test-results/previews/intro-${locale}.png` });
     await page.getByRole('button', { name: copy.intro.start, exact: true }).click();
     await page.locator('.desktop-icon:has([data-app="usb"])').click();

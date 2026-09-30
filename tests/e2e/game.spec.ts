@@ -383,7 +383,7 @@ for (const delivery of ['http', 'file'] as const) {
     await page.getByRole('button', { name: 'Passer au joueur suivant' }).click();
     await page.getByRole('button', { name: 'Quitter et effacer ma progression' }).click();
     await expect(page.getByRole('heading', { name: fr.welcome.title })).toBeVisible();
-    await expect(page.getByText(fr.welcome.loggedOut)).toBeVisible();
+    await expect(page.locator('.welcome-reset')).toHaveCount(0);
     expect(errors).toEqual([]);
     expect(external).toEqual([]);
     expect(

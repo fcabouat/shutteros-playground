@@ -40,11 +40,14 @@
           </h1>
           <LoginDecisionReview selectedChoiceId={snapshot.loginChoiceId} />
           <p class="text-muted mt-3 text-sm leading-relaxed">
-            {snapshot.loginChoiceId === 'manager'
-              ? copy.intro.guidedSafe(config.passwordManagerName)
-              : snapshot.loginChoiceId === 'note'
-                ? copy.intro.guidedRiskNote(config.passwordManagerName)
-                : copy.intro.guidedRiskFile(config.passwordManagerName)}
+            <EmphasizedText
+              text={snapshot.loginChoiceId === 'manager'
+                ? copy.intro.guidedSafe(config.passwordManagerName)
+                : snapshot.loginChoiceId === 'note'
+                  ? copy.intro.guidedRiskNote(config.passwordManagerName)
+                  : copy.intro.guidedRiskFile(config.passwordManagerName)}
+              emphasis={copy.intro.principleEmphasis}
+            />
           </p>
           <p class="mt-4 text-sm leading-relaxed">{copy.intro.guidedTransition}</p>
         {:else}
@@ -59,7 +62,7 @@
           <p class="mt-4 text-sm leading-relaxed">
             <EmphasizedText
               text={copy.intro.principle(config.passwordManagerName)}
-              emphasis={copy.intro.principleEmphasis(config.passwordManagerName)}
+              emphasis={copy.intro.principleEmphasis}
             />
           </p>
         {/if}
