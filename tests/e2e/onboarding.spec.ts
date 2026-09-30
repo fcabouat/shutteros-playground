@@ -71,7 +71,8 @@ for (const locale of ['fr', 'en'] as const) {
           path: `test-results/previews/guided-login-feedback-${locale}.png`,
         });
       }
-      await expect(page.locator('.session-timer')).toContainText('30:00');
+      // The live clock keeps running during the accessibility scan and screenshot.
+      await expect(page.locator('.session-timer')).toContainText(/30:00|29:5\d/);
       await expect(page.getByRole('heading', { name: copy.intro.title, exact: true })).toHaveCount(
         0,
       );
