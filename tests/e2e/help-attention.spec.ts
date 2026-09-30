@@ -1,10 +1,12 @@
 import { test, expect, type Page } from '@playwright/test';
 import { fr } from '@shutteros/core/data/fr';
+import { beginFree } from './helpers';
 import { guidanceDelayMs } from '@shutteros/core/model/game';
 
 async function enter(page: Page) {
   await page.clock.install();
   await page.goto('./');
+  await beginFree(page);
   await page.getByLabel(fr.login.password, { exact: true }).fill('password');
   await page.getByRole('button', { name: fr.login.enter, exact: true }).click();
   await page.getByRole('button', { name: fr.intro.start, exact: true }).click();

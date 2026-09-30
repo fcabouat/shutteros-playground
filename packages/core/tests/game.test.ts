@@ -37,6 +37,7 @@ const config: GameConfig = {
   acceptedPasswords: [' Accès ', 'Café'],
   caseSensitivePasswords: false,
   showPasswordHint: false,
+  passwordManagerName: 'KeePass',
   organizationName: 'Org',
   playerName: 'Jules',
   supportLabel: 'Support',
@@ -50,8 +51,16 @@ function apply(state: GameState, intent: Intent, now: number): GameState {
   return transition(state, intent, now, config);
 }
 
+function loginScreen(now = 0, mode: 'free' | 'guided' = 'free') {
+  let state = initialState(now);
+  state = apply(state, { type: 'set-mode', mode }, now);
+  const login = apply(state, { type: 'begin' }, now);
+  if (login.phase !== 'login') throw new Error('Expected login');
+  return login;
+}
+
 function session(now = 0): Extract<GameState, { phase: 'session' }> {
-  const loggedIn = apply(initialState(now), { type: 'login', password: 'accès' }, now);
+  const loggedIn = apply(loginScreen(now), { type: 'login', password: 'accès' }, now);
   if (loggedIn.phase !== 'session') throw new Error('Expected session');
   return loggedIn;
 }
@@ -64,19 +73,15 @@ function desktop(now = 0): Extract<GameState, { phase: 'session' }> {
 }
 
 describe('contextual guidance', () => {
-  it('leaves login help dormant until interaction, then reveals it at the boundary', () => {
-    const untouched = apply(initialState(), { type: 'tick' }, guidanceDelayMs * 4);
-    expect(loginHelpStarted(untouched)).toBe(false);
-    expect(loginHintVisible(untouched)).toBe(false);
-
-    const active = apply(initialState(), { type: 'activity' }, 50);
+  it('starts login help timing after begin and reveals it at the boundary', () => {
+    const active = loginScreen(50);
     expect(loginHelpStarted(active)).toBe(true);
     expect(loginHintVisible(apply(active, { type: 'tick' }, 50 + guidanceDelayMs - 1))).toBe(false);
     expect(loginHintVisible(apply(active, { type: 'tick' }, 50 + guidanceDelayMs))).toBe(true);
   });
 
   it('reveals login help after three failures and resets on logout', () => {
-    let state = initialState();
+    let state: GameState = loginScreen();
     for (let count = 1; count <= 3; count += 1) {
       state = apply(state, { type: 'login', password: 'wrong' }, count);
       expect(state).toMatchObject({ phase: 'login', failedAttempts: count });
@@ -87,12 +92,12 @@ describe('contextual guidance', () => {
       { type: 'logout' },
       5,
     );
-    expect(loggedOut).toMatchObject({ phase: 'login', failedAttempts: 0 });
+    expect(loggedOut).toMatchObject({ phase: 'welcome', generation: 1, mode: 'guided' });
     expect(loginHelpStarted(loggedOut)).toBe(false);
   });
 
   it('pauses the login timer while hidden', () => {
-    let state = apply(initialState(), { type: 'activity' }, 0);
+    let state: GameState = loginScreen();
     state = apply(state, { type: 'activity-visible', visible: false }, 60_000);
     expect(activityIsVisible(state)).toBe(false);
     state = apply(state, { type: 'tick' }, 300_000);
@@ -199,9 +204,13 @@ describe('contextual guidance', () => {
   it('returns to free exploration without resetting an in-progress incident', () => {
     let state = apply(desktop(), { type: 'open', id: 'incident' }, 1);
     state = apply(state, { type: 'choose', choiceId: 'isolate' }, 2);
-    const guided = apply(state, { type: 'finish-experience' }, 3);
-    const free = apply(guided, { type: 'explore-freely' }, 4);
-    expect(free).toEqual({ ...guided, mode: 'free', now: 4 });
+    const guided = apply(state, { type: 'set-mode', mode: 'guided' }, 3);
+    const free = apply(guided, { type: 'set-mode', mode: 'free' }, 4);
+    expect(free).toMatchObject({
+      mode: 'free',
+      now: 4,
+      journey: { modes: ['free', 'guided', 'free'] },
+    });
     expect(free).toMatchObject({ scene: { id: 'incident', step: 'notify' } });
     const other = apply(free, { type: 'open', id: 'usb' }, 5);
     expect(other).toMatchObject({ mode: 'free', scene: { id: 'usb' } });
@@ -210,7 +219,7 @@ describe('contextual guidance', () => {
   });
 
   it('opens every guided stage with choices available', () => {
-    let state = apply(desktop(), { type: 'finish-experience' }, 1);
+    let state = apply(desktop(), { type: 'set-mode', mode: 'guided' }, 1);
     expect(state).toMatchObject({ mode: 'guided', scene: { id: 'usb', step: 'choose' } });
     expect(guidanceLevel(state)).toBe(2);
     state = apply(
@@ -406,7 +415,7 @@ describe('session-wide behavior', () => {
     const opened = apply(desktop(5), { type: 'open', id: 'usb' }, 500);
     expect(opened).toMatchObject({ deadline: 1_000_005 });
     expect(apply(opened, { type: 'choose', choiceId: 'eject' }, 1_000_005)).toMatchObject({
-      phase: 'login',
+      phase: 'welcome',
       reason: 'expired',
     });
   });
@@ -422,7 +431,7 @@ describe('session-wide behavior', () => {
     const feedback = apply(challenge, { type: 'choose', choiceId: 'report' }, 10_002);
     expect(nextAmbientEvent(feedback, config)).toBeNull();
     expect(idleReminderVisible(feedback, config)).toBe(false);
-    const guided = apply(ready, { type: 'finish-experience' }, 10_003);
+    const guided = apply(ready, { type: 'set-mode', mode: 'guided' }, 10_003);
     expect(nextAmbientEvent(guided, config)).toBeNull();
     const locked = apply(ready, { type: 'practice-lock' }, 10_004);
     expect(nextAmbientEvent(locked, config)).toBeNull();

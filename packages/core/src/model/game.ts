@@ -9,6 +9,17 @@ export type AiPrompt =
 
 export type Outcome = 'safe' | 'risky';
 
+export type PlayMode = 'free' | 'guided';
+
+export type LoginChoiceId = 'manager' | 'note' | 'file';
+
+export type Journey = {
+  /** Chronological modes selected after entering the experience. */
+  modes: readonly PlayMode[];
+  /** Help actually shown, once per unresolved context. */
+  hints: readonly string[];
+};
+
 /** A safe final choice can still carry a caution about an earlier risk. */
 export type ResultAssessment = Outcome | 'caution';
 
@@ -106,10 +117,19 @@ export type Scene =
  */
 export type GameState =
   | {
+      phase: 'welcome';
+      generation: number;
+      now: number;
+      reason: 'initial' | 'logout' | 'expired';
+      mode: PlayMode;
+    }
+  | {
       phase: 'login';
       generation: number;
       now: number;
       reason: 'initial' | 'logout' | 'expired';
+      mode: PlayMode;
+      journey: Journey;
       failedAttempts: number;
       loginGuidance: GuidanceClock;
     }
@@ -120,8 +140,10 @@ export type GameState =
       startedAt: number;
       deadline: number;
       // Category only: player input is never retained after a successful login.
-      loginCategory: 'displayed' | 'weak';
-      mode: 'free' | 'guided';
+      loginCategory: 'displayed' | 'weak' | 'guided';
+      loginChoiceId?: LoginChoiceId;
+      mode: PlayMode;
+      journey: Journey;
       scene: Scene;
       // First outcomes are retained by recordResult; optional knowledge answers are separate.
       results: readonly ChallengeResult[];
@@ -146,14 +168,16 @@ export type GameState =
  * a command is available. External configuration has a separate decoder.
  */
 export type Intent =
+  | { type: 'begin' }
+  | { type: 'set-mode'; mode: PlayMode }
   | { type: 'login'; password: string }
+  | { type: 'answer-login'; choiceId: LoginChoiceId }
   | { type: 'tick' }
   | { type: 'logout' }
   | { type: 'continue' }
   | { type: 'open'; id: ChallengeId }
-  | { type: 'finish-experience' }
-  | { type: 'explore-freely' }
   | { type: 'request-hint' }
+  | { type: 'hint-viewed' }
   | { type: 'request-choices' }
   | { type: 'open-usb-readme' }
   | { type: 'choose'; choiceId: string }

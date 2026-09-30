@@ -1,9 +1,11 @@
 import { test, expect, type Page } from '@playwright/test';
 import { fr } from '@shutteros/core/data/fr';
+import { beginFree } from './helpers';
 import AxeBuilder from '@axe-core/playwright';
 
 async function login(page: Page) {
   await page.goto('./');
+  await beginFree(page);
   await page.getByLabel(fr.login.password, { exact: true }).fill('password');
   await page.getByRole('button', { name: fr.login.enter, exact: true }).click();
 }
@@ -15,6 +17,7 @@ for (const viewport of [
   test(`maximized welcome fills the desktop and remains reachable at ${viewport.width}px`, async ({
     page,
   }) => {
+    await page.clock.install();
     await page.setViewportSize(viewport);
     await login(page);
     const counter = page.locator('.progress-slot .companion-trigger');
@@ -27,7 +30,19 @@ for (const viewport of [
     await expect(page.locator('.primary-help-slot .guidance-trigger')).toBeDisabled();
     await expect(page.locator('.choices-trigger')).toBeDisabled();
     await expect(page.locator('.restore-hint')).toHaveCount(0);
-    await expect(page.locator('.finish-experience')).toBeDisabled();
+    const mode = page.locator('.finish-experience');
+    const timer = page.getByRole('timer');
+    const initialTime = await timer.getAttribute('aria-label');
+    await expect(mode).toBeEnabled();
+    await expect(mode).toHaveText(fr.experience.finish);
+    await mode.click();
+    await expect(page.getByRole('heading', { name: fr.intro.title })).toBeVisible();
+    await expect(mode).toHaveText(fr.experience.free);
+    await expect(timer).toHaveAttribute('aria-label', initialTime!);
+    await mode.click();
+    await expect(page.getByRole('heading', { name: fr.intro.title })).toBeVisible();
+    await expect(mode).toHaveText(fr.experience.finish);
+    await expect(timer).toHaveAttribute('aria-label', initialTime!);
     const frame = page.locator('.window-layer .os-window');
     if (viewport.width === 1440) {
       const initial = (await frame.boundingBox())!;

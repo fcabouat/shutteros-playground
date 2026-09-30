@@ -6,6 +6,7 @@ import { challenges } from '@shutteros/core/data/challenges';
 import { englishChallenges } from '@shutteros/core/data/challenges.en';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { beginFree } from './helpers';
 
 async function openAiFromDesktop(page: import('@playwright/test').Page) {
   await page.locator('.desktop-icon:has([data-app="ai"])').click();
@@ -21,6 +22,7 @@ for (const locale of ['fr', 'en'] as const) {
         delivery === 'http' ? './' : pathToFileURL(resolve('dist/portable/shutteros.html')).href,
       );
       if (locale === 'en') await page.getByRole('button', { name: 'EN', exact: true }).click();
+      await beginFree(page, locale);
       await page.getByLabel(copy.login.password, { exact: true }).fill('password');
       await page.getByRole('button', { name: copy.login.enter, exact: true }).click();
       await page.getByRole('button', { name: copy.intro.start, exact: true }).click();
@@ -69,6 +71,7 @@ for (const locale of ['fr', 'en'] as const) {
       expect(outgoing).toEqual([]);
       await page.getByRole('button', { name: copy.shell.logout, exact: true }).click();
       await page.getByRole('button', { name: copy.shell.exitConfirm, exact: true }).click();
+      await beginFree(page, locale);
       await page.getByLabel(copy.login.password, { exact: true }).fill('password');
       await page.getByRole('button', { name: copy.login.enter, exact: true }).click();
       await page.getByRole('button', { name: copy.intro.start, exact: true }).click();
@@ -181,6 +184,7 @@ for (const locale of ['fr', 'en'] as const) {
 
       await page.getByRole('button', { name: copy.shell.logout, exact: true }).click();
       await page.getByRole('button', { name: copy.shell.exitConfirm, exact: true }).click();
+      await beginFree(page, locale);
       await page.getByLabel(copy.login.password, { exact: true }).fill('password');
       await page.getByRole('button', { name: copy.login.enter, exact: true }).click();
       await page.getByRole('button', { name: copy.intro.start, exact: true }).click();

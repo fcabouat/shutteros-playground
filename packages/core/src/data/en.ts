@@ -3,8 +3,53 @@ import type { Catalog } from './catalog';
 export const en: Catalog = {
   product: 'ShutterOS',
   organizationPlaceholder: 'Your organization',
+  welcome: {
+    eyebrow: 'CYBERSECURITY PRACTICE',
+    title: 'A day at work. Choices that matter.',
+    description: (name: string) =>
+      `You play as ${name}. A found USB drive, unexpected messages and workstation protection await in a simulated desktop.`,
+    choose: 'Choose a journey',
+    guided: {
+      title: 'Guided',
+      description: 'A clear sequence of multiple-choice situations.',
+      detail: 'Ideal for a first visit.',
+    },
+    free: {
+      title: 'Free exploration',
+      description: 'Explore the desktop, take action and ask for hints.',
+      detail: 'You choose your route.',
+    },
+    begin: 'Start exercise',
+    duration: 'Typical duration: 10 to 20 min',
+    expired: 'The session time ended. Local answers have been erased.',
+    loggedOut: 'The previous game and its local answers have been erased.',
+    reset: (minutes: number) =>
+      `After sign-in, a ${minutes}-minute hourglass resets the session. Your answers are neither saved nor sent and disappear at the end. The recap is not a grade.`,
+    families: {
+      vigilance: 'Vigilance · orange: spot and handle unusual situations.',
+      protection: 'Protect my workstation · green: apply everyday protection habits.',
+    },
+    controls: {
+      title: 'The game bar stays with you',
+      progress: 'Progress',
+      waiting: 'Waiting',
+      items: [
+        { title: 'Progress', detail: 'guides you to a situation you have not explored yet.' },
+        {
+          title: 'Hint',
+          detail: 'shows a clue about what is currently visible, also offered after 2 min.',
+        },
+        { title: 'Choices', detail: 'opens the answers when they are available.' },
+        {
+          title: 'Journey and hourglass',
+          detail: 'lets you switch mode; the countdown only starts after sign-in.',
+        },
+      ],
+    },
+  },
   experience: {
     free: 'Free exploration',
+    guided: 'Guided journey',
     freeHint: 'Choose activities yourself. Your progress is kept.',
     finish: 'Guided journey',
     next: 'Next reflex',
@@ -25,7 +70,7 @@ export const en: Catalog = {
     password: 'Password renewal requested by IT',
     passwordBody:
       'Your usual account centre requests a new password. An unexpected email asks for one? Find the known portal yourself instead of following its link.',
-    passwordAction: 'Create a unique secret with the approved manager',
+    passwordAction: (manager: string) => `Create a unique secret with ${manager}`,
     passwordDone: 'Simulated password renewal completed.',
     passwordEmphasis: 'Use a long, unique secret for each account',
     passwordLesson:
@@ -97,6 +142,25 @@ export const en: Catalog = {
     hidePassword: 'Hide password',
     placeholder: 'Password',
     enter: 'Open the session',
+    guidedIntro:
+      'Before entering the simulated desktop, look at the phrase on the note and choose a safer place to keep it.',
+    guidedQuestion: 'Where would you keep this password so that somebody else cannot access it?',
+    guidedChoices: [
+      {
+        id: 'manager',
+        label: (manager: string) => `In the approved password manager: ${manager}`,
+      },
+      {
+        id: 'note',
+        label: (manager: string) => `On a note under the keyboard, rather than in ${manager}`,
+      },
+      {
+        id: 'file',
+        label: (manager: string) => `In a file on the workstation, rather than in ${manager}`,
+      },
+    ],
+    guidedHelper:
+      'Look for a place designed by your organisation to restrict access to the secret.',
     helper: 'Need a hint? Look at the note near the screen. A simple password can also work here.',
     error: 'Incorrect password. Try again.',
     postitTitle: 'Sticky note',
@@ -127,12 +191,23 @@ export const en: Catalog = {
   },
   intro: {
     title: 'A session that was too easy to open.',
-    description: 'The password was in plain sight. The first weakness needed no technical skill.',
+    description:
+      'You found the note provided for this exercise. It illustrates a password left in plain sight.',
     guessedDescription:
       'The weak phrase accepted here could also have been guessed: short or predictable secrets are easy to try.',
-    principleEmphasis: 'Keep it in an approved password manager.',
-    principle:
-      'A long, unique password for every account: never the same at work and at home. Keep it in an approved password manager.',
+    principleEmphasis: (manager: string) => `Keep it in the approved password manager: ${manager}.`,
+    principle: (manager: string) =>
+      `A long, unique password for every account: never the same at work and at home. Keep it in the approved password manager: ${manager}.`,
+    guidedRiskTitle: 'This secret would remain too exposed.',
+    guidedTitle: 'You identified a better place.',
+    guidedSafe: (manager: string) =>
+      `${manager} is designed to store secrets securely. This choice does not actually unlock a workstation: use the authentication method required by your organisation.`,
+    guidedRiskNote: (manager: string) =>
+      `A hidden note can still be read by somebody nearby. The approved manager, ${manager}, is designed to restrict that access.`,
+    guidedRiskFile: (manager: string) =>
+      `A text file can be found, copied or exposed if the workstation is compromised. The approved manager, ${manager}, protects this secret more effectively.`,
+    guidedTransition:
+      'Your answer does not stop the exercise: you will now enter the simulated desktop and practise other habits.',
     start: 'Explore the desk',
   },
   ai: {
@@ -330,7 +405,8 @@ export const en: Catalog = {
     },
     hints: {
       usb: 'Look at the drive controls',
-      incident: 'How could the infection spread?',
+      incident:
+        'Where could the infection spread? Where can you act on this workstation’s connection?',
       notify: 'Which contact did you know before seeing this alert?',
       mail: 'What do the full address and attachment type reveal? How should you handle this email?',
       spoof: 'Does this request fit your usual way of working? How should you handle this email?',
@@ -496,7 +572,8 @@ export const en: Catalog = {
       `${safe} good habit${safe === 1 ? '' : 's'}${caution > 0 ? `, ${caution} risk${caution === 1 ? '' : 's'} followed by ${caution === 1 ? 'a good response' : 'good responses'}` : ''} out of ${total} situation${total === 1 ? '' : 's'} explored`,
     notGrade: 'A starting point, not a grade.',
     password: 'Protect access',
-    passwordNote: 'A visible secret is no longer a secret.',
+    passwordNote: (manager: string) =>
+      `A visible secret is no longer secret; ${manager} helps keep it protected.`,
     discovered: 'Discovered',
     safe: 'Good habit',
     caution: 'Risk taken, then a good response',
@@ -512,7 +589,25 @@ export const en: Catalog = {
     routine:
       'In everyday use, follow your organisation’s password policy and apply scheduled updates. If compromise is suspected, report it immediately and follow the established procedure.',
     thankYou: 'Thanks for playing.',
-    privacy: 'Your game will be erased when you leave this session.',
+    privacy:
+      'No answers are transmitted. This game stays in local memory and is erased when you leave the session.',
     source: 'Advice inspired by ANSSI, CERT-FR and Cybermalveillance.gouv.fr.',
+    summary: {
+      eyebrow: 'YOUR JOURNEY',
+      title: 'Thank you for taking the time to try.',
+      description:
+        'This recap describes your journey. It gives no grade, and using hints carries no penalty.',
+      situations: (count: number) => `${count} situation${count === 1 ? '' : 's'} completed`,
+      habits: (count: number) => `${count} everyday habit${count === 1 ? '' : 's'} completed`,
+      hints: (count: number) => `${count} unique hint${count === 1 ? '' : 's'} viewed`,
+      journey: 'Journey followed',
+      modes: { guided: 'Guided', free: 'Free exploration', mixed: 'Mixed' },
+      badges: 'Your journey markers',
+      activityBadge: 'Situations practised',
+      reportBadge: 'Reports on first attempts',
+      protectedBadge: 'Workstation protected',
+      detailed: 'Read my detailed recap',
+    },
+    backToSummary: 'Back to recap',
   },
 };

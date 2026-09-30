@@ -1,15 +1,20 @@
 <script lang="ts">
   import { pendingRoutines } from '@shutteros/core/projections/game';
   import type { GameState, Intent } from '@shutteros/core/model/game';
+  import type { GameConfig } from '@shutteros/core/model/configuration';
   import { getI18n } from '../i18n/context';
   import KnowledgeCheck from '../commons/KnowledgeCheck.svelte';
   import Icon from '../commons/Icon.svelte';
   import EmphasizedText from '../commons/EmphasizedText.svelte';
   let {
     snapshot,
+    config,
     dispatch,
-  }: { snapshot: Extract<GameState, { phase: 'session' }>; dispatch: (intent: Intent) => void } =
-    $props();
+  }: {
+    snapshot: Extract<GameState, { phase: 'session' }>;
+    config: GameConfig;
+    dispatch: (intent: Intent) => void;
+  } = $props();
   let checkOpen = $state(false);
   const i18n = getI18n();
   const copy = $derived(i18n.text);
@@ -49,7 +54,10 @@
                   id === 'lock'
                     ? { type: 'practice-lock' }
                     : { type: 'routine', id, action: 'complete' },
-                )}>{copy.routines[`${id}Action`]}</button
+                )}
+              >{id === 'password'
+                ? copy.routines.passwordAction(config.passwordManagerName)
+                : copy.routines[`${id}Action`]}</button
             >{/if}
         </article>
       {/each}

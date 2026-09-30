@@ -20,6 +20,7 @@ REQUIRED = {
     "mailImpersonatorAddress",
 }
 OPTIONAL = {
+    "passwordManagerName",
     "organizationName",
     "partnerOrganizationName",
     "partnerOrganizationLogo",
@@ -125,7 +126,7 @@ def main() -> int:
         ("stationLabel", 80),
     ):
         text(config, key, maximum, issues)
-    for key in ("organizationName", "partnerOrganizationName"):
+    for key in ("organizationName", "partnerOrganizationName", "passwordManagerName"):
         if key in config:
             text(config, key, 80, issues)
     if "partnerOrganizationLogo" in config and "partnerOrganizationName" not in config:

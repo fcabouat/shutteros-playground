@@ -3,6 +3,7 @@ import AxeBuilder from '@axe-core/playwright';
 import { readFile, readdir, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { parse, type DefaultTreeAdapterMap } from 'parse5';
+import { fr } from '@shutteros/core/data/fr';
 
 test('published guides and product pages have no broken local links', async () => {
   const root = path.resolve('dist/site');
@@ -99,11 +100,18 @@ test('API and Storybook artifacts load as runnable pages', async ({ request, pag
   await expect(page.locator('#root')).not.toBeEmpty();
   // A rendered manager alone does not prove that the independently built Svelte
   // stories resolve their workspace package and establish the locale context.
+  await page.goto('storybook/iframe.html?id=game-scenes--welcome&viewMode=story');
+  await expect(page.getByRole('heading', { name: fr.welcome.title })).toBeVisible();
+  await expect(page.locator('.welcome-hero')).toBeVisible();
+  await page.goto('storybook/iframe.html?id=game-scenes--guided-login&viewMode=story');
+  await expect(page.getByRole('group', { name: fr.login.guidedQuestion })).toBeVisible();
   await page.goto('storybook/iframe.html?id=game-scenes--login&viewMode=story');
   await expect(page.getByRole('textbox', { name: 'Mot de passe', exact: true })).toBeVisible();
   await page.goto('storybook/iframe.html?id=game-scenes--impersonated-sender&viewMode=story');
   await expect(page.locator('[data-challenge="spoof"]')).toBeVisible();
   await expect(page.locator('.mail-list-message')).toHaveCount(2);
   await page.goto('storybook/iframe.html?id=game-scenes--personal-recap&viewMode=story');
+  await expect(page.getByRole('heading', { name: fr.debrief.summary.title })).toBeVisible();
+  await page.getByRole('button', { name: fr.debrief.summary.detailed, exact: true }).click();
   await expect(page.locator('.debrief-list')).toBeVisible();
 });

@@ -1,6 +1,7 @@
 <script lang="ts">
   import Provider from '@shutteros/components/i18n/Provider.svelte';
   import Login from '@shutteros/components/screens/Login.svelte';
+  import Welcome from '@shutteros/components/screens/Welcome.svelte';
   import Session from '@shutteros/components/screens/Session.svelte';
   import type { GameState, Intent } from '@shutteros/core/model/game';
   import type { GameConfig } from '@shutteros/core/model/configuration';
@@ -22,7 +23,8 @@
 
 <Provider initialLocale={locale}>
   {#key snapshot.generation}
-    {#if snapshot.phase === 'login'}<Login {snapshot} {config} {dispatch} />{:else}<Session
+    {#if snapshot.phase === 'welcome'}<Welcome {snapshot} {config} {dispatch} />
+    {:else if snapshot.phase === 'login'}<Login {snapshot} {config} {dispatch} />{:else}<Session
         {snapshot}
         {config}
         {dispatch}

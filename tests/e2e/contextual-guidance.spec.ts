@@ -1,9 +1,12 @@
 import { test, expect, type Page } from '@playwright/test';
 import { fr } from '@shutteros/core/data/fr';
 import { guidanceDelayMs } from '@shutteros/core/model/game';
+import { beginFree } from './helpers';
+import config from '../../static/kiosk-config.json' with { type: 'json' };
 
 async function enter(page: Page) {
   await page.goto('./');
+  await beginFree(page);
   await page.getByLabel(fr.login.password, { exact: true }).fill('password');
   await page.getByRole('button', { name: fr.login.enter, exact: true }).click();
   await page.getByRole('button', { name: fr.intro.start, exact: true }).click();
@@ -44,15 +47,15 @@ function expectSeparated(
   expect(overlapX <= 1 || overlapY <= 1).toBeTruthy();
 }
 
-test('untouched login waits; first input starts the two-minute hint without starting the session deadline', async ({
+test('welcome is unlimited; login reveals help after two minutes without starting the session deadline', async ({
   page,
 }) => {
   await page.clock.install();
   await page.goto('./');
-  await expect(page.getByLabel(fr.login.password, { exact: true })).toBeVisible();
   await page.clock.fastForward(20 * 60_000);
+  await expect(page.getByRole('heading', { name: fr.welcome.title })).toBeVisible();
+  await beginFree(page);
   await expect(page.locator('#password-help')).toHaveCount(0);
-  await page.getByLabel(fr.login.password, { exact: true }).fill('guess');
   await page.clock.fastForward(guidanceDelayMs - 1_000);
   await expect(page.locator('#password-help')).toHaveCount(0);
   await page.clock.fastForward(1_100);
@@ -289,7 +292,12 @@ test('a routine completed from Start suppresses its later reminder and is clearl
   await expect(page.locator('.window-titlebar .activity-family')).toHaveText(
     fr.guidance.families.protection,
   );
-  await page.getByRole('button', { name: fr.routines.passwordAction, exact: true }).click();
+  await page
+    .getByRole('button', {
+      name: fr.routines.passwordAction(config.passwordManagerName),
+      exact: true,
+    })
+    .click();
   await page.clock.fastForward(90_100);
   await expect(page.locator('.ambient-notice')).toHaveCount(0);
   await page
@@ -574,11 +582,9 @@ test('activity windows and mode switches preserve only the state that belongs to
   await page.getByRole('button', { name: fr.experience.finish, exact: true }).first().click();
   await expect(page.locator('.finish-experience')).toHaveText(fr.experience.free);
   await expect(page.locator('[data-challenge="web"][data-step="choose"]')).toBeVisible();
-  await expect(frame).toHaveClass(/maximized/);
+  await expect(frame).not.toHaveClass(/maximized/);
   await expect(page.locator('.action-dock-panel')).toBeVisible();
 
-  await frame.getByRole('button', { name: fr.os.restoreSize, exact: true }).click();
-  await expect(frame).not.toHaveClass(/maximized/);
   await page.locator('.action-dock-panel [data-choice="known-address"]').click();
   await expect(page.locator('.learning-takeaway')).toBeVisible();
   await expect(frame).not.toHaveClass(/maximized/);
@@ -594,7 +600,7 @@ test('activity windows and mode switches preserve only the state that belongs to
   await expect(page.locator(`[data-challenge="${guidedId}"][data-step="choose"]`)).toBeVisible();
   await expect(page.locator('.action-dock-panel')).toBeVisible();
   await expect(page.locator('.choices-trigger')).toBeEnabled();
-  await expect(frame).not.toHaveClass(/maximized/);
+  await expect(frame).toHaveClass(/maximized/);
 
   await page.locator('[data-taskbar-window="mail"]').click();
   await expect(page.locator('[data-challenge="mail"]')).toBeVisible();
