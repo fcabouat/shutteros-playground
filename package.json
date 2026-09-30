@@ -1,6 +1,6 @@
 {
   "name": "shutteros-playground",
-  "version": "0.3.1",
+  "version": "1.0.0",
   "private": true,
   "description": "ShutterOS Playground — an independent cybersecurity awareness game for European Cybersecurity Month",
   "type": "module",
@@ -26,12 +26,13 @@
     "test:e2e": "playwright test",
     "storybook": "node scripts/prepare-branding.mjs && storybook dev -p 6006 --no-open --disable-telemetry",
     "build:storybook": "node scripts/prepare-branding.mjs && storybook build --disable-telemetry",
-    "verify": "pnpm lint && pnpm format:check && pnpm check && pnpm knip && pnpm test && pnpm build && pnpm test:e2e",
+    "verify": "node scripts/verify.mjs",
     "build:site": "node scripts/build-site.mjs",
     "docs:api": "typedoc",
     "test:site": "playwright test --config playwright.site.config.ts",
     "version:next": "node scripts/version.mjs next",
-    "gitflow:init": "sh scripts/gitflow-init.sh"
+    "gitflow:init": "sh scripts/gitflow-init.sh",
+    "verify:checks": "pnpm lint && pnpm format:check && pnpm check && pnpm knip && pnpm test && pnpm build && pnpm test:e2e"
   },
   "dependencies": {
     "@shutteros/components": "workspace:*",
