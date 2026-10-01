@@ -58,7 +58,7 @@
     "prettier": "^3.6.0",
     "prettier-plugin-svelte": "^3.4.0",
     "storybook": "10.6.0",
-    "svelte": "5.57.0",
+    "svelte": "5.57.1",
     "svelte-check": "^4.4.0",
     "tailwindcss": "4.3.3",
     "typedoc": "^0.28.20",
