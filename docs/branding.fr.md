@@ -67,7 +67,7 @@ Pour modifier aussi le nom du système fictif ou le nom de campagne, créez `pri
 
 `applicationName` est le nom du système ; `organizationName` est celui de l’organisation. Les champs facultatifs `partnerOrganizationName` et `partnerOrganizationLogo` ajoutent un partenaire, avec son image également placée dans `private/`. Définissez `showOrganizationNames` à `true` pour garder les deux noms visibles même lorsque leurs logos se chargent correctement. Cette option vaut `false` par défaut et n’est disponible que dans `private/branding.json`, pas dans `kiosk-config.json`.
 
-Cette méthode accepte uniquement des logos PNG ou WebP de 256 Kio au maximum. Pour un SVG, utilisez la configuration de déploiement décrite plus haut. Les commandes de développement, de vérification, de build et de Storybook préparent automatiquement l’identité. Elles vérifient les noms, le format réel des images et leur emplacement, puis génèrent le module local ignoré par Git `src/lib/branding.generated.ts`. Aucune URL distante n’est acceptée.
+Cette méthode accepte des logos PNG, WebP ou SVG de 256 Kio au maximum. Les SVG doivent être autonomes, comme pour la configuration de déploiement. Les commandes de développement, de vérification, de build et de Storybook préparent automatiquement l’identité. Elles vérifient les noms, le format réel des images et leur emplacement, puis génèrent le module local ignoré par Git `src/lib/branding.generated.ts`. Aucune URL distante n’est acceptée.
 
 L’identité privée prend le pas sur celle du déploiement, indépendamment pour chaque organisation. Pour les logos, l’ordre est : image privée, image intégrée au livrable autonome, puis fichier nommé dans `kiosk-config.json`. Sans fichier privé, la construction utilise l’identité générique ShutterOS.
 

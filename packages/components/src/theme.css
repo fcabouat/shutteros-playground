@@ -1219,7 +1219,8 @@ button:active:not(:disabled) {
 /* Organisation identity and the OS wallpaper mark remain separate. */
 .organization-logo {
   width: auto;
-  height: auto;
+  /* A definite height also sizes SVGs that declare only a viewBox. */
+  height: 54px;
   max-width: min(160px, 26vw);
   max-height: 54px;
   flex-shrink: 0;
@@ -1611,6 +1612,7 @@ button:active:not(:disabled) {
   max-width: none;
 }
 .os-topbar .organization-logo {
+  height: var(--shell-item-height);
   max-height: var(--shell-item-height);
   border-radius: var(--shell-radius);
 }
