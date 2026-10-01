@@ -19,6 +19,7 @@ const allowedKeys = new Set([
 const allowed = new Map([
   ['.png', 'image/png'],
   ['.webp', 'image/webp'],
+  ['.svg', 'image/svg+xml'],
 ]);
 
 function fail(message) {
@@ -76,7 +77,7 @@ function embedPrivateLogo(reference, key) {
   if (!resolvedLogoPath.startsWith(privateRoot + '/'))
     fail(`${key} symlink must resolve inside private/`);
   const mime = allowed.get(extname(logoPath).toLowerCase());
-  if (!mime) fail(`${key} must be PNG or WebP`);
+  if (!mime) fail(`${key} must be PNG, WebP or SVG`);
   const logoBytes = readFileSync(resolvedLogoPath);
   if (logoBytes.byteLength > 256 * 1024) fail(`${key} must be at most 256 KiB`);
   const png =
@@ -88,6 +89,18 @@ function embedPrivateLogo(reference, key) {
     logoBytes.subarray(8, 12).toString() === 'WEBP';
   if ((mime === 'image/png' && !png) || (mime === 'image/webp' && !webp))
     fail(`${key} magic bytes do not match its extension`);
+  if (mime === 'image/svg+xml') {
+    // Match the portable configuration contract: validate the format, then embed
+    // as an image resource, never as inline SVG markup.
+    let svg;
+    try {
+      svg = new TextDecoder('utf-8', { fatal: true }).decode(logoBytes);
+    } catch {
+      fail(`${key} SVG must be valid UTF-8`);
+    }
+    if (!/<svg(?:\s|>)/i.test(svg.slice(0, 4096)))
+      fail(`${key} must contain an SVG root element near the start`);
+  }
   return `data:${mime};base64,${logoBytes.toString('base64')}`;
 }
 

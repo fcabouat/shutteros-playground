@@ -44,6 +44,44 @@ describe('private branding preparation', () => {
     }
   });
 
+  it.each(['organizationLogo', 'partnerOrganizationLogo'])(
+    'embeds a private SVG for %s',
+    async (key) => {
+      const fixture = await runBranding({
+        [key]: 'private/logo.svg',
+        ...(key === 'partnerOrganizationLogo' ? { partnerOrganizationName: 'Partner' } : {}),
+      });
+      const svg =
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 30"><path d="M0 0h10v30H0z"/></svg>';
+      try {
+        await writeFile(resolve(fixture.root, 'private/logo.svg'), svg);
+        await execFileAsync(process.execPath, [
+          resolve(fixture.root, 'scripts/prepare-branding.mjs'),
+        ]);
+        expect(await readFile(fixture.output, 'utf8')).toContain(
+          `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`,
+        );
+      } finally {
+        await rm(fixture.root, { recursive: true, force: true });
+      }
+    },
+  );
+
+  it.each(['not an SVG', Buffer.from([0xff, 0xfe])])(
+    'rejects invalid SVG content %#',
+    async (content) => {
+      const fixture = await runBranding({ organizationLogo: 'private/logo.svg' });
+      try {
+        await writeFile(resolve(fixture.root, 'private/logo.svg'), content);
+        await expect(
+          execFileAsync(process.execPath, [resolve(fixture.root, 'scripts/prepare-branding.mjs')]),
+        ).rejects.toThrow('Branding:');
+      } finally {
+        await rm(fixture.root, { recursive: true, force: true });
+      }
+    },
+  );
+
   it('embeds a private PNG and keeps organisation and application names distinct', async () => {
     const fixture = await runBranding({
       applicationName: 'ShutterOS',
