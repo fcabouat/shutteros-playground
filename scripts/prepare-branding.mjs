@@ -14,6 +14,7 @@ const allowedKeys = new Set([
   'organizationLogo',
   'partnerOrganizationName',
   'partnerOrganizationLogo',
+  'showOrganizationNames',
 ]);
 const allowed = new Map([
   ['.png', 'image/png'],
@@ -39,6 +40,11 @@ if (process.env.SHUTTEROS_PUBLIC_BUILD !== '1' && existsSync(inputPath)) {
 if (!branding || typeof branding !== 'object' || Array.isArray(branding))
   fail('configuration must be an object');
 for (const key of Object.keys(branding)) if (!allowedKeys.has(key)) fail(`unknown key: ${key}`);
+if (
+  branding.showOrganizationNames !== undefined &&
+  typeof branding.showOrganizationNames !== 'boolean'
+)
+  fail('showOrganizationNames must be a boolean');
 
 const applicationName = branding.applicationName ?? fallback.applicationName;
 if (
@@ -112,6 +118,9 @@ const serializedBranding = JSON.stringify({
     ? { partnerOrganizationName: branding.partnerOrganizationName }
     : {}),
   ...(branding.campaignName ? { campaignName: branding.campaignName } : {}),
+  ...(branding.showOrganizationNames !== undefined
+    ? { showOrganizationNames: branding.showOrganizationNames }
+    : {}),
   ...(organizationLogo ? { organizationLogo } : {}),
   ...(partnerOrganizationLogo ? { partnerOrganizationLogo } : {}),
 }).replace(

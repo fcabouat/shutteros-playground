@@ -31,6 +31,7 @@
         embeddedPartnerOrganizationLogo ??
         config.partnerOrganizationLogo}
       campaign={branding.campaignName}
+      showNames={branding.showOrganizationNames}
     />
   </div>
   {@render controls()}

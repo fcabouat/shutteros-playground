@@ -1,6 +1,12 @@
 <script lang="ts">
-  let { name, logo, campaign }: { name: string; logo?: string; campaign?: string } = $props();
+  let {
+    name,
+    logo,
+    showName = false,
+  }: { name: string; logo?: string; showName?: boolean } = $props();
   let failedLogo = $state<string>();
+  const hasLogo = $derived(!!logo && failedLogo !== logo);
+  const logoOnly = $derived(hasLogo && !showName);
   const initials = $derived(
     name
       .split(/\s+/)
@@ -12,16 +18,19 @@
   );
 </script>
 
-<div class="organization-brand flex min-w-0 max-w-[340px] items-center gap-3">
-  {#if logo && failedLogo !== logo}<img
+<div
+  class="organization-brand flex min-w-0 max-w-[340px] items-center gap-3"
+  class:logo-only={logoOnly}
+  title={name}
+>
+  {#if hasLogo}<img
       class="organization-logo"
       src={logo}
       alt=""
       onerror={() => (failedLogo = logo)}
     />
   {:else}<span class="organization-placeholder" aria-hidden="true">{initials}</span>{/if}
-  <div class="min-w-0">
+  <div class="min-w-0" class:sr-only={logoOnly}>
     <p class="truncate text-sm font-medium" title={name}>{name}</p>
-    {#if campaign}<p class="mt-0.5 truncate text-xs text-white/65">{campaign}</p>{/if}
   </div>
 </div>

@@ -92,6 +92,10 @@ describe('private branding preparation', () => {
   });
 
   it.each([
+    [
+      'non-boolean name visibility',
+      { applicationName: 'ShutterOS', showOrganizationNames: 'false' },
+    ],
     ['unknown key', { applicationName: 'ShutterOS', unexpected: true }],
     ['outside path', { applicationName: 'ShutterOS', organizationLogo: 'private/../outside.png' }],
     [
@@ -112,6 +116,23 @@ describe('private branding preparation', () => {
       await rm(fixture.root, { recursive: true, force: true });
     }
   });
+
+  it.each([true, false])(
+    'preserves explicit name visibility %s in the generated identity',
+    async (showOrganizationNames) => {
+      const fixture = await runBranding({ applicationName: 'ShutterOS', showOrganizationNames });
+      try {
+        await execFileAsync(process.execPath, [
+          resolve(fixture.root, 'scripts/prepare-branding.mjs'),
+        ]);
+        expect(await readFile(fixture.output, 'utf8')).toContain(
+          `"showOrganizationNames":${showOrganizationNames}`,
+        );
+      } finally {
+        await rm(fixture.root, { recursive: true, force: true });
+      }
+    },
+  );
 
   it('serializes branding text without literal HTML delimiters', async () => {
     const fixture = await runBranding({
