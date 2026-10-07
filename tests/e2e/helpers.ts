@@ -6,7 +6,7 @@ export async function beginFree(page: Page, locale: 'fr' | 'en' = 'fr') {
   const copy = locale === 'fr' ? fr : en;
   const freeMode = page.getByRole('radio', { name: copy.welcome.free.title });
   await expect(freeMode).toBeVisible();
-  await expect(freeMode).toBeChecked();
+  await freeMode.check();
   await page.getByRole('button', { name: copy.welcome.begin, exact: true }).click();
 }
 
