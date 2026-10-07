@@ -938,7 +938,8 @@ test('local portrait SVG keeps its ratio and organisation text stays escaped', a
   await page.goto('./');
   const logo = page.locator('.organization-logo');
   await expect(logo).toBeVisible();
-  await expect(page.getByText(label, { exact: true })).toBeVisible();
+  await expect(page.locator('.organization-brand')).toHaveAttribute('title', label);
+  await expect(page.getByText(label, { exact: true }).locator('..')).toHaveClass(/sr-only/);
   const box = await logo.boundingBox();
   expect(box!.height).toBeLessThanOrEqual(54);
   expect(box!.width / box!.height).toBeCloseTo(1 / 3, 2);
@@ -946,6 +947,11 @@ test('local portrait SVG keeps its ratio and organisation text stays escaped', a
   await expect(logo).toBeVisible();
   await expect(logo).toHaveAttribute('src', 'logo-organisation.svg');
   expect(await page.locator('img').count()).toBe(1);
+  // A failed logo restores a visible name, rather than leaving the identity blank.
+  await logo.evaluate((image: HTMLImageElement) => image.dispatchEvent(new Event('error')));
+  await expect(page.getByText(label, { exact: true }).locator('..')).not.toHaveClass(/sr-only/);
+  await expect(page.getByText(label, { exact: true })).toBeVisible();
+  await expect(page.locator('.organization-placeholder')).toBeVisible();
 });
 
 test('Start no longer offers calm mode and legacy timer keys are ignored', async ({ page }) => {

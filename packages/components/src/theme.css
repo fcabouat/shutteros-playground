@@ -1361,6 +1361,29 @@ button:active:not(:disabled) {
 }
 
 /* Co-hosts share one bounded identity row; their images keep independent aspect ratios. */
+.organization-identity {
+  display: grid;
+  grid-template-columns: minmax(0, max-content);
+  justify-content: start;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+.organization-identity:has(.organization-campaign) {
+  grid-template-columns: minmax(0, max-content) minmax(0, max-content);
+}
+.organization-campaign {
+  color: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.2;
+  border-inline-start: 1px solid #52677780;
+  padding-inline-start: 16px;
+  max-width: 180px;
+  max-height: 2.4em;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
 .organization-group {
   display: flex;
   min-width: 0;
@@ -1375,7 +1398,7 @@ button:active:not(:disabled) {
   flex: 1 1 0;
 }
 .joint-organizations .organization-logo {
-  max-width: min(96px, 12vw);
+  max-width: min(120px, 24vw);
 }
 .desktop-organization {
   min-width: 0;
@@ -1386,10 +1409,6 @@ button:active:not(:disabled) {
   }
   .joint-organizations .organization-brand {
     gap: 8px;
-  }
-  .joint-organizations .organization-logo {
-    max-width: 48px;
-    max-height: 40px;
   }
 }
 
@@ -1591,7 +1610,7 @@ button:active:not(:disabled) {
   grid-auto-columns: minmax(0, max-content);
   justify-content: start;
   width: auto;
-  gap: var(--shell-gap);
+  gap: 8px;
 }
 .os-topbar .organization-brand {
   display: grid;
@@ -1600,14 +1619,15 @@ button:active:not(:disabled) {
   max-width: none;
 }
 .os-topbar .organization-logo {
-  max-height: 44px;
+  max-height: 52px;
+  border-radius: 6px;
+}
+.os-topbar .organization-brand.logo-only {
+  grid-template-columns: auto;
 }
 .os-topbar .organization-placeholder {
   color: inherit;
   border-color: #8da5b5;
-}
-.os-topbar .organization-brand .text-white\/65 {
-  color: inherit;
 }
 .session-controls {
   display: grid;
@@ -1664,12 +1684,12 @@ button:active:not(:disabled) {
     height: auto;
     min-height: 116px;
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: 44px auto;
+    grid-template-rows: 52px auto;
     align-items: stretch;
     row-gap: 6px;
   }
   .os-topbar .desktop-organization {
-    height: 44px;
+    height: 52px;
   }
   .session-controls {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;

@@ -6,4 +6,5 @@ export type Branding = {
   campaignName?: string;
   organizationLogo?: string;
   partnerOrganizationLogo?: string;
+  showOrganizationNames?: boolean;
 };
