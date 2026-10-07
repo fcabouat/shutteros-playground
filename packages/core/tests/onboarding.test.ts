@@ -58,7 +58,7 @@ describe('play mode onboarding', () => {
       generation: 0,
       now: 9_000_000,
       reason: 'initial',
-      mode: 'free',
+      mode: 'guided',
     });
     expect(apply(welcome, { type: 'login', password: 'Bureau2026' }, 9_000_001)).toMatchObject({
       phase: 'welcome',
@@ -264,21 +264,21 @@ describe('play mode onboarding', () => {
     });
   });
 
-  it('returns to a clean free welcome on logout and expiry', () => {
+  it('returns to a clean guided welcome on logout and expiry', () => {
     const active = session('free', 100);
     expect(apply(active, { type: 'logout' }, 200)).toEqual({
       phase: 'welcome',
       generation: 1,
       now: 200,
       reason: 'logout',
-      mode: 'free',
+      mode: 'guided',
     });
     expect(apply(active, { type: 'tick' }, 1_800_100)).toEqual({
       phase: 'welcome',
       generation: 1,
       now: 1_800_100,
       reason: 'expired',
-      mode: 'free',
+      mode: 'guided',
     });
   });
 });

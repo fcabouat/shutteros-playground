@@ -90,7 +90,7 @@ describe('contextual guidance', () => {
       { type: 'logout' },
       5,
     );
-    expect(loggedOut).toMatchObject({ phase: 'welcome', generation: 1, mode: 'free' });
+    expect(loggedOut).toMatchObject({ phase: 'welcome', generation: 1, mode: 'guided' });
   });
 
   it('pauses the login timer while hidden', () => {

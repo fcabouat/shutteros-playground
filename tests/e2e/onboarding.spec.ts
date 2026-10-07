@@ -20,7 +20,9 @@ for (const locale of ['fr', 'en'] as const) {
       await page.clock.install();
       await page.goto(delivery === 'file' ? `${portable}?lang=${locale}` : `./?lang=${locale}`);
       await expect(page.getByRole('heading', { name: copy.welcome.title })).toBeVisible();
-      await expect(page.getByRole('radio', { name: copy.welcome.free.title })).toBeChecked();
+      await expect(page.getByRole('radio').nth(0)).toHaveAttribute('value', 'guided');
+      await expect(page.getByRole('radio').nth(1)).toHaveAttribute('value', 'free');
+      await expect(page.getByRole('radio', { name: copy.welcome.guided.title })).toBeChecked();
       await expect(page.locator('.os-topbar')).toBeVisible();
       await expect(page.locator('.welcome-hero')).toBeVisible();
       expect(
@@ -37,7 +39,6 @@ for (const locale of ['fr', 'en'] as const) {
           path: `test-results/previews/welcome-${locale}.png`,
           fullPage: true,
         });
-      await page.getByRole('radio', { name: copy.welcome.guided.title }).click();
       await page.getByRole('button', { name: copy.welcome.begin, exact: true }).click();
       await expect(page.getByRole('group', { name: copy.login.guidedQuestion })).toBeVisible();
       await expect(

@@ -51,7 +51,7 @@ Le fichier `static/kiosk-config.json` utilise le format version 1. Il contient l
 | `mailLegitimateAddress`          | Expéditeur familier de la demande inhabituelle.                                                                 |
 | `mailImpersonatorAddress`        | Expéditeur suspect de la demande d’apparence ordinaire.                                                         |
 
-La durée globale accepte de 1 à 30 minutes et vaut 30 minutes par défaut. Prévoyez généralement 10 à 20 minutes de participation. Le compteur démarre après la connexion simulée. Le mode libre est proposé à l’accueil ; le joueur peut choisir le mode guidé et changer de mode ensuite sans perdre sa progression.
+La durée globale accepte de 1 à 30 minutes et vaut 30 minutes par défaut. Prévoyez généralement 10 à 20 minutes de participation. Le compteur démarre après la connexion simulée. Le Mode facile est proposé à l’accueil ; le joueur peut choisir le Mode défi et changer de mode à tout moment sans perdre sa progression.
 
 Configurez un contact de sécurité direct. L’assistance générale peut être un recours si votre procédure le prévoit ; la maintenance habituelle du poste relève du service informatique.
 
@@ -65,7 +65,7 @@ Au chargement, `?lang=fr` ou `?lang=en` choisit explicitement la langue. Sinon, 
 
 Le post-it standard affiche `Bureau2026` en français ou `Office2026` en anglais, si la traduction figure dans les phrases acceptées. Une première phrase personnalisée reste identique dans les deux langues. Les autres entrées permettent d’accepter des mots de passe faibles courants. Par défaut, la casse et les espaces en début ou fin ne comptent pas. Après trois essais infructueux, un indice aide à avancer.
 
-En mode guidé, la connexion demande où conserver un mot de passe, sans saisir de phrase. Cela ne simule pas l’ouverture d’un gestionnaire sur un poste verrouillé pour déverrouiller ce même poste.
+En mode facile, la connexion demande où conserver un mot de passe, sans saisir de phrase. Cela ne simule pas l’ouverture d’un gestionnaire sur un poste verrouillé pour déverrouiller ce même poste.
 
 Les phrases du jeu sont publiques et fictives : n’utilisez jamais un vrai mot de passe. Le champ est extérieur à un formulaire et désactive l’autocomplétion. Le texte est masqué visuellement, avec un champ de type mot de passe en repli si le navigateur ne prend pas en charge le masquage CSS. Il n’est ni conservé, ni journalisé, ni envoyé. Ce choix limite les déclenchements des gestionnaires du navigateur, sans pouvoir garantir le comportement de toutes les extensions ; [l’autocomplétion reste une indication au navigateur](https://developer.mozilla.org/en-US/docs/Web/Security/Practical_implementation_guides/Turning_off_form_autocompletion).
 

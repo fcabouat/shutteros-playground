@@ -6,14 +6,14 @@ export const fr = {
     title: 'Une journée de travail. Des choix qui comptent.',
     description: (name: string) =>
       `Vous incarnez ${name}, agente dans un service public. La journée commence : des messages à traiter, une réunion à préparer… et une clé USB retrouvée près du bureau. Au fil des demandes et des imprévus, à vous de décider à quoi faire confiance, quand demander de l’aide et comment protéger votre poste et les informations du service.`,
-    choose: 'Choisir un parcours',
+    choose: 'Choisissez votre niveau de départ',
     guided: {
-      title: 'Parcours en douceur',
-      description: 'Avancez avec des QCM présentés dans un ordre simple.',
-      detail: 'Le jeu vous conduit d’une activité à la suivante.',
+      title: 'Mode facile',
+      description: 'Pour débuter en douceur, avec des choix guidés (QCM).',
+      detail: 'Le jeu vous guide d’une activité à la suivante.',
     },
     free: {
-      title: 'Petit défi',
+      title: 'Mode défi',
       description: 'Explorez librement le bureau, agissez et demandez des indices.',
       detail: 'À vous de repérer les situations.',
     },
@@ -29,7 +29,7 @@ export const fr = {
     controls: {
       title: 'La barre de jeu, en haut de l’écran',
       introduction:
-        'Elle reste accessible pendant tout le parcours. Passez du mode libre au mode guidé à tout moment, sans perdre votre progression.',
+        'Elle reste accessible pendant tout le parcours. Changez de mode à tout moment, sans perdre votre progression.',
       progress: 'Progression',
       waiting: 'En attente',
       items: [
@@ -46,8 +46,8 @@ export const fr = {
     },
   },
   experience: {
-    free: 'Mode libre (exploration)',
-    guided: 'Mode guidé (QCM)',
+    free: 'Mode défi (exploration)',
+    guided: 'Mode facile (choix guidés)',
     freeHint: 'Choisissez vous-même les activités. Votre progression est conservée.',
     next: 'Passer à l’activité suivante',
     finishHint:
@@ -183,7 +183,7 @@ export const fr = {
     nextPlayer: 'Passer au joueur suivant',
     guide: 'Un coup de pouce',
     close: 'Fermer',
-    finish: 'Mode guidé (QCM)',
+    finish: 'Mode facile (choix guidés)',
     resume: 'Retour au bureau',
     connected: 'Réseau connecté',
     isolated: 'Réseau isolé',
@@ -604,7 +604,7 @@ export const fr = {
       habits: (count: number, total: number) => `Gestes du quotidien : ${count}/${total}`,
       hints: (count: number, total: number) => `Indices d’activité consultés : ${count}/${total}`,
       journey: 'Parcours suivi',
-      modes: { guided: 'Guidé', free: 'Libre', mixed: 'Mixte' },
+      modes: { guided: 'Mode facile', free: 'Mode défi', mixed: 'Modes facile et défi' },
       badges: 'Repères de votre parcours',
       activityBadge: 'Situations mises en pratique',
       reportBadge: (count: number, total: number) =>
