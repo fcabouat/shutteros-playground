@@ -32,7 +32,9 @@
     "test:site": "playwright test --config playwright.site.config.ts",
     "version:next": "node scripts/version.mjs next",
     "gitflow:init": "sh scripts/gitflow-init.sh",
-    "verify:checks": "pnpm lint && pnpm format:check && pnpm check && pnpm knip && pnpm test && pnpm build && pnpm test:e2e"
+    "verify:checks": "pnpm lint && pnpm format:check && pnpm check && pnpm knip && pnpm test && pnpm build && pnpm test:e2e",
+    "pr": "node scripts/delivery.mjs pr",
+    "release": "node scripts/delivery.mjs release"
   },
   "dependencies": {
     "@shutteros/components": "workspace:*",

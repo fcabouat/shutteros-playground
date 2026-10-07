@@ -97,9 +97,15 @@ export function writeVersion(root, version) {
  * @param {string} root
  * @param {string} tag
  * @param {string} [testedCommit]
+ * @param {{main: string, develop: string}} [refs]
  * @returns {string}
  */
-export function validateTag(root, tag, testedCommit = 'HEAD') {
+export function validateTag(
+  root,
+  tag,
+  testedCommit = 'HEAD',
+  refs = { main: 'origin/main', develop: 'origin/develop' },
+) {
   const version = tag.startsWith('v') ? tag.slice(1) : '';
   if (!isVersion(version)) throw new Error(`release tag is not vX.Y.Z: ${tag}`);
 
@@ -126,9 +132,9 @@ export function validateTag(root, tag, testedCommit = 'HEAD') {
   }
 
   try {
-    git('merge-base', '--is-ancestor', tagCommit, 'origin/main');
+    git('merge-base', '--is-ancestor', tagCommit, refs.main);
   } catch {
-    throw new Error(`${tagCommit} is not on origin/main`);
+    throw new Error(`${tagCommit} is not on ${refs.main}`);
   }
 
   const taggedParents = git('rev-list', '--parents', '-n', '1', tagCommit).split(/\s+/);
@@ -136,7 +142,7 @@ export function validateTag(root, tag, testedCommit = 'HEAD') {
     throw new Error(`${tag} must identify the two-parent main merge from a Gitflow finish`);
   }
   const deliveryTip = taggedParents[2];
-  const developMerges = git('rev-list', '--first-parent', '--merges', '--parents', 'origin/develop')
+  const developMerges = git('rev-list', '--first-parent', '--merges', '--parents', refs.develop)
     .split('\n')
     .filter(Boolean)
     .map((line) => line.split(/\s+/));
