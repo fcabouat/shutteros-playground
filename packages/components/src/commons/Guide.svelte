@@ -28,7 +28,7 @@
     disabled={!canNavigate}
     title={copy.guide.prompt}
     >{#key attention}<span class="help-cue" aria-hidden="true"
-        ><Icon name="sparkles" size={23} /></span
+        ><Icon name="sparkles" size={20} /></span
       >{/key}<span
       >{remaining === 1
         ? copy.guide.counterOne

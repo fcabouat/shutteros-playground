@@ -308,7 +308,7 @@ button:active:not(:disabled) {
 }
 
 .session-timer {
-  inline-size: 120px;
+  inline-size: 136px;
   flex: none;
   justify-content: center;
   white-space: nowrap;
@@ -1590,19 +1590,30 @@ button:active:not(:disabled) {
   gap: 0;
 }
 
-/* Stable slots for progress, hints and choices across both exploration modes. */
+/* Stable game-bar slots before and after sign-in, in either exploration mode. */
 .os-topbar {
   --shell-gap: 12px;
-  height: 64px;
+  --shell-inset: 6px;
+  --shell-item-height: 52px;
+  --shell-radius: 6px;
+  height: calc(var(--shell-item-height) + 2 * var(--shell-inset));
   flex: none;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: var(--shell-gap);
-  padding: 8px 20px;
+  padding: var(--shell-inset) var(--shell-gap);
   position: relative;
   z-index: 50;
-  border-bottom: 1px solid #c4d3dd;
+  box-shadow:
+    inset 0 -1px 0 #c4d3dd,
+    0 -1px 12px #071d3410;
+}
+.os-topbar .organization-identity {
+  gap: var(--shell-gap);
+}
+.os-topbar .organization-campaign {
+  padding-inline-start: var(--shell-gap);
 }
 .os-topbar .organization-group {
   display: grid;
@@ -1610,7 +1621,7 @@ button:active:not(:disabled) {
   grid-auto-columns: minmax(0, max-content);
   justify-content: start;
   width: auto;
-  gap: 8px;
+  gap: var(--shell-gap);
 }
 .os-topbar .organization-brand {
   display: grid;
@@ -1619,8 +1630,8 @@ button:active:not(:disabled) {
   max-width: none;
 }
 .os-topbar .organization-logo {
-  max-height: 52px;
-  border-radius: 6px;
+  max-height: var(--shell-item-height);
+  border-radius: var(--shell-radius);
 }
 .os-topbar .organization-brand.logo-only {
   grid-template-columns: auto;
@@ -1630,30 +1641,44 @@ button:active:not(:disabled) {
   border-color: #8da5b5;
 }
 .session-controls {
+  --control-padding: var(--shell-gap);
   display: grid;
-  grid-template-columns: minmax(360px, 440px) minmax(210px, 240px) auto;
+  grid-template-columns: minmax(360px, 440px) minmax(250px, 280px) auto;
   align-items: center;
   gap: var(--shell-gap);
 }
 .session-help {
   display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   align-items: center;
-  gap: 8px;
+  gap: var(--shell-gap);
 }
 .session-help,
 .session-help .primary-help-slot,
 .session-finish {
   min-width: 0;
 }
-.session-finish button {
+.session-controls :is(.companion-trigger, .guidance-trigger, .finish-experience, .session-timer) {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 44px;
+  height: var(--shell-item-height);
+  min-height: var(--shell-item-height);
+  gap: 8px;
+  padding: 0 var(--control-padding);
+  border-radius: var(--shell-radius);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 18px;
+  text-align: center;
+}
+.session-controls :is(.companion-trigger, .guidance-trigger, .finish-experience) {
   width: 100%;
-  font-size: 0.75rem;
-  white-space: nowrap;
+  white-space: normal;
+}
+.session-controls :is(svg, .help-cue) {
+  flex-shrink: 0;
 }
 .session-finish button:disabled {
   background: #d4dce1;
@@ -1661,14 +1686,6 @@ button:active:not(:disabled) {
   color: #52616b;
   opacity: 1;
   box-shadow: none;
-}
-.session-help .companion-trigger,
-.session-help .guidance-trigger {
-  width: 100%;
-  min-height: 44px;
-  height: 44px;
-  white-space: nowrap;
-  border-radius: 10px;
 }
 .session-help .activity-guidance {
   width: 100%;
@@ -1682,35 +1699,18 @@ button:active:not(:disabled) {
 @media (max-width: 1299px) {
   .os-topbar {
     height: auto;
-    min-height: 116px;
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: 52px auto;
+    grid-template-rows: var(--shell-item-height) auto;
     align-items: stretch;
-    row-gap: 6px;
   }
   .os-topbar .desktop-organization {
-    height: 52px;
+    height: var(--shell-item-height);
   }
   .session-controls {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
   }
-  .session-help .companion-trigger,
-  .session-help .guidance-trigger {
-    font-size: 0.75rem;
-    padding: 6px 8px;
-    height: 48px;
-    min-height: 48px;
-    white-space: normal;
-  }
-  .session-finish button {
-    padding: 6px;
-    white-space: normal;
-  }
 }
 @media (max-width: 699px) {
-  .os-topbar {
-    padding-inline: 12px;
-  }
   .session-controls {
     grid-template-columns: minmax(0, 1fr) auto;
   }
@@ -2056,10 +2056,6 @@ button:active:not(:disabled) {
 
 .progress-slot {
   min-width: 0;
-}
-.progress-slot .companion-trigger {
-  font-size: 0.75rem;
-  padding-inline: 8px;
 }
 .progress-slot .companion-trigger:disabled {
   opacity: 1;

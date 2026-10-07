@@ -44,21 +44,14 @@
     </button>
   </div>
   <div class="session-finish">
-    <button
-      class="finish-experience rounded-lg px-3 py-2 text-xs"
-      onclick={onMode}
-      disabled={!onMode}
-    >
-      {mode === 'guided' ? copy.experience.free : copy.experience.guided}<Icon
+    <button class="finish-experience" onclick={onMode} disabled={!onMode}>
+      <span>{mode === 'guided' ? copy.experience.free : copy.experience.guided}</span><Icon
         name="arrow"
-        size={14}
-        class="ml-2 inline"
+        size={20}
       />
     </button>
   </div>
-  <span
-    class="session-timer waiting flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium"
-  >
-    <Icon name="hourglass" size={17} /><span>{copy.welcome.controls.waiting}</span>
+  <span class="session-timer waiting">
+    <Icon name="hourglass" size={20} /><span>{copy.welcome.controls.waiting}</span>
   </span>
 </div>
