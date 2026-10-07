@@ -39,6 +39,13 @@ Use fictional data only. Configuration passwords are public game phrases, never 
 
 ## Pull requests
 
+From a clean `feature/*` or `bugfix/*` branch, run `pnpm pr`. It runs the public
+verification, pushes to `origin`, and opens or finds the pull request into `develop`.
+GitHub CLI (`gh`) manages authentication, including the first interactive sign-in.
+Use `pnpm pr --title "fix(scope): describe the change" --body-file /path/to/pr.txt`
+to supply an edited description; otherwise the commit subjects form the initial draft.
+The command does not merge the PR.
+
 Describe the user-visible change, the invariant or content source that supports it, and the validation run. Keep changes focused. Do not mix generated build output, unrelated formatting, or kiosk-host policy with application logic.
 
 The workspace overrides `cookie@<0.7.0` to `0.7.2` for [GHSA-pxg6-pf52-xh8x](https://github.com/advisories/GHSA-pxg6-pf52-xh8x). It is a SvelteKit server dependency, absent from the delivered browser bundle; remove this override when upstream no longer selects the affected range.
@@ -47,7 +54,7 @@ Dependabot checks version updates monthly, grouped into application dependencies
 
 ## Git workflow
 
-`main` contains the reviewed distributable version; `develop` is the integration branch. Work on `feature/<topic>` or `bugfix/<topic>` branches and open a pull request into `develop`; squash or rebase merging is suitable for these working branches. Release and hotfix finishes retain merge commits. Releases and hotfixes are made locally with git-flow (`release/<version>`, `hotfix/<version>`, tags `v<version>`, `support/` for maintained lines) as described in the [publishing guide](docs/publishing.md#releases-with-git-flow). Run `pnpm gitflow:init` once per clone to configure the client and its tracked hooks. The initializer refuses to overwrite an existing hook that is not already the exact tracked link.
+`main` contains the reviewed distributable version; `develop` is the integration branch. Work on `feature/<topic>` or `bugfix/<topic>` branches and open a pull request into `develop`; squash or rebase merging is suitable for these working branches. Release and hotfix finishes retain merge commits. Releases and hotfixes are made locally with git-flow (`release/<version>`, `hotfix/<version>`, tags `v<version>`, `support/` for maintained lines) as described in the [publishing guide](docs/publishing.md#releases-with-git-flow). From clean, synchronized `develop` and `main`, run `pnpm release patch` (or `minor`, `major`, `X.Y.Z`). This configures AVH, checks the current develop CI, invokes its start/finish hooks, pushes atomically and follows publication. The initializer refuses to overwrite an existing hook that is not already the exact tracked link.
 
 ## Dependency notices
 
