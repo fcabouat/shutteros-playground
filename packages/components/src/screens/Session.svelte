@@ -493,24 +493,23 @@
       </div>
       <div class="session-finish">
         <button
-          class="finish-experience rounded-lg px-3 py-2 text-xs"
+          class="finish-experience"
           title={guidedMode ? copy.experience.freeHint : copy.experience.finishHint}
           onclick={() => execute({ type: 'set-mode', mode: guidedMode ? 'free' : 'guided' })}
-          >{guidedMode ? copy.experience.free : copy.experience.guided}<Icon
+          ><span>{guidedMode ? copy.experience.free : copy.experience.guided}</span><Icon
             name="arrow"
-            size={14}
-            class="ml-2 inline"
+            size={20}
           /></button
         >
       </div>
       <span
-        class="session-timer flex items-center gap-2 rounded-lg px-3 py-2 font-mono text-sm font-medium"
+        class="session-timer"
         class:urgent={seconds <= 30}
         title={copy.shell.timeout}
         role="timer"
         aria-live="off"
         aria-label={`${copy.shell.time} : ${formattedTime}`}
-        ><Icon name="hourglass" size={17} /><span aria-hidden="true">{formattedTime}</span></span
+        ><Icon name="hourglass" size={20} /><span aria-hidden="true">{formattedTime}</span></span
       >
     </div>
   {/snippet}

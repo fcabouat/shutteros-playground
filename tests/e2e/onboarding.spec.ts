@@ -231,3 +231,59 @@ test('recap distinguishes viewed hints from guided choices and survives minimisa
   await page.getByRole('button', { name: fr.debrief.backToSummary, exact: true }).click();
   await expect(page.getByText(fr.debrief.summary.hints(1, 8), { exact: true })).toBeVisible();
 });
+
+for (const width of [1440, 390]) {
+  test(`game bar controls keep consistent geometry before and after login at ${width}px`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 1000 });
+    await page.goto('./');
+    const checkControls = async () => {
+      const controls = page.locator('.session-help button, .session-finish button, .session-timer');
+      await expect(controls).toHaveCount(4);
+      const geometry = await controls.evaluateAll((elements) =>
+        elements.map((element) => {
+          const style = getComputedStyle(element);
+          const icon = element.querySelector('svg')!.getBoundingClientRect();
+          return {
+            height: element.getBoundingClientRect().height,
+            radius: style.borderRadius,
+            padding: style.paddingInline,
+            gap: style.gap,
+            font: style.fontSize,
+            iconWidth: icon.width,
+            iconHeight: icon.height,
+          };
+        }),
+      );
+      expect(geometry[0]!.height).toBe(52);
+      expect(geometry[0]!.radius).toBe('6px');
+      const insets = await page.locator('.os-topbar').evaluate((bar) => {
+        const bounds = bar.getBoundingClientRect();
+        const controls = bar.querySelector('.session-controls')!.getBoundingClientRect();
+        return { top: controls.top - bounds.top, bottom: bounds.bottom - controls.bottom };
+      });
+      expect(insets.bottom).toBe(6);
+      if (width === 1440) expect(insets.top).toBe(6);
+      for (const control of geometry) expect(control).toEqual(geometry[0]);
+      expect(
+        await page
+          .locator('.session-help')
+          .evaluate((element) => getComputedStyle(element).columnGap),
+      ).toBe(
+        await page
+          .locator('.session-controls')
+          .evaluate((element) => getComputedStyle(element).columnGap),
+      );
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
+    };
+    await checkControls();
+    await beginGuided(page);
+    await page.getByRole('button', { name: fr.login.guidedChoices[0].label, exact: true }).click();
+    await page.getByRole('button', { name: fr.intro.guidedStart, exact: true }).click();
+    await checkControls();
+    await page.locator('.finish-experience').click();
+    await checkControls();
+    await page.screenshot({ path: `test-results/previews/unified-controls-${width}.png` });
+  });
+}
