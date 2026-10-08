@@ -6,7 +6,7 @@ You play Camille Martin at a fictional workstation: a found USB drive, messages 
 
 The [welcome screen](images/welcome.png) introduces the **game bar**, visible throughout the journey, and offers two routes:
 
-- **Easy mode**, selected by default: move through one situation at a time, with choices displayed. Login starts with a question about where to keep a password, followed by an explanation of each option.
+- **Easy mode**, selected by default: move through one situation at a time, with choices displayed. The [sign-in screen](images/login-guided.png) offers a password-storage question beside the account. Answer it or sign in directly with the fictional password.
 - **Challenge mode (free exploration)**: explore applications and find the controls to act. At login, find the fictional password; a hint helps after three failed attempts or two minutes of searching.
 
 Choose the level that suits you at the welcome screen. You can switch modes at any time without losing your progress.
@@ -37,7 +37,7 @@ The hourglass starts after the login exercise and allows thirty minutes by defau
 
 - **Language**: choose FR or EN at welcome, then on the taskbar.
 - **Windows**: drag their title bars, resize main windows by their edges, minimise them and find them again on the taskbar. Hints and the USB text file have independent windows.
-- **Size**: new activities open maximised in Easy mode and at normal size in Challenge mode. Restore them if preferred; switching to Easy mode can widen the current window to accommodate choices without maximising it.
+- **Size**: new activities open at normal size in both modes, keeping the desktop visible. You can maximise them; displaying choices may widen the window without maximising it.
 - **Keyboard**: Tab moves between controls; Enter or Space activates buttons. The fictional password is masked; the eye button reveals it.
 - **Sign out**: confirmation prevents accidental resets. The operator shortcut `Ctrl+Alt+Home` resets the game immediately.
 

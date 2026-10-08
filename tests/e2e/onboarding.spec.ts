@@ -24,6 +24,7 @@ for (const locale of ['fr', 'en'] as const) {
       await expect(page.getByRole('radio').nth(1)).toHaveAttribute('value', 'free');
       await expect(page.getByRole('radio', { name: copy.welcome.guided.title })).toBeChecked();
       await expect(page.locator('.os-topbar')).toBeVisible();
+      await expect(page.getByText(copy.welcome.switchTitle, { exact: true })).toBeVisible();
       await expect(page.locator('.welcome-hero')).toBeVisible();
       expect(
         await page
@@ -47,7 +48,13 @@ for (const locale of ['fr', 'en'] as const) {
           exact: true,
         }),
       ).toBeFocused();
-      await expect(page.getByLabel(copy.login.password, { exact: true })).toHaveCount(0);
+      await expect(page.getByLabel(copy.login.password, { exact: true })).toBeVisible();
+      await expect(page.getByRole('button', { name: copy.login.enter, exact: true })).toBeVisible();
+      if (delivery === 'http')
+        await page.screenshot({
+          path: `test-results/previews/login-side-quiz-${locale}.png`,
+          fullPage: true,
+        });
       const controlsAfter = await page.locator('.session-controls').boundingBox();
       expect(controlsAfter?.y).toBe(controlsBefore?.y);
       await page.clock.fastForward(31 * 60_000);
@@ -287,3 +294,22 @@ for (const width of [1440, 390]) {
     await page.screenshot({ path: `test-results/previews/unified-controls-${width}.png` });
   });
 }
+
+test('easy mode also allows signing in directly and preserves a draft across mode changes', async ({
+  page,
+}) => {
+  await page.goto('./');
+  await beginGuided(page);
+  const password = page.getByLabel(fr.login.password, { exact: true });
+  await password.fill(config.acceptedPasswords[0]!);
+  await page.locator('.finish-experience').click();
+  await expect(password).toHaveValue(config.acceptedPasswords[0]!);
+  await expect(page.locator('.guided-login')).toHaveCount(0);
+  await page.locator('.finish-experience').click();
+  await expect(password).toHaveValue(config.acceptedPasswords[0]!);
+  await page.getByRole('button', { name: fr.login.enter, exact: true }).click();
+  await expect(page.getByRole('heading', { name: fr.intro.title, exact: true })).toBeVisible();
+  await page.getByRole('button', { name: fr.intro.guidedStart, exact: true }).click();
+  await expect(page.locator('.action-dock-panel')).toBeVisible();
+  await expect(page.locator('.window-layer .os-window')).not.toHaveClass(/maximized/);
+});

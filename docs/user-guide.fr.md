@@ -6,7 +6,7 @@ Vous incarnez Camille Martin sur un poste fictif : une clé USB trouvée, des me
 
 L’[écran d’accueil](images/welcome.fr.png) présente la **barre de jeu**, visible pendant tout le parcours, et propose deux modes :
 
-- **Mode facile**, proposé par défaut : avancez une situation après l’autre, avec les choix affichés. La connexion commence par une question sur le rangement d’un mot de passe, puis une explication de chaque option.
+- **Mode facile**, proposé par défaut : avancez une situation après l’autre, avec les choix affichés. L’[écran de connexion](images/login-guided.fr.png) propose un QCM sur le rangement d’un mot de passe à côté du compte. Vous pouvez répondre ou ouvrir directement la session avec le mot de passe fictif.
 - **Mode défi (exploration libre)** : explorez les applications et trouvez les commandes pour agir. À la connexion, retrouvez le mot de passe fictif ; un indice aide après trois essais ratés ou deux minutes de recherche.
 
 Choisissez le niveau qui vous convient à l’accueil. Vous pouvez changer de mode à tout moment sans perdre votre progression.
@@ -37,7 +37,7 @@ Le sablier démarre après l’exercice de connexion et laisse trente minutes pa
 
 - **Langue** : FR ou EN dès l’accueil, puis dans la barre des tâches.
 - **Fenêtres** : déplacez-les par leur titre, redimensionnez les fenêtres principales par leurs bords, réduisez-les puis retrouvez-les dans la barre des tâches. Les indices et le fichier texte sont des fenêtres indépendantes.
-- **Taille** : les nouvelles activités s’ouvrent agrandies en mode facile et en taille normale en mode défi. Vous pouvez les restaurer ; passer en mode facile peut élargir la fenêtre courante pour accueillir les choix, sans la maximiser.
+- **Taille** : les nouvelles activités s’ouvrent en fenêtre dans les deux modes, pour garder le bureau visible. Vous pouvez les agrandir ; le QCM peut élargir la fenêtre pour accueillir les choix, sans la maximiser.
 - **Clavier** : Tab passe d’une commande à l’autre ; Entrée ou Espace active les boutons. Le mot de passe fictif est masqué ; le bouton œil permet de le vérifier.
 - **Déconnexion** : une confirmation évite d’effacer la progression par erreur. Le raccourci opérateur `Ctrl+Alt+Home` réinitialise immédiatement le jeu.
 

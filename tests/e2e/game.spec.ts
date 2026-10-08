@@ -117,13 +117,17 @@ test('guided completion sweeps remaining situations without local timers', async
   await expect(page.locator('[data-challenge="usb"][data-step="choose"]')).toBeVisible();
   await expect(page.locator('.ambient-notice')).toHaveCount(0);
   const frame = page.locator('.window-layer .os-window');
+  await expect(frame).not.toHaveClass(/maximized/);
+  // Maximising is a player choice: keep it for feedback, then open the next
+  // activity at normal size, even when the guided route advances automatically.
+  await frame.getByRole('button', { name: fr.os.maximize, exact: true }).click();
   const workspace = await page.locator('.os-workspace').boundingBox();
   expect(await frame.boundingBox()).toEqual(workspace);
   await chooseFromDock(page, 'station');
   await expect(page.locator('.learning-takeaway')).toBeVisible();
   expect(await frame.boundingBox()).toEqual(workspace);
   await advanceGuided(page);
-  expect(await frame.boundingBox()).toEqual(workspace);
+  await expect(frame).not.toHaveClass(/maximized/);
   await chooseFromDock(page, 'isolate');
   await page.getByRole('button', { name: fr.incident.reportAction, exact: true }).click();
   await advanceGuided(page);

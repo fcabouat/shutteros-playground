@@ -83,14 +83,14 @@
     activeId ?? (snapshot.scene.kind === 'feedback' ? snapshot.scene.result.id : null),
   );
   // An activity and its feedback share the player's size choice; another activity
-  // gets the default for its exploration mode.
+  // opens at normal size, regardless of the play mode.
   const windowDefaultsKey = $derived(`${taskbarId ?? snapshot.scene.kind}`);
   let previousWindowDefaultsKey = $state('');
   let coreMaximized = $state(false);
   $effect(() => {
     if (windowDefaultsKey !== previousWindowDefaultsKey) {
       previousWindowDefaultsKey = windowDefaultsKey;
-      coreMaximized = snapshot.mode === 'guided';
+      coreMaximized = false;
     }
   });
   const coreUsesPinnedTaskbar = $derived(

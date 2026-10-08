@@ -64,6 +64,26 @@
   });
 </script>
 
+{#snippet note(compact: boolean)}
+  {#if config.showPasswordHint}
+    <aside
+      class:compact
+      class="post-it relative mx-auto w-[260px] rotate-[4deg] p-7 text-left"
+      aria-label={copy.login.postitTitle}
+    >
+      <span class="tape" aria-hidden="true"></span>
+      <p class="post-it-phrase break-words py-6 text-center font-mono text-lg">
+        {passwordHint(config, i18n.locale)}
+      </p>
+    </aside>
+  {:else}
+    <aside class="mx-auto max-w-[240px] text-center text-sm text-white/80" hidden={!hintVisible}>
+      <Icon name="light" size={28} />
+      <p class="mt-3">{copy.login.physicalHint}</p>
+    </aside>
+  {/if}
+{/snippet}
+
 <main class="login-screen wallpaper relative flex min-h-dvh flex-col overflow-hidden">
   <div class="wallpaper-orbit" aria-hidden="true"></div>
   {#snippet controls()}
@@ -86,45 +106,27 @@
   />
 
   <div
-    class="relative z-10 mx-auto grid w-full max-w-[1200px] flex-1 items-center gap-8 px-5 py-8 sm:px-9 lg:grid-cols-[1fr_420px_1fr] lg:gap-12 lg:px-12"
+    class="login-layout relative z-10 mx-auto grid w-full max-w-[1200px] flex-1 items-center gap-8 px-5 py-8 sm:px-9 lg:gap-12 lg:px-12"
+    class:guided={snapshot.mode === 'guided'}
     tabindex="-1"
     use:focusScreen={snapshot.mode}
   >
-    <div class="hidden lg:block"></div>
+    {#if snapshot.mode === 'free'}<div class="hidden lg:block"></div>{/if}
 
-    <section
-      class="login-account mx-auto w-full max-w-[380px] text-center"
-      aria-label={copy.login.account}
-    >
-      <div
-        class="avatar mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full sm:h-28 sm:w-28"
+    <div class="login-identity">
+      <section
+        class="login-account mx-auto w-full max-w-[380px] text-center"
+        aria-label={copy.login.account}
       >
-        <Icon name="user" size={53} />
-      </div>
-      <h1 class="text-[2rem] font-medium tracking-tight">{config.playerName}</h1>
-      <p class="mt-2 text-sm text-white/70">{copy.login.account}</p>
-
-      {#if snapshot.mode === 'guided'}
-        <div class="guided-login mt-7 text-left">
-          <p class="text-sm leading-relaxed text-white/90">{copy.login.guidedIntro}</p>
-          <fieldset class="mt-5 space-y-3">
-            <legend class="mb-3 text-base leading-relaxed font-semibold"
-              >{copy.login.guidedQuestion}</legend
-            >
-            {#each copy.login.guidedChoices as choice (choice.id)}
-              <button
-                class="guided-login-choice"
-                type="button"
-                data-window-focus={choice.id === 'manager' ? '' : undefined}
-                onclick={() =>
-                  dispatch({ type: 'answer-login', choiceId: choice.id as LoginChoiceId })}
-              >
-                <span>{choice.label}</span><Icon name="arrow" size={17} />
-              </button>
-            {/each}
-          </fieldset>
+        <div
+          class="avatar mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full sm:h-28 sm:w-28"
+        >
+          <Icon name="user" size={53} />
         </div>
-      {:else}<div class="mt-8 text-left">
+        <h1 class="text-[2rem] font-medium tracking-tight">{config.playerName}</h1>
+        <p class="mt-2 text-sm text-white/70">{copy.login.account}</p>
+
+        <div class="mt-8 text-left">
           <label for="session-code" class="mb-2 block text-sm text-white/80"
             >{copy.login.password}</label
           >
@@ -133,7 +135,7 @@
                This reduces password-manager prompts; autocomplete is only a browser hint. -->
             <input
               id="session-code"
-              data-window-focus
+              data-window-focus={snapshot.mode === 'free' ? '' : undefined}
               type={passwordVisible || supportsTextSecurity ? 'text' : 'password'}
               bind:value={password}
               maxlength={100}
@@ -183,38 +185,50 @@
             >{copy.login.enter}<Icon name="arrow" size={20} /></button
           >
         </div>
+        {#if hintVisible}<p
+            id="password-help"
+            role="status"
+            class="login-guidance mt-5 rounded-xl px-4 py-3 text-left text-sm leading-relaxed"
+          >
+            <Icon name="light" size={18} />
+            <span
+              >{copy.login.helper}{#if snapshot.mode === 'guided'}
+                {copy.login.guidedAlternative}{/if}</span
+            >
+          </p>{/if}
+        {#if snapshot.reason !== 'initial'}<p
+            role="status"
+            class="mt-5 text-sm leading-relaxed text-white/85"
+          >
+            {snapshot.reason === 'expired' ? copy.login.expired : copy.login.loggedOut}
+          </p>{/if}
+      </section>
+      {#if snapshot.mode === 'guided'}
+        <div class="login-note">{@render note(true)}</div>
       {/if}
-      {#if hintVisible}<p
-          id="password-help"
-          role="status"
-          class="login-guidance mt-5 rounded-xl px-4 py-3 text-left text-sm leading-relaxed"
-        >
-          <Icon name="light" size={18} />
-          <span>{snapshot.mode === 'guided' ? copy.login.guidedHelper : copy.login.helper}</span>
-        </p>{/if}
-      {#if snapshot.reason !== 'initial'}<p
-          role="status"
-          class="mt-5 text-sm leading-relaxed text-white/85"
-        >
-          {snapshot.reason === 'expired' ? copy.login.expired : copy.login.loggedOut}
-        </p>{/if}
-    </section>
+    </div>
 
-    {#if config.showPasswordHint}
-      <aside
-        class="post-it relative mx-auto w-[260px] rotate-[4deg] p-7 text-left lg:mt-24"
-        aria-label={copy.login.postitTitle}
-      >
-        <span class="tape" aria-hidden="true"></span>
-        <p class="post-it-phrase break-words py-6 text-center font-mono text-lg">
-          {passwordHint(config, i18n.locale)}
-        </p>
-      </aside>
+    {#if snapshot.mode === 'guided'}
+      <div class="guided-login text-left">
+        <fieldset class="space-y-3">
+          <legend class="mb-3 text-base leading-relaxed font-semibold"
+            >{copy.login.guidedQuestion}</legend
+          >
+          {#each copy.login.guidedChoices as choice (choice.id)}
+            <button
+              class="guided-login-choice"
+              type="button"
+              data-window-focus={choice.id === 'manager' ? '' : undefined}
+              onclick={() =>
+                dispatch({ type: 'answer-login', choiceId: choice.id as LoginChoiceId })}
+            >
+              <span>{choice.label}</span><Icon name="arrow" size={17} />
+            </button>
+          {/each}
+        </fieldset>
+      </div>
     {:else}
-      <aside class="mx-auto max-w-[240px] text-center text-sm text-white/80" hidden={!hintVisible}>
-        <Icon name="light" size={28} />
-        <p class="mt-3">{copy.login.physicalHint}</p>
-      </aside>
+      {@render note(false)}
     {/if}
   </div>
 
@@ -232,6 +246,54 @@
 </main>
 
 <style>
+  .post-it.compact {
+    width: 220px;
+    margin-top: 1.5rem;
+    padding: 0.5rem 1rem;
+  }
+  .post-it.compact .post-it-phrase {
+    padding-block: 1.375rem;
+  }
+  @media (min-width: 1024px) {
+    .login-layout {
+      grid-template-columns: 1fr 420px 1fr;
+    }
+    .login-layout.guided {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+  }
+
+  @media (min-width: 1280px) {
+    .login-layout.guided {
+      max-width: 1440px;
+      grid-template-columns: minmax(280px, 1fr) 360px minmax(360px, 1fr);
+      column-gap: 2rem;
+    }
+    .guided .login-identity {
+      display: contents;
+    }
+    .guided .login-account {
+      grid-column: 2;
+      grid-row: 1;
+    }
+    .guided .login-note {
+      grid-column: 1;
+      grid-row: 1;
+    }
+    .guided-login {
+      grid-column: 3;
+      grid-row: 1;
+    }
+    .post-it.compact {
+      width: 260px;
+      margin-top: 0;
+      padding: 1.75rem;
+    }
+    .post-it.compact .post-it-phrase {
+      padding-block: 1.5rem;
+    }
+  }
+
   .minimal-secret-mask {
     -webkit-text-security: disc;
   }
