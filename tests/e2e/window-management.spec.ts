@@ -268,3 +268,28 @@ for (const [id, surface] of [
     }
   });
 }
+
+for (const height of [760, 900]) {
+  test(`desktop icons stay square with multiline labels in both modes at ${height}px high`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1440, height });
+    await login(page);
+    await page.getByRole('button', { name: fr.intro.start, exact: true }).click();
+    for (const mode of ['free', 'guided']) {
+      if (mode === 'guided') await switchToGuided(page);
+      const shortcuts = page.locator('.desktop-icon');
+      await expect(shortcuts).toHaveCount(6);
+      for (const shortcut of await shortcuts.all()) {
+        const tile = (await shortcut.boundingBox())!;
+        const icon = (await shortcut.locator('.app-icon').boundingBox())!;
+        const label = (await shortcut.locator('.desktop-icon-label').boundingBox())!;
+        expect(icon.width).toBeGreaterThan(0);
+        expect(icon.height).toBeCloseTo(icon.width, 1);
+        expect(icon.y).toBeGreaterThanOrEqual(tile.y);
+        expect(icon.y + icon.height).toBeLessThanOrEqual(label.y);
+        expect(label.y + label.height).toBeLessThanOrEqual(tile.y + tile.height);
+      }
+    }
+  });
+}
