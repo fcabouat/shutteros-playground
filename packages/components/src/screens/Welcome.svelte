@@ -93,9 +93,12 @@
         {/each}
       </div>
 
-      <aside class="topbar-explainer mt-5 rounded-2xl p-4" aria-label={copy.welcome.controls.title}>
-        <p class="text-sm font-semibold">{copy.welcome.controls.title}</p>
-        <p class="text-muted mt-2 text-xs leading-relaxed">{copy.welcome.controls.introduction}</p>
+      <aside
+        class="topbar-explainer mode-reassurance mt-4 rounded-2xl p-4"
+        aria-label={copy.welcome.controls.title}
+      >
+        <p class="text-sm font-semibold">{copy.welcome.switchTitle}</p>
+        <p class="text-muted mt-2 text-sm leading-relaxed">{copy.welcome.switchDetail}</p>
         <div class="mt-3 grid gap-3 sm:grid-cols-3">
           {#each copy.welcome.controls.items as item, index (item.title)}
             <div class="flex gap-3">
@@ -148,3 +151,11 @@
     <Language />
   </footer>
 </main>
+
+<style>
+  .mode-reassurance {
+    color: var(--accent-strong);
+    background: var(--soft);
+    border-left: 3px solid var(--accent);
+  }
+</style>

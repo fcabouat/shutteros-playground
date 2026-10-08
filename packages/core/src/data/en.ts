@@ -19,6 +19,9 @@ export const en: Catalog = {
       description: 'Explore the desktop freely, take action and ask for hints.',
       detail: 'It is up to you to spot the situations.',
     },
+    switchTitle: 'Switch modes at any time, without starting over.',
+    switchDetail:
+      'Feel like trying the challenge? Easy mode is always available in the game bar at the top of the screen.',
     begin: 'Start the journey',
     duration: 'Typical duration: 10 to 20 min',
     expired: 'The session time ended. Local answers have been erased.',
@@ -30,8 +33,6 @@ export const en: Catalog = {
     },
     controls: {
       title: 'Your game bar, at the top of the screen',
-      introduction:
-        'It stays with you throughout the journey. Switch modes at any time without losing your progress.',
       progress: 'Progress',
       waiting: 'Waiting',
       items: [
@@ -150,16 +151,13 @@ export const en: Catalog = {
     hidePassword: 'Hide password',
     placeholder: 'Password',
     enter: 'Open the session',
-    guidedIntro:
-      'Before entering the simulated desktop, look at the phrase on the note and choose a safer place to keep it.',
     guidedQuestion: 'Where would you keep this password so that somebody else cannot access it?',
     guidedChoices: [
       { id: 'manager', label: 'In an approved password manager' },
       { id: 'note', label: 'On a note under the keyboard' },
       { id: 'file', label: 'In a text file on the workstation' },
     ],
-    guidedHelper:
-      'Look for a place designed by your organisation to restrict access to the secret.',
+    guidedAlternative: 'You can also choose one of the suggested answers.',
     helper: 'Need a hint? Look at the note near the screen. A simple password can also work here.',
     error: 'Incorrect password. Try again.',
     postitTitle: 'Sticky note',

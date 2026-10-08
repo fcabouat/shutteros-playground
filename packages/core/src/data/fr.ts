@@ -17,6 +17,9 @@ export const fr = {
       description: 'Explorez librement le bureau, agissez et demandez des indices.',
       detail: 'À vous de repérer les situations.',
     },
+    switchTitle: 'Changez de mode à tout moment, sans recommencer.',
+    switchDetail:
+      'Envie de tenter le défi ? Le mode facile reste accessible dans la barre de jeu, en haut de l’écran.',
     begin: 'Commencer le parcours',
     duration: 'Durée habituelle : 10 à 20 min',
     expired: 'Le temps de la session est écoulé. Les réponses locales ont été effacées.',
@@ -28,8 +31,6 @@ export const fr = {
     },
     controls: {
       title: 'La barre de jeu, en haut de l’écran',
-      introduction:
-        'Elle reste accessible pendant tout le parcours. Changez de mode à tout moment, sans perdre votre progression.',
       progress: 'Progression',
       waiting: 'En attente',
       items: [
@@ -150,17 +151,14 @@ export const fr = {
     hidePassword: 'Masquer le mot de passe',
     placeholder: 'Mot de passe',
     enter: 'Ouvrir la session',
-    guidedIntro:
-      'Avant d’accéder au bureau simulé, observez la phrase visible sur la note puis choisissez une façon plus sûre de la conserver.',
     guidedQuestion:
-      'Où conserveriez-vous ce mot de passe pour éviter qu’il soit accessible à quelqu’un d’autre ?',
+      'Où conserveriez-vous ce mot de passe pour éviter qu’il soit accessible à quelqu’un d’autre ?',
     guidedChoices: [
       { id: 'manager', label: 'Dans un gestionnaire de mots de passe approuvé' },
       { id: 'note', label: 'Sur une note sous le clavier' },
       { id: 'file', label: 'Dans un fichier texte sur le poste' },
     ],
-    guidedHelper:
-      'Cherchez un endroit qui limite l’accès au secret et qui soit prévu par votre organisation.',
+    guidedAlternative: 'Vous pouvez aussi choisir une des réponses proposées.',
     helper:
       'Un indice ? Regardez la note près de l’écran. Un mot de passe simple peut aussi fonctionner ici.',
     error: 'Mot de passe incorrect. Réessayez.',
