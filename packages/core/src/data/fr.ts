@@ -20,6 +20,7 @@ export const fr = {
     switchTitle: 'Changez de mode à tout moment, sans recommencer.',
     switchDetail:
       'Envie de tenter le défi ? Le mode facile reste accessible dans la barre de jeu, en haut de l’écran.',
+    hint: 'Choisissez le mode qui vous convient, puis cliquez sur « Commencer le parcours ».',
     begin: 'Commencer le parcours',
     duration: 'Durée habituelle : 10 à 20 min',
     expired: 'Le temps de la session est écoulé. Les réponses locales ont été effacées.',
@@ -34,14 +35,15 @@ export const fr = {
       progress: 'Progression',
       waiting: 'En attente',
       items: [
-        { title: 'Progression', detail: 'vous guide vers une situation encore à découvrir.' },
+        { title: 'Progression', detail: 'rejoint une activité à découvrir.' },
         {
           title: 'Indice',
-          detail: 'affiche une piste liée à ce qui est visible, proposée aussi après 2 min.',
+          detail: 'donne une piste, proposée aussi après 2 min en activité.',
         },
+        { title: 'Mode', detail: 'passez du défi aux choix guidés, ou inversement.' },
         {
           title: 'Sablier',
-          detail: 'le décompte commence seulement après la connexion.',
+          detail: 'démarre après la connexion.',
         },
       ],
     },

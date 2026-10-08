@@ -22,6 +22,7 @@ export const en: Catalog = {
     switchTitle: 'Switch modes at any time, without starting over.',
     switchDetail:
       'Feel like trying the challenge? Easy mode is always available in the game bar at the top of the screen.',
+    hint: 'Choose the mode that suits you, then click “Start the journey”.',
     begin: 'Start the journey',
     duration: 'Typical duration: 10 to 20 min',
     expired: 'The session time ended. Local answers have been erased.',
@@ -36,14 +37,15 @@ export const en: Catalog = {
       progress: 'Progress',
       waiting: 'Waiting',
       items: [
-        { title: 'Progress', detail: 'guides you to a situation you have not explored yet.' },
+        { title: 'Progress', detail: 'opens an activity you have yet to explore.' },
         {
           title: 'Hint',
-          detail: 'shows a clue about what is currently visible, also offered after 2 min.',
+          detail: 'offers a clue, also suggested after 2 min in an activity.',
         },
+        { title: 'Mode', detail: 'switch between exploration and guided choices.' },
         {
           title: 'Hourglass',
-          detail: 'the countdown only starts after sign-in.',
+          detail: 'starts counting down after sign-in.',
         },
       ],
     },

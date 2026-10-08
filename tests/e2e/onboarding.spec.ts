@@ -31,6 +31,27 @@ for (const locale of ['fr', 'en'] as const) {
           .locator('.welcome-hero')
           .evaluate((image: HTMLImageElement) => image.naturalWidth),
       ).toBeGreaterThan(0);
+      await expect(
+        page.getByRole('button', { name: copy.welcome.controls.progress, exact: true }),
+      ).toBeDisabled();
+      const modeSwitch = page.locator('.onboarding-controls .finish-experience');
+      await expect(modeSwitch).toBeEnabled();
+      await modeSwitch.click();
+      await expect(page.getByRole('radio', { name: copy.welcome.free.title })).toBeChecked();
+      await page.getByRole('radio', { name: copy.welcome.guided.title }).check();
+      await expect(modeSwitch).toHaveText(copy.experience.free);
+      const welcomeHint = page.locator('.onboarding-controls button[aria-pressed]');
+      await welcomeHint.click();
+      const hintWindow = page.getByRole('dialog', { name: copy.shell.guide });
+      await expect(hintWindow).toContainText(copy.welcome.hint);
+      await page.keyboard.press('Escape');
+      await expect(hintWindow).toBeHidden();
+      await expect(welcomeHint).toBeFocused();
+      await expect(welcomeHint).toHaveText(copy.guidance.restore);
+      await welcomeHint.click();
+      await hintWindow.getByRole('button', { name: copy.guidance.minimize, exact: true }).click();
+      await expect(hintWindow).toBeHidden();
+      await expect(page.getByRole('heading', { name: copy.welcome.title })).toBeVisible();
       const controlsBefore = await page.locator('.session-controls').boundingBox();
       await page.clock.fastForward(31 * 60_000);
       await expect(page.getByRole('heading', { name: copy.welcome.title })).toBeVisible();

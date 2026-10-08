@@ -15,6 +15,8 @@ Utiliser le post-it pour entrer dans la simulation n’est pas une faute : il il
 
 Les fenêtres **Vigilance** invitent à examiner une situation ; celles portant **Protéger mon poste** proposent des gestes de sécurisation. Les libellés accompagnent les couleurs : le jeu ne demande pas de deviner la fonction d’une fenêtre.
 
+Dès l’accueil, le bouton de mode de la barre de jeu et les cartes de sélection restent synchronisés. « Un indice ? » rappelle comment commencer ; « Progression » reste désactivé avant la connexion.
+
 ## Trouver son chemin
 
 La barre de jeu affiche les activités restantes, **Un indice ?**, le changement de mode et le temps disponible. Les commandes sans effet à l’étape courante sont désactivées. Depuis le bureau, le compteur permet de rejoindre la prochaine activité sans révéler son indice.

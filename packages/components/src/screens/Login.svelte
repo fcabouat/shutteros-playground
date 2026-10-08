@@ -94,7 +94,6 @@
       onHint={toggleHint}
       {hintVisible}
       hintSeen={showHelp || hintReported}
-      hintDisabled={false}
     />
   {/snippet}
   <GameTopbar
