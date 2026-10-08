@@ -56,7 +56,7 @@ function mutations(calls: Call[]) {
     );
 }
 
-function finishedReleaseFixture({ published = false } = {}) {
+function releaseFixture({ published = false, finished = true } = {}) {
   const parent = mkdtempSync(join(tmpdir(), 'shutteros-delivery-'));
   temporaryRepositories.push(parent);
   const root = join(parent, 'work');
@@ -89,6 +89,7 @@ function finishedReleaseFixture({ published = false } = {}) {
   git('branch', 'develop');
   git('push', '-q', 'origin', 'main', 'develop');
   git('switch', '-q', 'develop');
+  if (!finished) return { git, root, sha: git('rev-parse', 'HEAD'), upstream };
   git('switch', '-q', '-c', 'release/1.0.1');
   writeVersions('1.0.1');
   git('add', '.');
@@ -281,7 +282,9 @@ describe('delivery orchestration', () => {
   });
 
   it('refuses an unsynchronized release before initializing or starting Gitflow', async () => {
+    const { root } = releaseFixture({ finished: false });
     const { calls, execute } = harness({
+      'git rev-parse --show-toplevel': root,
       'git branch --show-current': 'develop',
       'git ls-remote origin refs/tags/v1.0.1': '',
       'git for-each-ref --format=%(objectname) refs/tags/v1.0.1': '',
@@ -301,7 +304,9 @@ describe('delivery orchestration', () => {
 
   it('does not start a release when the exact develop push failed CI', async () => {
     const develop = 'develop-sha';
+    const { root } = releaseFixture({ finished: false });
     const { calls, execute } = harness({
+      'git rev-parse --show-toplevel': root,
       'git branch --show-current': 'develop',
       'git ls-remote origin refs/tags/v1.0.1': '',
       'git for-each-ref --format=%(objectname) refs/tags/v1.0.1': '',
@@ -340,7 +345,7 @@ describe('delivery orchestration', () => {
   });
 
   it('validates and atomically publishes a finished release, then resumes without repushing', async () => {
-    const { root, sha, git } = finishedReleaseFixture();
+    const { root, sha, git } = releaseFixture();
     const { calls, ciRefs, execute } = releaseExecutor(root);
     vi.spyOn(console, 'log').mockImplementation(() => undefined);
 
@@ -370,7 +375,7 @@ describe('delivery orchestration', () => {
   });
 
   it('stops after tag CI when the release assets are incomplete', async () => {
-    const { root } = finishedReleaseFixture();
+    const { root } = releaseFixture();
     const { calls, ciRefs, execute } = releaseExecutor(root, { completeAssets: false });
     vi.spyOn(console, 'log').mockImplementation(() => undefined);
 
@@ -390,7 +395,7 @@ describe('delivery orchestration', () => {
   });
 
   it('refuses a local tag that differs from the immutable published tag', async () => {
-    const { root, git } = finishedReleaseFixture({ published: true });
+    const { root, git } = releaseFixture({ published: true });
     git('tag', '-d', 'v1.0.1');
     git('tag', '-a', 'v1.0.1', '-m', 'different local tag object', 'main');
     const { calls, ciRefs, execute } = releaseExecutor(root);
