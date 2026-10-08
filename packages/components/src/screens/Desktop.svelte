@@ -32,7 +32,7 @@
   <nav
     class="desktop-icons grid auto-rows-min grid-cols-[112px] content-start gap-2"
     aria-label={copy.shell.desktop}
-    tabindex="0"
+    inert={!canExplore(snapshot)}
   >
     {#each challengeOrder.filter((id) => id !== 'spoof') as id (id)}
       {@const done = hasResult(snapshot, id) && (id !== 'mail' || hasResult(snapshot, 'spoof'))}
