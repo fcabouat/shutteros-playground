@@ -15,6 +15,8 @@ Using the sticky note to enter the simulation is not a player mistake: it illust
 
 Windows labelled **Vigilance** ask you to examine a situation; **Protect my workstation** windows offer protective actions. Labels accompany the colours so you do not need to guess a window’s purpose.
 
+On the welcome screen, the game bar mode button and the selection cards stay in sync. “Need a hint?” explains how to begin; “Progress” stays disabled before sign-in.
+
 ## Finding your way
 
 The game bar shows remaining activities, **Need a hint?**, the route switch and time available. Controls that do not apply to the current step are disabled. From the desktop, the activity counter can take you to the next activity without revealing its hint.
