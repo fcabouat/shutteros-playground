@@ -13,7 +13,7 @@ passwords, updates and screen locking before the recap.
 
 [**Play the live demo**](https://fcabouat.github.io/shutteros-playground/demo/?lang=en) · [Jouer en français](https://fcabouat.github.io/shutteros-playground/demo/?lang=fr)
 
-Use it in a reception area, a team workshop or a Cybersecurity Month event. Add your organisation’s identity, configure the session length (30 minutes by default), and let the kiosk reset for the next player. Free exploration is selected by default: find how to act on the fictional desktop, with hints available. Choose the guided route for a gentler questionnaire-led journey. Switch routes at any time without losing progress. A persistent game bar keeps help and progress within reach. A personal recap shows the route followed and hints consulted before the detailed explanations, without grading the player.
+Use it in a reception area, a team workshop or a Cybersecurity Month event. Add your organisation’s identity, configure the session length (30 minutes by default), and let the kiosk reset for the next player. Easy mode is selected by default and guides players through a clear sequence of choices. Challenge mode lets them explore the fictional desktop freely, with hints available. Switch modes at any time without losing progress. A persistent game bar keeps help and progress within reach. A personal recap shows the route followed and hints consulted before the detailed explanations, without grading the player.
 The experience is local and fictional: it has no backend, account system,
 telemetry, persistence, external API, or real authentication. Game phrases,
 messages, addresses, files, and forms stay in the current session and are never

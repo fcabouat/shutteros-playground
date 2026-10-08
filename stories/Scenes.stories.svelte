@@ -26,6 +26,18 @@
 </script>
 
 <Story name="Welcome" args={{ initial: welcome }} />
+<Story
+  name="Joint event welcome"
+  args={{
+    initial: welcome,
+    branding: {
+      applicationName: 'ShutterOS',
+      organizationName: 'Préfecture des Alpes-Maritimes',
+      partnerOrganizationName: 'Département des Alpes-Maritimes',
+      campaignName: 'Cybermois 2026',
+    },
+  }}
+/>
 <Story name="English welcome" args={{ initial: welcome, locale: 'en' }} />
 <Story name="Guided login" args={{ initial: guidedLogin }} />
 <Story name="Guided login feedback" args={{ initial: guidedIntro }} />

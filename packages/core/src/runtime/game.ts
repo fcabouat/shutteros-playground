@@ -30,7 +30,7 @@ export function initialState(now = 0): GameState {
     generation: 0,
     now: finiteTime(now, 0),
     reason: 'initial',
-    mode: 'free',
+    mode: 'guided',
   };
 }
 
@@ -642,7 +642,7 @@ function welcomeState(
     generation,
     now,
     reason,
-    mode: 'free',
+    mode: 'guided',
   };
 }
 

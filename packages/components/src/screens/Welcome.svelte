@@ -60,13 +60,12 @@
       <p class="text-muted mt-4 max-w-[650px] text-base leading-relaxed">
         {copy.welcome.description(config.playerName)}
       </p>
-
       <div
         class="mt-5 grid gap-3 sm:grid-cols-2"
         role="radiogroup"
         aria-label={copy.welcome.choose}
       >
-        {#each ['free', 'guided'] as const as mode (mode)}
+        {#each ['guided', 'free'] as const as mode (mode)}
           <label class="mode-card text-left" class:selected={snapshot.mode === mode}>
             <input
               class="mode-selection"

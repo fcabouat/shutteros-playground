@@ -8,14 +8,14 @@ export const en: Catalog = {
     title: 'A day at work. Choices that matter.',
     description: (name: string) =>
       `You play as ${name}, a public-sector employee. The day is starting: messages to answer, a meeting to prepare… and a USB drive found near your desk. As requests and surprises come your way, decide what to trust, when to ask for help and how to protect your workstation and your organisation’s information.`,
-    choose: 'Choose a journey',
+    choose: 'Choose your starting level',
     guided: {
-      title: 'Gentle walkthrough',
-      description: 'Move through a clear sequence of multiple-choice situations.',
-      detail: 'The game takes you from one activity to the next.',
+      title: 'Easy mode',
+      description: 'Start gently, with multiple-choice questions.',
+      detail: 'The game guides you from one activity to the next.',
     },
     free: {
-      title: 'Small challenge',
+      title: 'Challenge mode',
       description: 'Explore the desktop freely, take action and ask for hints.',
       detail: 'It is up to you to spot the situations.',
     },
@@ -31,7 +31,7 @@ export const en: Catalog = {
     controls: {
       title: 'Your game bar, at the top of the screen',
       introduction:
-        'It stays with you throughout the journey. Switch between free exploration and guided mode at any time, keeping your progress.',
+        'It stays with you throughout the journey. Switch modes at any time without losing your progress.',
       progress: 'Progress',
       waiting: 'Waiting',
       items: [
@@ -48,8 +48,8 @@ export const en: Catalog = {
     },
   },
   experience: {
-    free: 'Free mode (exploration)',
-    guided: 'Guided mode (multiple choice)',
+    free: 'Challenge mode (exploration)',
+    guided: 'Easy mode (guided choices)',
     freeHint: 'Choose activities yourself. Your progress is kept.',
     next: 'Go to the next activity',
     finishHint:
@@ -181,7 +181,7 @@ export const en: Catalog = {
     nextPlayer: 'Next player',
     guide: 'A hint',
     close: 'Close',
-    finish: 'Guided mode (multiple choice)',
+    finish: 'Easy mode (guided choices)',
     resume: 'Back to the desk',
     connected: 'Network connected',
     isolated: 'Network isolated',
@@ -602,7 +602,7 @@ export const en: Catalog = {
       habits: (count: number, total: number) => `Everyday habits: ${count}/${total}`,
       hints: (count: number, total: number) => `Activity hints viewed: ${count}/${total}`,
       journey: 'Journey followed',
-      modes: { guided: 'Guided', free: 'Free exploration', mixed: 'Mixed' },
+      modes: { guided: 'Easy mode', free: 'Challenge mode', mixed: 'Easy and Challenge modes' },
       badges: 'Your journey markers',
       activityBadge: 'Situations practised',
       reportBadge: (count: number, total: number) =>

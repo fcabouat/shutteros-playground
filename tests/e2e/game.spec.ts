@@ -754,9 +754,10 @@ test('left Start menu opens updates and keeps their status for the session', asy
   expect(startBounds!.y).toBeGreaterThan(640);
   expect(organization!.x).toBeLessThan(60);
   expect(organization!.y).toBeLessThan(60);
-  expect(guide!.y).toBeLessThan(64);
+  const topbar = await page.locator('.os-topbar').boundingBox();
+  expect(guide!.y).toBeGreaterThanOrEqual(topbar!.y);
+  expect(guide!.y + guide!.height).toBeLessThanOrEqual(topbar!.y + topbar!.height);
   expect(guide!.x + guide!.width).toBeLessThanOrEqual(1280);
-  expect(guide!.y).toBeLessThan(130);
   expect(watermark!.x).toBeGreaterThan(1000);
   expect(watermark!.x + watermark!.width).toBeLessThan(1280);
   expect(watermark!.y + watermark!.height).toBeLessThan(startBounds!.y);
@@ -932,13 +933,14 @@ test('local portrait SVG keeps its ratio and organisation text stays escaped', a
   await page.route('**/logo-organisation.svg', (route) =>
     route.fulfill({
       contentType: 'image/svg+xml',
-      body: '<svg xmlns="http://www.w3.org/2000/svg" width="80" height="240" viewBox="0 0 80 240"><rect width="80" height="240" fill="#ffffff"/></svg>',
+      body: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 240"><rect width="80" height="240" fill="#ffffff"/></svg>',
     }),
   );
   await page.goto('./');
   const logo = page.locator('.organization-logo');
   await expect(logo).toBeVisible();
-  await expect(page.getByText(label, { exact: true })).toBeVisible();
+  await expect(page.locator('.organization-brand')).toHaveAttribute('title', label);
+  await expect(page.getByText(label, { exact: true }).locator('..')).toHaveClass(/sr-only/);
   const box = await logo.boundingBox();
   expect(box!.height).toBeLessThanOrEqual(54);
   expect(box!.width / box!.height).toBeCloseTo(1 / 3, 2);
@@ -946,6 +948,11 @@ test('local portrait SVG keeps its ratio and organisation text stays escaped', a
   await expect(logo).toBeVisible();
   await expect(logo).toHaveAttribute('src', 'logo-organisation.svg');
   expect(await page.locator('img').count()).toBe(1);
+  // A failed logo restores a visible name, rather than leaving the identity blank.
+  await logo.evaluate((image: HTMLImageElement) => image.dispatchEvent(new Event('error')));
+  await expect(page.getByText(label, { exact: true }).locator('..')).not.toHaveClass(/sr-only/);
+  await expect(page.getByText(label, { exact: true })).toBeVisible();
+  await expect(page.locator('.organization-placeholder')).toBeVisible();
 });
 
 test('Start no longer offers calm mode and legacy timer keys are ignored', async ({ page }) => {
@@ -1001,13 +1008,13 @@ for (const width of [390, 960, 1440]) {
     await page.route('**/logo-organisation.svg', (route) =>
       route.fulfill({
         contentType: 'image/svg+xml',
-        body: '<svg xmlns="http://www.w3.org/2000/svg" width="80" height="240" viewBox="0 0 80 240"><rect width="80" height="240" rx="8" fill="#244d70"/><path d="M12 90L40 62L68 90V170H12Z" fill="#f1dc9b"/><path d="M30 130H50V170H30Z" fill="#244d70"/></svg>',
+        body: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 240"><rect width="80" height="240" rx="8" fill="#244d70"/><path d="M12 90L40 62L68 90V170H12Z" fill="#f1dc9b"/><path d="M30 130H50V170H30Z" fill="#244d70"/></svg>',
       }),
     );
     await page.route('**/logo-partner-organisation.svg', (route) =>
       route.fulfill({
         contentType: 'image/svg+xml',
-        body: '<svg xmlns="http://www.w3.org/2000/svg" width="300" height="60" viewBox="0 0 300 60"><rect width="300" height="60" rx="8" fill="#236e62"/><path d="M15 44L38 15L61 44Z" fill="#dbefcc"/><text x="78" y="39" font-family="sans-serif" font-size="28" fill="white">DÉPARTEMENT</text></svg>',
+        body: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 60"><rect width="300" height="60" rx="8" fill="#236e62"/><path d="M15 44L38 15L61 44Z" fill="#dbefcc"/><text x="78" y="39" font-family="sans-serif" font-size="28" fill="white">DÉPARTEMENT</text></svg>',
       }),
     );
     await page.goto('./');
@@ -1017,7 +1024,13 @@ for (const width of [390, 960, 1440]) {
       const logo = brands.nth(index).locator('img');
       await expect(logo).toBeVisible();
       const box = await logo.boundingBox();
-      expect(box!.width / box!.height).toBeCloseTo(ratio, 2);
+      expect(box!.width).toBeGreaterThan(0);
+      expect(box!.height).toBeGreaterThan(0);
+      // Wide logos may have a constrained box; contain preserves their artwork ratio.
+      await expect(logo).toHaveCSS('object-fit', 'contain');
+      expect(
+        await logo.evaluate((img: HTMLImageElement) => img.naturalWidth / img.naturalHeight),
+      ).toBeCloseTo(ratio, 2);
       await expect(brands.nth(index)).toBeInViewport({ ratio: 1 });
     }
     await page.screenshot({ path: `test-results/previews/partners-login-${width}.png` });

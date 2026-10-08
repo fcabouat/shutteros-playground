@@ -2,7 +2,11 @@
 
 [Français](branding.fr.md)
 
-**ShutterOS** is the fictional OS identity, with its window-and-curtains icon. The deploying organisation's name, campaign label, and logo appear together in the upper-left corner of the welcome screen, login and desktop. Supply organisation assets locally and keep them out of version control. See [licensing and attribution](legal.md) for ownership and redistribution terms.
+**ShutterOS** is the fictional OS identity, with its window-and-curtains icon. The campaign label and organisation identities appear together in the game bar on the welcome screen, login and desktop. Supply organisation assets locally and keep them out of version control. See [licensing and attribution](legal.md) for ownership and redistribution terms.
+
+The organisation logos appear on the left, followed by a separator and then the campaign label. With two organisations, both logos align on the same row. Each logo keeps its proportions within a 52 px-high area in the 64 px bar, leaving a 6 px margin above and below.
+
+When a logo loads successfully, its organisation name is visually hidden by default to keep the bar compact. The name remains available to screen readers and in a tooltip. Without a logo, or if the image cannot be loaded, the name is shown. Private build-time branding can force names to remain visible beside valid logos; see `showOrganizationNames` below.
 
 With no organisation fields configured, the public demo displays **Votre organisation** / **Your organization**, following the selected language. A second organisation is optional and shares the same identity block.
 
@@ -21,7 +25,7 @@ The recommended HTTP deployment can take its name and logo from `dist/kiosk-conf
 
 Omit both `partnerOrganizationName` and `partnerOrganizationLogo` for a single organisation. Either organisation may use a name without a logo; a partner logo requires its partner name. Omit `organizationName` to retain the translated placeholder.
 
-Use a filename ending in `.png`, `.webp`, or `.svg`, with only ASCII letters, numbers, dots, `_`, and `-`. Paths, URL schemes, query strings, fragments, and data URLs are rejected. Place the image beside `kiosk-config.json` and the generated `index.html`; when building from source, put it in `static/` so the static adapter copies it to `dist/`. The browser loads it only as an `<img>` resource. Keep the file at or below 256 KiB. Use a self-contained SVG with a `viewBox`; external fonts or images should not be required. The image keeps its proportions inside a maximum height of 54 px and maximum width of `min(160px, 26vw)`. The desktop top bar limits logo height to 44 px and aligns both organisations horizontally, with responsive wrapping of the controls. For two organisations, each logo has its own bounds (96 px wide on desktop, 48 × 40 px on small screens) and retains its proportions. A missing or unreadable logo falls back to that organisation’s initials.
+Use a filename ending in `.png`, `.webp`, or `.svg`, with only ASCII letters, numbers, dots, `_`, and `-`. Paths, URL schemes, query strings, fragments, and data URLs are rejected. Place the image beside `kiosk-config.json` and the generated `index.html`; when building from source, put it in `static/` so the static adapter copies it to `dist/`. The browser loads it only as an `<img>` resource. Keep the file at or below 256 KiB. Use a self-contained SVG with a `viewBox`; external fonts or images should not be required. Each image keeps its proportions within the 52 px logo height. The controls wrap responsively when space is limited. A missing or unreadable logo shows that organisation’s name instead.
 
 ```text
 dist/
@@ -45,13 +49,14 @@ For a build that also customises the OS name or campaign label, create `private/
   "applicationName": "ShutterOS",
   "organizationName": "Example Organisation",
   "campaignName": "Security Week",
-  "organizationLogo": "private/logo.png"
+  "organizationLogo": "private/logo.png",
+  "showOrganizationNames": true
 }
 ```
 
-The private file also accepts optional `partnerOrganizationName` and `partnerOrganizationLogo` (a path under `private/`).
+The private file also accepts optional `partnerOrganizationName` and `partnerOrganizationLogo` (a path under `private/`). Set `showOrganizationNames` to `true` to keep both organisation names visible even when their logos load successfully. It defaults to `false` and is available only in `private/branding.json`, not in `kiosk-config.json`.
 
-Keep `applicationName` (the OS name) distinct from `organizationName` (the organisation shown in the organisation block). This optional build-time logo accepts PNG or WebP of at most 256 KiB; use the deployment-local method above for SVG. `pnpm dev`, `pnpm check`, `pnpm build`, and the Storybook commands automatically prepare the branding. The script validates the name, resolves symlinks, checks that the logo remains inside `private/`, verifies magic bytes, and writes the ignored `src/lib/branding.generated.ts` data module with an embedded base64 data URL. No remote URL is accepted. The composition root imports the generated module and passes its values as props. The organisation block is rendered once per screen, at the upper left of welcome, login and desktop; the OS symbol remains independent. Without private configuration, the build uses the generic ShutterOS identity.
+Keep `applicationName` (the OS name) distinct from `organizationName` (the organisation shown in the organisation block). This optional build-time logo accepts PNG, WebP or SVG of at most 256 KiB. SVG files must be self-contained, as for deployment-local logos. `pnpm dev`, `pnpm check`, `pnpm build`, and the Storybook commands automatically prepare the branding. The script validates the name, resolves symlinks, checks that the logo remains inside `private/`, checks image format, and writes the ignored `src/lib/branding.generated.ts` data module with an embedded base64 data URL. No remote URL is accepted. The composition root imports the generated module and passes its values as props. The organisation block is rendered once per screen, at the upper left of welcome, login and desktop; the OS symbol remains independent. Without private configuration, the build uses the generic ShutterOS identity.
 
 Keep `private/branding.json` and `private/logo.*` outside version control. This project is personal MIT software; private brand assets remain with the deploying organisation. The generated module is also ignored and must be regenerated on each clean checkout. Do not put real passwords, credentials, or other secrets in branding files.
 

@@ -38,7 +38,7 @@ export const content = {
     steps: [
       [
         'Choisissez votre parcours',
-        'Relevez le défi en mode libre, proposé par défaut, ou avancez en douceur avec les QCM du mode guidé. Changez de mode à tout moment.',
+        'Avancez en douceur avec les choix guidés du mode facile, proposé par défaut, ou explorez librement en mode défi. Changez de mode à tout moment sans perdre votre progression.',
       ],
       [
         'Terminez à votre rythme',
@@ -127,7 +127,7 @@ export const content = {
     steps: [
       [
         'Choose your route',
-        'Take on the challenge in free exploration, selected by default, or follow a gentler guided questionnaire. Switch routes at any time without losing progress.',
+        'Start gently with guided choices in Easy mode, selected by default, or explore freely in Challenge mode. Switch modes at any time without losing progress.',
       ],
       [
         'Finish at your own pace',

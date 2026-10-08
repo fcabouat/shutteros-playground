@@ -31,7 +31,12 @@ export const guidedIntro = transition(
   0,
   config,
 );
-export const login = transition(welcome, { type: 'begin' }, 0, config);
+export const login = transition(
+  transition(welcome, { type: 'set-mode', mode: 'free' }, 0, config),
+  { type: 'begin' },
+  0,
+  config,
+);
 function play(intents: Intent[]): GameState {
   return intents.reduce((snapshot, intent) => transition(snapshot, intent, 0, config), login);
 }

@@ -139,7 +139,7 @@ test('API and Storybook artifacts load as runnable pages', async ({ request, pag
   await page.goto('storybook/iframe.html?id=game-scenes--welcome&viewMode=story');
   await expect(page.getByRole('heading', { name: fr.welcome.title })).toBeVisible();
   await expect(page.locator('.welcome-hero')).toBeVisible();
-  await expect(page.getByRole('radio', { name: fr.welcome.free.title })).toBeChecked();
+  await expect(page.getByRole('radio', { name: fr.welcome.guided.title })).toBeChecked();
   await expect(page.getByRole('button', { name: fr.welcome.begin, exact: true })).toBeVisible();
   await page.goto('storybook/iframe.html?id=game-scenes--guided-login&viewMode=story');
   await expect(page.getByRole('group', { name: fr.login.guidedQuestion })).toBeVisible();

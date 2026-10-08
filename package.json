@@ -1,6 +1,6 @@
 {
   "name": "shutteros-playground",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "description": "ShutterOS Playground — an independent cybersecurity awareness game for European Cybersecurity Month",
   "type": "module",
@@ -32,7 +32,9 @@
     "test:site": "playwright test --config playwright.site.config.ts",
     "version:next": "node scripts/version.mjs next",
     "gitflow:init": "sh scripts/gitflow-init.sh",
-    "verify:checks": "pnpm lint && pnpm format:check && pnpm check && pnpm knip && pnpm test && pnpm build && pnpm test:e2e"
+    "verify:checks": "pnpm lint && pnpm format:check && pnpm check && pnpm knip && pnpm test && pnpm build && pnpm test:e2e",
+    "pr": "node scripts/delivery.mjs pr",
+    "release": "node scripts/delivery.mjs release"
   },
   "dependencies": {
     "@shutteros/components": "workspace:*",
@@ -46,27 +48,27 @@
     "@storybook/svelte-vite": "10.6.0",
     "@sveltejs/adapter-static": "3.0.10",
     "@sveltejs/kit": "2.70.3",
-    "@sveltejs/vite-plugin-svelte": "7.3.0",
+    "@sveltejs/vite-plugin-svelte": "7.3.1",
     "@tailwindcss/vite": "4.3.3",
     "@types/node": "^24.0.0",
     "eslint": "^9.39.0",
     "eslint-plugin-svelte": "^3.13.0",
     "globals": "^17.12.0",
-    "knip": "6.35.1",
-    "marked": "^18.0.13",
+    "knip": "6.38.0",
+    "marked": "^18.0.14",
     "parse5": "^8.0.1",
-    "prettier": "^3.6.0",
+    "prettier": "^3.9.9",
     "prettier-plugin-svelte": "^3.4.0",
     "storybook": "10.6.0",
-    "svelte": "5.57.0",
+    "svelte": "5.57.1",
     "svelte-check": "^4.4.0",
     "tailwindcss": "4.3.3",
     "typedoc": "^0.28.20",
     "typescript": "~5.9.3",
-    "typescript-eslint": "^8.46.0",
-    "vite": "8.3.0",
+    "typescript-eslint": "^8.70.1",
+    "vite": "8.3.1",
     "vite-plugin-singlefile": "^2.3.0",
-    "vitest": "5.0.0"
+    "vitest": "5.0.2"
   },
   "author": {
     "name": "F. Cabouat"

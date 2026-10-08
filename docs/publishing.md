@@ -70,6 +70,29 @@ Contributors without write access fork the repository and open a pull request fr
 
 ### Release
 
+From a clean `develop`, with both `main` and `develop` exactly synchronized to
+`origin`, use:
+
+```sh
+pnpm release patch       # also minor, major, or an explicit X.Y.Z
+```
+
+Install GitHub CLI (`gh`) and the AVH client first. The command uses `gh`'s saved
+GitHub authentication and offers interactive sign-in if needed; it stores no token.
+It waits for the push CI of the exact `develop` commit, invokes the existing AVH
+start/finish hooks (including one local verification), then pushes `main`, `develop`
+and the annotated tag atomically. It follows the exact tag and main workflows,
+checks the two published assets, and reports Pages separately. Keep the terminal
+open for tracking; interrupting it does not cancel work already running on GitHub.
+
+If interrupted, use `pnpm release X.Y.Z --resume` with the printed version. A clean
+release branch can resume validation; a completed local finish can retry its push;
+an already-published tag is only checked and followed. A divergent branch, tag
+conflict or partially completed AVH merge requires inspection. Failed remote runs
+are linked, not blindly rerun: rerun transient failures on GitHub, then resume;
+code or workflow fixes for an immutable published tag require a new patch release.
+There is no force push and no automatic PR merge. The lower-level equivalent remains:
+
 ```sh
 (
   set -e
