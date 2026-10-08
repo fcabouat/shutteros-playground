@@ -8,3 +8,10 @@ allowBuilds:
 # SvelteKit currently selects cookie 0.6; 0.7 fixes GHSA-pxg6-pf52-xh8x.
 overrides:
   'cookie@<0.7.0': '0.7.2'
+
+# No upstream fix. Only reached by vite-plugin-singlefile's optional inlinePattern
+# matcher; our portable build uses its empty default. Reassess before using that
+# option, and remove this exception when upstream provides a fix.
+auditConfig:
+  ignoreGhsas:
+    - GHSA-vfj7-8cjw-p6xm
