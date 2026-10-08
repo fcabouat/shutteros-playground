@@ -50,6 +50,15 @@ Describe the user-visible change, the invariant or content source that supports 
 
 The workspace overrides `cookie@<0.7.0` to `0.7.2` for [GHSA-pxg6-pf52-xh8x](https://github.com/advisories/GHSA-pxg6-pf52-xh8x). It is a SvelteKit server dependency, absent from the delivered browser bundle; remove this override when upstream no longer selects the affected range.
 
+The audit temporarily excludes [GHSA-vfj7-8cjw-p6xm](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm)
+(`braces`, no patched release as of 2026-10-08). Its only dependency path is
+`vite-plugin-singlefile → micromatch → braces`. In version 2.3.3, the plugin calls
+that matcher only for a non-empty `inlinePattern`; `vite.portable.config.ts` uses
+the empty default. This build-only path therefore does not process patterns in
+our configuration. Reassess the exception before enabling that option or changing
+the plugin, and remove it when an upstream fix is available. Other advisories
+remain subject to the normal audit threshold.
+
 Dependabot checks version updates monthly, grouped into application dependencies, development tools and GitHub Actions. Its limits are two npm PRs and one Actions PR at a time. Security alerts and security-update PRs have separate GitHub settings; see [publishing](docs/publishing.md#public-repository-security).
 
 ## Git workflow
