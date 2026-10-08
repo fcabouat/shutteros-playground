@@ -754,9 +754,10 @@ test('left Start menu opens updates and keeps their status for the session', asy
   expect(startBounds!.y).toBeGreaterThan(640);
   expect(organization!.x).toBeLessThan(60);
   expect(organization!.y).toBeLessThan(60);
-  expect(guide!.y).toBeLessThan(64);
+  const topbar = await page.locator('.os-topbar').boundingBox();
+  expect(guide!.y).toBeGreaterThanOrEqual(topbar!.y);
+  expect(guide!.y + guide!.height).toBeLessThanOrEqual(topbar!.y + topbar!.height);
   expect(guide!.x + guide!.width).toBeLessThanOrEqual(1280);
-  expect(guide!.y).toBeLessThan(130);
   expect(watermark!.x).toBeGreaterThan(1000);
   expect(watermark!.x + watermark!.width).toBeLessThan(1280);
   expect(watermark!.y + watermark!.height).toBeLessThan(startBounds!.y);
