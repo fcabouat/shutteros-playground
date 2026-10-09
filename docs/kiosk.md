@@ -49,9 +49,9 @@ Session duration accepts 1 to 30 minutes. Address fields are bounded, simple ema
 
 Treat the accepted passwords as public game content. They are not credentials and must never be copied from a real account. The simulated login uses an ordinary text input, outside a form, with autocomplete disabled; Enter and the session button both work. Its value is not stored, logged, or sent. Where supported, CSS masks the text input; other browsers use a password-input fallback. The field is outside a credential form. This reduces the normal credential-form trigger, but a web page cannot control every browser or password-manager extension: [autocomplete is only a browser hint](https://developer.mozilla.org/en-US/docs/Web/Security/Practical_implementation_guides/Turning_off_form_autocompletion).
 
-## Ubuntu setup kit
+## Debian and Ubuntu setup kit
 
-The repository includes `deployment/ubuntu/install.sh`, its support files, verification, and uninstall scripts for a dedicated Ubuntu 24.04 Server. See [the Ubuntu guide](ubuntu-kiosk.md) for prerequisites, validation status, hardware acceptance checks, and recovery.
+The repository includes `deployment/ubuntu/install.sh`, its support files, verification, and uninstall scripts for a dedicated Debian 13 or Ubuntu Server 24.04 / 26.04 LTS host. See [the Linux deployment guide](ubuntu-kiosk.md) for prerequisites, validation status, hardware acceptance checks, and recovery.
 
 ## Host policy
 

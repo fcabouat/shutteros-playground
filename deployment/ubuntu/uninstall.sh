@@ -5,16 +5,19 @@ set -eu
 PATH=/usr/sbin:/usr/bin:/sbin:/bin
 export PATH
 
+readonly OS_RELEASE_FILE=/etc/os-release
 readonly KIOSK_USER=shutteros-kiosk
 readonly STATIC_USER=shutteros-static
 readonly KIOSK_ROOT=/opt/cyber-shutteros
 readonly HOME_ROOT="/home/$KIOSK_USER"
 readonly LIB_ROOT=/usr/local/lib/shutteros-kiosk
-readonly POLICY_FILE=/etc/chromium-browser/policies/managed/shutteros.json
 readonly STATIC_UNIT=/etc/systemd/system/shutteros-static.service
 readonly KIOSK_UNIT=/etc/systemd/system/shutteros-kiosk.service
 readonly OWNER_MARKER="$KIOSK_ROOT/.shutteros-kiosk-owner"
 readonly OWNER_VERSION=shutteros-kiosk-install-v1
+
+SOURCE_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+readonly SOURCE_DIR
 
 die() {
   printf '%s\n' "error: $*" >&2
@@ -131,6 +134,15 @@ trap 'exit 130' INT
 trap 'exit 143' TERM
 
 [ "$(id -u)" -eq 0 ] || die 'run this reviewed local script as root'
+
+# shellcheck source=deployment/ubuntu/platform.sh
+. "$SOURCE_DIR/platform.sh"
+# shellcheck disable=SC1090
+. "$OS_RELEASE_FILE"
+kiosk_platform "${ID:-}" || die 'unsupported distribution'
+readonly POLICY_ROOT
+readonly POLICY_FILE="$POLICY_ROOT/shutteros.json"
+
 validate_marker
 validate_account
 validate_static_account
@@ -141,11 +153,11 @@ assert_installed_getty_state
   die 'unexpected files exist in the kiosk root; move them aside before uninstalling'
 if [ -e "$LIB_ROOT" ] || [ -L "$LIB_ROOT" ]; then
   root_owned_directory "$LIB_ROOT" || die 'the launcher directory is unexpected'
-  [ -z "$(find "$LIB_ROOT" -mindepth 1 -maxdepth 1 ! -name session ! -name launch-chromium ! -name environment -print -quit)" ] ||
+  [ -z "$(find "$LIB_ROOT" -mindepth 1 -maxdepth 1 ! -name session ! -name launch-chromium ! -name environment ! -name platform.sh -print -quit)" ] ||
     die 'unexpected files exist in the launcher directory; move them aside before uninstalling'
 fi
 
-for path in "$LIB_ROOT/session" "$LIB_ROOT/launch-chromium" "$LIB_ROOT/environment" "$STATIC_UNIT" "$KIOSK_UNIT" "$POLICY_FILE"; do
+for path in "$LIB_ROOT/platform.sh" "$LIB_ROOT/session" "$LIB_ROOT/launch-chromium" "$LIB_ROOT/environment" "$STATIC_UNIT" "$KIOSK_UNIT" "$POLICY_FILE"; do
   if [ -e "$path" ] || [ -L "$path" ]; then
     root_owned_regular "$path" || die "refusing to remove unexpected path: $path"
   fi
