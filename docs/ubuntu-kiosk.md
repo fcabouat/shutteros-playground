@@ -1,14 +1,58 @@
-# Ubuntu kiosk deployment
+# Debian and Ubuntu kiosk deployment
 
-`deployment/ubuntu/` installs ShutterOS on a **dedicated Ubuntu Server 24.04 LTS
-host with no active graphical display manager**.
+`deployment/ubuntu/` installs ShutterOS on a **dedicated Debian 13 or Ubuntu
+Server 24.04 / 26.04 LTS host with no active graphical display manager**.
+The directory name is retained for existing deployment commands.
 
-**Validation status:** tested on an Ubuntu 24.04.5 cloud-image KVM guest with
-1 vCPU, 1 GiB RAM and 1 GiB swap, Cage 0.1.5 and Chromium Snap 152. Installation,
-HTTP service, cold boot to graphical login, AZERTY/QWERTY selection, offline reinstall,
-crash recovery, failure cleanup and uninstall passed. Shell fixtures additionally
-cover rollback and refusal paths. This does not qualify a physical kiosk:
-complete the hardware acceptance checks below before public use.
+| Distribution             | Chromium delivery      | Managed policy directory                 | Browser profile under its home         |
+| ------------------------ | ---------------------- | ---------------------------------------- | -------------------------------------- |
+| Debian 13                | APT package `chromium` | `/etc/chromium/policies/managed`         | `.config/shutteros-kiosk`              |
+| Ubuntu 24.04 / 26.04 LTS | Official Chromium Snap | `/etc/chromium-browser/policies/managed` | `snap/chromium/common/shutteros-kiosk` |
+
+Only these releases are accepted for installation; derivatives and future
+versions need their own validation. The same installer, verifier and uninstaller
+select these fixed paths through `platform.sh`. The release guard applies to
+installation and updates; verification and removal retain the family’s paths
+so an administrator can still recover an existing kiosk after an OS upgrade.
+
+## Validation
+
+The earlier Ubuntu 24.04.5 KVM validation used Cage 0.1.5 and Chromium Snap 152.
+Installation, HTTP service, cold boot to graphical login, AZERTY/QWERTY selection,
+offline reinstall, crash recovery, failure cleanup and uninstall passed.
+
+The current kit was also exercised on Debian 13.7 with Cage 0.2.0 and native
+Chromium 154, in a software-emulated VM with 2 vCPUs, 1 GiB RAM and 1 GiB swap.
+Installation, read-only verification, keyboard reconfiguration, reinstall,
+compositor crash recovery, cold-boot services, all 20 effective managed Chromium
+policies, and uninstall restoring the console passed. The complete graphical
+page was confirmed on the virtual display using Cage’s `pixman` renderer;
+the standard Debian kernel was needed for DRM/KMS support.
+
+Ubuntu 26.04.1 was tested with Cage 0.2.1 and Chromium Snap 155. Installation,
+read-only verification, keyboard reconfiguration, reinstall, compositor crash
+recovery, uninstall restoring the console and all 20 managed policies passed.
+The final graphical qualification used KVM, Q35, standard VGA, 1 vCPU, 1 GiB RAM
+and 1 GiB swap. The unmodified kit opened the game automatically after a cold
+boot and after a compositor crash. Keyboard input completed welcome, guided
+sign-in, its feedback and entry into the USB activity. No forced navigation,
+debugging port, relaxed policy, `--disable-gpu` or compositor override was used
+for those final checks.
+
+Initial software-emulated runs were inconclusive: the browser remained black
+and an HTTP recovery check timed out during startup. A comparison using the same
+RAM, VGA model, disk and kit under TCG reproduced black output and compositor
+failures opening the DRM device or initialising EGL. KVM passed those checks.
+These results isolate the failure to the emulated VM configuration; they do not
+establish a general Ubuntu 26.04 incompatibility. Inspect both the actual display
+and service logs rather than treating an active process as graphical acceptance.
+
+CI uses isolated filesystem and command fixtures for all three supported
+releases. These cover installation, previous-kit upgrades, rollback, refusal,
+permission checks and removal without modifying the runner. The launcher tests
+exercise both browser/profile paths and the policy-inspection route.
+Virtual graphics and service tests do not qualify a physical kiosk; complete the
+hardware acceptance checks below before public use.
 
 The kit serves a normal ShutterOS `dist/` build on loopback HTTP and runs a
 single Chromium window inside Cage on `tty1`:
@@ -29,7 +73,7 @@ cannot start, it does not fall back to an interactive shell.
 
 ## Session architecture
 
-Ubuntu packages Cage, a Wayland compositor designed to run one maximized
+Debian and Ubuntu package Cage, a Wayland compositor designed to run one maximized
 application. Its `-s` option explicitly enables VT switching, so the kit does
 not use it. See the [Ubuntu Cage manpage](https://manpages.ubuntu.com/manpages/noble/man1/cage.1.html).
 
@@ -48,25 +92,52 @@ The Cage unit uses `Type=simple`: Ubuntu 24.04's PAM helper can retain the
 exec-status pipe and leave `Type=exec` stuck in startup even after the browser
 appears. The installer separately checks HTTP availability and process stability.
 
-Ubuntu 24.04 provides Chromium through Snap. The launcher selects native
+Ubuntu provides Chromium through Snap; Debian uses its native Chromium package. The launcher selects native
 Wayland with `--ozone-platform=wayland`, a Chromium-supported Ozone runtime
 choice. See [Chromium Ozone](https://chromium.googlesource.com/chromium/src/+/main/docs/ozone_overview.md)
 and [the Ubuntu Chromium Snap](https://snapcraft.io/install/chromium/ubuntu).
 
 ## Preconditions
 
-- Start with Ubuntu **Server 24.04 LTS**, systemd, logind, no active display
+- Start with **Debian 13** or **Ubuntu Server 24.04 / 26.04 LTS**, systemd, logind, no active display
   manager, an existing administrator, and an existing SSH recovery path. The
   installer refuses other releases and refuses to repurpose a desktop host.
+- Provide a working DRM/KMS graphics driver. Minimal cloud kernels may omit GPU
+  drivers; use the distribution’s standard kernel for a graphical VM. The kit
+  does not change the kernel or bootloader.
 - Build and test ShutterOS first. Pass only a freshly generated `dist/`
   directory to the installer, never the repository, a home directory, or a
   directory containing source or private files.
 - Review `deployment/ubuntu/install.sh` on the host before running it as root.
-  It downloads packages only through the configured Ubuntu APT and Snap
-  sources; it downloads no script and never changes SSH configuration.
+  It downloads packages only through the configured distribution APT sources and, on Ubuntu, the official Snap
+  store; it downloads no script and never changes SSH configuration.
 - Keep a second administrator SSH session open while enabling the service. The
   kit reserves `tty1` and disables VT switching inside Cage. Use SSH for recovery
   while the kiosk is running; SSH configuration remains untouched.
+
+## Graphics in a virtual machine
+
+Cage normally uses the graphics driver’s renderer. In the Debian 13 VM used for
+validation, the virtual GPU displayed only the page background despite a healthy
+Chromium process. Cage’s [software renderer](https://github.com/swaywm/wlroots/blob/master/docs/env_vars.md)
+(`WLR_RENDERER=pixman`) restored the complete framebuffer. This is a compositor setting; Chromium’s sandbox remains enabled.
+Use it only when the target’s virtual graphics need it:
+
+```sh
+sudo install -d -m 0755 /etc/systemd/system/shutteros-kiosk.service.d
+sudo tee /etc/systemd/system/shutteros-kiosk.service.d/90-software-renderer.conf >/dev/null <<'EOF'
+[Service]
+Environment=WLR_RENDERER=pixman
+EOF
+sudo systemctl daemon-reload
+sudo systemctl restart shutteros-kiosk.service
+```
+
+Confirm the actual display, not just the HTTP response or service status.
+Software rendering uses more CPU; a physical kiosk should first use its native
+graphics driver. To return to that renderer, remove only this drop-in, run
+`systemctl daemon-reload`, and restart the service. Administrator-created
+persistent drop-ins also need removing when uninstalling the kit.
 
 ## Install and verify
 
@@ -98,9 +169,10 @@ sudo deployment/ubuntu/install.sh \
 `--keyboard-model` is also available. Invalid values are rejected before
 package or account changes.
 
-The installer installs only missing `cage`, `python3`, and `snapd` packages,
-waits for Snap seeding, and installs the official `chromium` Snap only when it
-is absent. A reinstall therefore works without repository access when those
+The installer installs missing `cage`, `python3`, `libpam-systemd`, and
+`dbus-user-session` dependencies. On Debian it adds the native `chromium` package.
+On Ubuntu it adds `snapd`, waits for seeding, and installs the official `chromium`
+Snap only when absent. A reinstall therefore works without repository access when those
 local dependencies are already installed. It validates `kiosk-config.json`
 against the V1 deployment contract before changing accounts or services.
 
@@ -110,7 +182,7 @@ services.
 It replaces only `/opt/cyber-shutteros/site`, files under
 `/usr/local/lib/shutteros-kiosk`, the two `shutteros-*` unit files, and its own
 Chromium policy file. It disables `getty@tty1.service` to avoid two processes
-owning the same terminal. The launcher creates its Snap profile below the
+owning the same terminal. The launcher creates the distribution-specific profile below the
 kiosk-owned home; the root installer does not create root-owned `snap/` parent
 directories in that home.
 
@@ -126,7 +198,7 @@ silently repurposing an administrator account or deleting an unrelated home.
 `verify.sh` is read-only. It asserts both account shapes and group sets, the
 ownership marker, root-owned static tree, site-file types and permissions,
 configuration validity, the root-owned environment and unit files, reviewed
-policy byte equality, policy Snap connection, active services, local HTTP
+policy byte equality, the Snap policy connection on Ubuntu, active services, local HTTP
 response, and a `127.0.0.1`-only TCP listener. It establishes process and HTTP
 startup only; it cannot establish that a usable or confined browser is visible.
 Before opening the kiosk, test all of these on the actual hardware:
@@ -168,11 +240,12 @@ children into user-session scopes; include
 `journalctl -b _UID="$(id -u shutteros-kiosk)"` for their graphics and browser logs.
 Restore the console if needed.
 
-## Chromium policy and Snap check
+## Chromium policy and Ubuntu Snap check
 
 The kit writes a root-owned JSON file to
-`/etc/chromium-browser/policies/managed/shutteros.json`. Chromium documents
-this Ubuntu-specific policy location and requires managed files not be writable
+`/etc/chromium/policies/managed/shutteros.json` on Debian, or
+`/etc/chromium-browser/policies/managed/shutteros.json` on Ubuntu. Chromium documents
+these distribution-specific policy locations and requires managed files not be writable
 by unprivileged users; see the [Linux policy quick start](https://www.chromium.org/administrators/linux-quick-start/).
 
 The Ubuntu Chromium Snap needs the
@@ -241,13 +314,13 @@ than treating URL filtering as a complete browser boundary. See
 Chromium's current definitions document value `2` as forced Incognito and as
 the blocking value for geolocation and notifications; camera and microphone
 are disabled with their dedicated boolean policies. Confirm the effective
-values and lack of errors at `chrome://policy`, because the installed Snap
-revision is the authority on support. The source of truth used for this kit is
+values and lack of errors at `chrome://policy`, because the installed browser
+version is the authority on support. The source of truth used for this kit is
 Chromium's upstream
 [policy-definition tree](https://chromium.googlesource.com/chromium/src/+/refs/heads/main/components/policy/resources/templates/policy_definitions/).
 
-The launcher uses an incognito browser session and stores its required Snap
-profile only in the kiosk account's confined home directory. It does **not**
+The launcher uses an incognito browser session and stores its required
+profile only in the kiosk account's home directory. It does **not**
 pass `--no-sandbox`; do not add that flag as a workaround for graphics trouble.
 If Chromium does not start under Cage, inspect the journal, Snap connections,
 and GPU/Wayland support instead of weakening its sandbox.
@@ -280,7 +353,7 @@ configuration before applying the organisation's policy.
   (`superusers`, `password_pbkdf2`; export `superusers` for submenus).
   Leave only the intended normal boot entry
   `--unrestricted` for unattended startup. A hidden menu or zero timeout is not
-  authentication. Regenerate with `update-grub` after changing Ubuntu's source
+  authentication. Regenerate with `update-grub` after changing the distribution’s source
   configuration; verify editing, recovery and normal startup after kernel updates.
 - **Magic SysRq:** check `sysctl kernel.sysrq`. To disable keyboard-triggered
   [SysRq operations](https://docs.kernel.org/admin-guide/sysrq.html), manage
@@ -332,9 +405,9 @@ policy files may then be partially updated and require administrator repair.
 For site files only, if an interruption leaves just `.site-rollback`, the next
 verified reinstall restores it before staging. If both site directories exist,
 the installer refuses to guess and requires an administrator to inspect them.
-Schedule updates outside kiosk use. Chromium
+Schedule updates outside kiosk use. Chromium package updates and, on Ubuntu,
 Snap refreshes can alter startup or policy behavior, so retest the manual
-acceptance list after every refresh.
+acceptance list after every browser update.
 
 To restore the normal `tty1` login while keeping Chromium and Cage installed:
 
@@ -361,7 +434,7 @@ locked by design.
 
 ### Event-day browser updates
 
-Before an event, the administrator can temporarily postpone Chromium refreshes
+On Ubuntu, before an event, the administrator can temporarily postpone Chromium refreshes
 using [Snap's bounded hold](https://snapcraft.io/docs/how-to-guides/manage-snaps/manage-updates/):
 
 ```sh
@@ -372,5 +445,6 @@ sudo snap refresh --hold=12h chromium
 Check the existing hold and organisation policy before replacing it. Choose a
 duration covering the event; it expires automatically. The installer and
 uninstaller leave administrator-owned Snap update policy unchanged. Do not
-freeze security updates indefinitely. After the event, follow the organisation's
+freeze security updates indefinitely. On Debian, schedule APT upgrades outside the event using the organisation’s
+normal maintenance process. After the event, follow the organisation's
 maintenance schedule and repeat the acceptance checks after updating Chromium.

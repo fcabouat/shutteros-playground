@@ -71,7 +71,7 @@ Les phrases du jeu sont publiques et fictives : n’utilisez jamais un vrai mot 
 
 ## Préparer le poste
 
-Le dépôt fournit `deployment/ubuntu/install.sh`, des scripts de vérification et de désinstallation pour Ubuntu 24.04 Server. Le [guide Ubuntu](ubuntu-kiosk.md), en anglais, détaille les prérequis, la configuration Cage/Chromium, la recette matérielle et la récupération.
+Le dépôt fournit `deployment/ubuntu/install.sh`, des scripts de vérification et de désinstallation pour Debian 13 et Ubuntu Server 24.04 / 26.04 LTS. Le [guide de déploiement Linux](ubuntu-kiosk.md), en anglais, détaille les prérequis, la configuration Cage/Chromium, la recette matérielle et la récupération.
 
 Le système hôte reste responsable du confinement : raccourcis système, accès physique, sortie du navigateur et redémarrage après incident. ShutterOS dispose d’un raccourci volontaire de remise à zéro, `Ctrl+Alt+Home`, qui revient à l’accueil ; il ne verrouille pas le système d’exploitation.
 

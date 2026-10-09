@@ -56,7 +56,7 @@ export const content = {
     deployPoints: [
       'Ajoutez le nom et le logo de votre organisation, avec un second partenaire si besoin.',
       'Configurez le contact de sécurité et la durée de session. Le poste se réinitialise pour la personne suivante.',
-      'Hébergez les fichiers statiques ou préparez un poste Ubuntu avec le kit Cage + Chromium.',
+      'Hébergez les fichiers statiques ou préparez un poste Debian ou Ubuntu avec le kit Cage + Chromium.',
     ],
     deployLink: 'Préparer un poste de démonstration',
     resourcesTitle: 'Pour jouer, déployer ou contribuer.',
@@ -145,7 +145,7 @@ export const content = {
     deployPoints: [
       'Add your organisation’s name and logo, with a second partner if needed.',
       'Configure your security contact and session length. The workstation resets for the next participant.',
-      'Host the static files or prepare an Ubuntu workstation with the Cage + Chromium kit.',
+      'Host the static files or prepare a Debian or Ubuntu workstation with the Cage + Chromium kit.',
     ],
     deployLink: 'Prepare a kiosk workstation',
     resourcesTitle: 'Play, deploy or contribute.',

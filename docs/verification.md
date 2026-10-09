@@ -29,7 +29,7 @@ On Linux hosts without the browser's system libraries, use `pnpm exec playwright
 | Accessibility and privacy | Axe scans in tested states, focus behavior, unexpected external requests, page errors and persistent browser storage.                                                                    |
 | Product site              | Local links and anchors, language navigation, demo and download paths, API and Storybook loading, mobile layout and Axe scans.                                                           |
 | Maintenance               | Knip unused-file/dependency/export checks, workflow syntax, frozen dependency installation and registry advisory audit.                                                                  |
-| Ubuntu scripts            | ShellCheck, shell/unit syntax, Python/TypeScript contract parity and sandboxed install/refusal/rollback/verification/removal tests.                                                      |
+| Linux kiosk kit           | ShellCheck, shell/unit syntax, Python/TypeScript contract parity and sandboxed install/refusal/rollback/verification/removal tests on Debian 13 and Ubuntu 24.04 / 26.04.                |
 
 Only the session deadline limits play; there is no countdown for individual answers. Players cannot extend the deadline, so no WCAG timing-adjustment conformance is claimed. Operators can configure a longer session before an event.
 
@@ -56,7 +56,7 @@ Use the repository's actual base path for a fork. Run `pnpm build` without `BASE
 - Exercise the deployed URL after an Actions run: welcome, both login routes, one situation, language switching, About notices and logout. Check the browser console and asset paths.
 - Rehearse with representative participants. Verify reading pace, guided duration, keyboard use, screen-reader behavior, zoom, touch input and the target screen resolution. Chromium automation and Axe scans do not establish accessibility conformance or test every browser.
 - Test session expiry, cancelled logout and process recovery on the kiosk. Confirm that the facilitator can reach the organisation's support contact through its usual channel.
-- The Ubuntu kit has been exercised in a resource-limited KVM guest, including PAM/logind, Cage, Chromium Snap, recovery and uninstall. Complete its [hardware acceptance and recovery checks](ubuntu-kiosk.md#install-and-verify) on the target machine; virtual graphics and keyboard tests do not qualify its GPU, peripherals or firmware controls.
+- The Linux kit combines isolated Debian/Ubuntu fixtures with VM tests of PAM/logind, Cage, Chromium policy, recovery and uninstall. See its [validation record](ubuntu-kiosk.md#validation) for tested versions and renderer settings. Complete its [hardware acceptance and recovery checks](ubuntu-kiosk.md#install-and-verify) on the target machine; virtual graphics and keyboard tests do not qualify its GPU, peripherals or firmware controls.
 - Review the distributable files. Keep `LICENSE` and dependency notices, use fictional game data, and exclude private organisation assets from a generic public demo.
 
 Host access logs, HTTP security headers, browser policy and physical access are deployment responsibilities. The application's meta CSP cannot enforce a framing policy. See [security](../SECURITY.md) and [licensing and privacy](legal.md).

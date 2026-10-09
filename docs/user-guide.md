@@ -47,4 +47,4 @@ The hourglass starts after the login exercise and allows thirty minutes by defau
 
 Let the participant look around, then ask “What made you choose that action?” Mistakes and hints create useful discussion. For real work, follow your organisation’s procedures and policies rather than the fictional exercise rules.
 
-Before the event, try both routes on the actual workstation, including language changes, signing out and automatic reset. Check the displayed security contacts. For deployment, see [branding](branding.md), [kiosk setup](kiosk.md) and [Ubuntu installation](ubuntu-kiosk.md). The [content notes](content.md) explain the scenarios **and reveal their solutions**.
+Before the event, try both routes on the actual workstation, including language changes, signing out and automatic reset. Check the displayed security contacts. For deployment, see [branding](branding.md), [kiosk setup](kiosk.md) and [Debian/Ubuntu installation](ubuntu-kiosk.md). The [content notes](content.md) explain the scenarios **and reveal their solutions**.

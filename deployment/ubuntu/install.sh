@@ -1,5 +1,5 @@
 #!/bin/sh
-# Review this local script before running it as root on a dedicated Ubuntu 24.04 kiosk host.
+# Review this local script before running it as root on a dedicated Debian or Ubuntu kiosk host.
 set -eu
 
 PATH=/usr/sbin:/usr/bin:/sbin:/bin
@@ -13,8 +13,6 @@ readonly SITE_ROOT="$KIOSK_ROOT/site"
 readonly HOME_ROOT="/home/$KIOSK_USER"
 readonly LIB_ROOT=/usr/local/lib/shutteros-kiosk
 readonly ENVIRONMENT_FILE="$LIB_ROOT/environment"
-readonly POLICY_ROOT=/etc/chromium-browser/policies/managed
-readonly POLICY_FILE="$POLICY_ROOT/shutteros.json"
 readonly STATIC_UNIT=/etc/systemd/system/shutteros-static.service
 readonly KIOSK_UNIT=/etc/systemd/system/shutteros-kiosk.service
 readonly OWNER_MARKER="$KIOSK_ROOT/.shutteros-kiosk-owner"
@@ -25,7 +23,6 @@ readonly LOCALE_DEFAULTS_FILE=/etc/default/locale
 readonly CAGE_COMMAND=/usr/bin/cage
 readonly PYTHON_COMMAND=/usr/bin/python3
 readonly SNAP_COMMAND=/usr/bin/snap
-readonly CHROMIUM_COMMAND=/snap/bin/chromium
 
 die() {
   printf '%s\n' "error: $*" >&2
@@ -141,7 +138,7 @@ assert_installed_getty_state() {
 
 assert_no_graphical_display_manager() {
   if systemctl --quiet is-active display-manager.service; then
-    die 'an active display manager was found; this kit supports a dedicated Ubuntu Server host only'
+    die 'an active display manager was found; this kit supports a dedicated host without a display manager'
   fi
 }
 
@@ -306,6 +303,7 @@ backup_support_files() {
   support_rollback=$(mktemp -d "$STAGE_ROOT/.shutteros-kiosk-support.XXXXXX")
   for pair in \
     "session:$LIB_ROOT/session" \
+    "platform.sh:$LIB_ROOT/platform.sh" \
     "launch-chromium:$LIB_ROOT/launch-chromium" \
     "environment:$ENVIRONMENT_FILE" \
     "static.service:$STATIC_UNIT" \
@@ -326,6 +324,7 @@ restore_support_files() {
   [ -n "$support_rollback" ] || return 0
   for pair in \
     "session:$LIB_ROOT/session" \
+    "platform.sh:$LIB_ROOT/platform.sh" \
     "launch-chromium:$LIB_ROOT/launch-chromium" \
     "environment:$ENVIRONMENT_FILE" \
     "static.service:$STATIC_UNIT" \
@@ -450,6 +449,16 @@ done
 [ -n "$site_dir" ] || { usage >&2; exit 2; }
 
 [ "$(id -u)" -eq 0 ] || die 'run this reviewed local script as root'
+
+# shellcheck source=deployment/ubuntu/platform.sh
+. "$SOURCE_DIR/platform.sh"
+# shellcheck disable=SC1090
+. "$OS_RELEASE_FILE"
+kiosk_platform "${ID:-}" || die 'unsupported distribution'
+readonly CHROMIUM_COMMAND POLICY_ROOT CHROMIUM_SNAP
+readonly POLICY_FILE="$POLICY_ROOT/shutteros.json"
+kiosk_supported_release "${ID:-}" "${VERSION_ID:-}" || die 'unsupported release'
+
 case "$site_dir" in
   /*) ;;
   *) die '--site-dir must be an absolute path' ;;
@@ -482,19 +491,23 @@ else
 fi
 assert_no_graphical_display_manager
 
-# shellcheck disable=SC1090
-. "$OS_RELEASE_FILE"
-if [ "${ID:-}" != ubuntu ] || [ "${VERSION_ID:-}" != 24.04 ]; then
-  die 'this kit supports Ubuntu 24.04 LTS only; do not apply it to another release'
-fi
-
 prepare_environment
 prepare_stage
 
 missing_packages=
 [ -x "$CAGE_COMMAND" ] || missing_packages="$missing_packages cage"
 [ -x "$PYTHON_COMMAND" ] || missing_packages="$missing_packages python3"
-[ -x "$SNAP_COMMAND" ] || missing_packages="$missing_packages snapd"
+if [ "$CHROMIUM_SNAP" = true ]; then
+  [ -x "$SNAP_COMMAND" ] || missing_packages="$missing_packages snapd"
+else
+  [ -x "$CHROMIUM_COMMAND" ] || missing_packages="$missing_packages chromium"
+fi
+# PAM/logind must create the unprivileged Wayland runtime directory, even on minimal servers.
+for package in libpam-systemd dbus-user-session; do
+  if [ "$(dpkg-query -W -f='${Status}' "$package" 2>/dev/null || true)" != 'install ok installed' ]; then
+    missing_packages="$missing_packages $package"
+  fi
+done
 if [ -n "$missing_packages" ]; then
   export DEBIAN_FRONTEND=noninteractive
   apt-get update
@@ -504,17 +517,19 @@ if [ -n "$missing_packages" ]; then
 fi
 [ -x "$CAGE_COMMAND" ] || die 'Cage is unavailable after package installation'
 [ -x "$PYTHON_COMMAND" ] || die 'Python is unavailable after package installation'
-[ -x "$SNAP_COMMAND" ] || die 'Snap is unavailable after package installation'
 "$PYTHON_COMMAND" "$SOURCE_DIR/validate-config.py" "$stage_site/kiosk-config.json" ||
   die 'kiosk-config.json is invalid'
-"$SNAP_COMMAND" wait system seed.loaded
-if ! "$SNAP_COMMAND" list chromium >/dev/null 2>&1; then
-  "$SNAP_COMMAND" install chromium
+if [ "$CHROMIUM_SNAP" = true ]; then
+  [ -x "$SNAP_COMMAND" ] || die 'Snap is unavailable after package installation'
+  "$SNAP_COMMAND" wait system seed.loaded
+  if ! "$SNAP_COMMAND" list chromium >/dev/null 2>&1; then
+    "$SNAP_COMMAND" install chromium
+  fi
+  "$SNAP_COMMAND" connections chromium |
+    awk '$2 == "chromium:etc-chromium-browser-policies" && $3 != "-" { found = 1 } END { exit !found }' ||
+    die 'the Chromium snap policy interface is not connected'
 fi
-[ -x "$CHROMIUM_COMMAND" ] || die 'the Chromium snap command is unavailable after installation'
-"$SNAP_COMMAND" connections chromium |
-  awk '$2 == "chromium:etc-chromium-browser-policies" && $3 != "-" { found = 1 } END { exit !found }' ||
-  die 'the Chromium snap does not expose a connected etc-chromium-browser-policies interface'
+[ -x "$CHROMIUM_COMMAND" ] || die 'Chromium is unavailable after installation'
 
 if [ "$installation_mode" = fresh ]; then
   fresh_mutation_started=true
@@ -552,6 +567,7 @@ if [ "$installation_mode" = reinstall ]; then
 fi
 
 install -d -o root -g root -m 0755 "$LIB_ROOT"
+install -o root -g root -m 0644 "$SOURCE_DIR/platform.sh" "$LIB_ROOT/platform.sh"
 install -o root -g root -m 0755 "$SOURCE_DIR/session" "$LIB_ROOT/session"
 install -o root -g root -m 0755 "$SOURCE_DIR/launch-chromium" "$LIB_ROOT/launch-chromium"
 install -o root -g root -m 0644 "$environment_tmp" "$ENVIRONMENT_FILE"

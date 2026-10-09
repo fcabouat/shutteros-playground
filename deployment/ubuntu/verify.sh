@@ -5,6 +5,7 @@ set -eu
 PATH=/usr/sbin:/usr/bin:/sbin:/bin
 export PATH
 
+readonly OS_RELEASE_FILE=/etc/os-release
 readonly KIOSK_USER=shutteros-kiosk
 readonly STATIC_USER=shutteros-static
 readonly KIOSK_ROOT=/opt/cyber-shutteros
@@ -12,7 +13,6 @@ readonly SITE_ROOT="$KIOSK_ROOT/site"
 readonly HOME_ROOT="/home/$KIOSK_USER"
 readonly LIB_ROOT=/usr/local/lib/shutteros-kiosk
 readonly ENVIRONMENT_FILE="$LIB_ROOT/environment"
-readonly POLICY_FILE=/etc/chromium-browser/policies/managed/shutteros.json
 readonly STATIC_UNIT=/etc/systemd/system/shutteros-static.service
 readonly KIOSK_UNIT=/etc/systemd/system/shutteros-kiosk.service
 readonly OWNER_MARKER="$KIOSK_ROOT/.shutteros-kiosk-owner"
@@ -41,6 +41,15 @@ marker_value() {
 }
 
 [ "$(id -u)" -eq 0 ] || fail 'run this read-only verification as root'
+
+# shellcheck source=deployment/ubuntu/platform.sh
+. "$SOURCE_DIR/platform.sh"
+# shellcheck disable=SC1090
+. "$OS_RELEASE_FILE"
+kiosk_platform "${ID:-}" || fail 'unsupported distribution'
+readonly CHROMIUM_COMMAND POLICY_ROOT CHROMIUM_SNAP
+readonly POLICY_FILE="$POLICY_ROOT/shutteros.json"
+
 id "$KIOSK_USER" >/dev/null 2>&1 || fail 'kiosk account is missing'
 id "$STATIC_USER" >/dev/null 2>&1 || fail 'static-server account is missing'
 kiosk_entry=$(getent passwd "$KIOSK_USER")
@@ -74,11 +83,13 @@ root_owned_directory "$SITE_ROOT" || fail 'static site root is not root-owned mo
 [ -z "$(find "$SITE_ROOT" -xdev \( -type l -o ! -user root -o -perm /022 -o \( ! -type d -a ! -type f \) \) -print -quit)" ] ||
   fail 'static site contains a symlink, non-root-owned, writable, or special file'
 python3 "$SOURCE_DIR/validate-config.py" "$SITE_ROOT/kiosk-config.json" || fail 'deployed kiosk configuration is invalid'
-for name in session launch-chromium; do
+for name in session launch-chromium platform.sh; do
   source_file="$SOURCE_DIR/$name"
   installed_file="$LIB_ROOT/$name"
   root_owned_regular "$installed_file" || fail "installed launcher is missing or unsafe: $installed_file"
-  [ "$(stat -c %a "$installed_file")" = 755 ] || fail "installed launcher mode is not 0755: $installed_file"
+  expected_mode=755
+  [ "$name" != platform.sh ] || expected_mode=644
+  [ "$(stat -c %a "$installed_file")" = "$expected_mode" ] || fail "installed launcher mode is not $expected_mode: $installed_file"
   cmp -s "$source_file" "$installed_file" || fail "installed launcher differs from reviewed file: $installed_file"
 done
 for pair in \
@@ -105,9 +116,12 @@ root_owned_regular "$POLICY_FILE" || fail 'policy file is missing or unsafe'
 [ "$(stat -c %a "$POLICY_FILE")" = 644 ] || fail 'policy file mode is not 0644'
 cmp -s "$SOURCE_DIR/chromium-policy.json" "$POLICY_FILE" || fail 'installed policy differs from reviewed policy'
 
-snap connections chromium |
-  awk '$2 == "chromium:etc-chromium-browser-policies" && $3 != "-" { found = 1 } END { exit !found }' ||
-  fail 'Chromium policy interface is disconnected'
+[ -x "$CHROMIUM_COMMAND" ] || fail 'Chromium command is missing'
+if [ "$CHROMIUM_SNAP" = true ]; then
+  snap connections chromium |
+    awk '$2 == "chromium:etc-chromium-browser-policies" && $3 != "-" { found = 1 } END { exit !found }' ||
+    fail 'Chromium policy interface is disconnected'
+fi
 systemctl --quiet is-active shutteros-static.service || fail 'static service is not active'
 systemctl --quiet is-active shutteros-kiosk.service || fail 'kiosk service is not active'
 python3 -c 'from urllib.request import urlopen; urlopen("http://127.0.0.1:8080/", timeout=3).read(1)'
