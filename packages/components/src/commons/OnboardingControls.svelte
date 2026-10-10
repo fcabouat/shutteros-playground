@@ -9,15 +9,17 @@
     onHint,
     hintVisible = false,
     hintSeen = false,
-    hintDisabled = true,
   }: {
     mode: PlayMode;
     onMode?: () => void;
     onHint?: () => void;
     hintVisible?: boolean;
     hintSeen?: boolean;
-    hintDisabled?: boolean;
   } = $props();
+  let hintButton: HTMLButtonElement;
+  export function focusHint() {
+    hintButton?.focus({ preventScroll: true });
+  }
   const i18n = getI18n();
   const copy = $derived(i18n.text);
 </script>
@@ -28,9 +30,10 @@
       <Icon name="sparkles" size={20} /><span>{copy.welcome.controls.progress}</span>
     </button>
     <button
+      bind:this={hintButton}
       class="guidance-trigger"
       class:offered={hintVisible}
-      disabled={hintDisabled}
+      disabled={!onHint}
       aria-pressed={hintVisible}
       onclick={onHint}
     >

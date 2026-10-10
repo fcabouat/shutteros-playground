@@ -9,7 +9,7 @@ mkdir -p "$tmp/bin" "$tmp/kit" "$tmp/opt" "$tmp/etc/default" "$tmp/etc/systemd/s
 cp -a "$repo_root/deployment/ubuntu/." "$tmp/kit/"
 cp -a "$repo_root/static/." "$tmp/dist/"
 printf '<!doctype html><title>initial</title>' > "$tmp/dist/index.html"
-printf 'ID=ubuntu\nVERSION_ID=24.04\n' > "$tmp/etc/os-release"
+printf 'ID=%s\nVERSION_ID=%s\n' "${TEST_DISTRO:-ubuntu}" "${TEST_RELEASE:-24.04}" > "$tmp/etc/os-release"
 printf 'XKBMODEL="pc105"\nXKBLAYOUT="fr"\nXKBVARIANT="oss"\nXKBOPTIONS="compose:ralt"\n' > "$tmp/etc/default/keyboard"
 printf 'LANG="fr_FR.UTF-8"\n' > "$tmp/etc/default/locale"
 : > "$tmp/accounts"
@@ -120,6 +120,11 @@ fi
 if [ "$unit" = shutteros-kiosk.service ] && [ "$command" = restart ] && [ "${FAIL_KIOSK_RESTART:-0}" = 1 ]; then
   exit 1
 fi
+if [ "$unit" = shutteros-kiosk.service ] && [ "$command" = restart ] &&
+  [ "${FAIL_KIOSK_RESTART_ONCE:-0}" = 1 ] && [ ! -e "$TEST_HOME/restart-failed" ]; then
+  touch "$TEST_HOME/restart-failed"
+  exit 1
+fi
 if [ "$unit" = shutteros-kiosk.service ] && [ "$command" = restart ]; then
   touch "$TEST_HOME/session-active"
 fi
@@ -133,7 +138,11 @@ cat > "$tmp/bin/snap" <<'EOF'
 #!/bin/sh
 printf 'snap %s\n' "$*" >> "$TEST_CALLS"
 case "${1:-}" in
-  connections) printf 'Interface Plug Slot Notes\nsystem-files chromium:etc-chromium-browser-policies system:etc-chromium-browser-policies -\n' ;;
+  connections)
+    slot=system:etc-chromium-browser-policies
+    [ "${DISCONNECTED_POLICY:-0}" != 1 ] || slot=-
+    printf 'Interface Plug Slot Notes\nsystem-files chromium:etc-chromium-browser-policies %s -\n' "$slot"
+    ;;
   list|wait) exit 0 ;;
   install) exit 90 ;;
 esac
@@ -145,9 +154,15 @@ case "${1:-}" in
   *) exec /usr/bin/python3 "$@" ;;
 esac
 EOF
+cat > "$tmp/bin/dpkg-query" <<'EOF'
+#!/bin/sh
+[ "${MISSING_SESSION_PACKAGES:-0}" != 1 ] || exit 1
+printf 'install ok installed'
+EOF
 cat > "$tmp/bin/apt-get" <<'EOF'
 #!/bin/sh
 printf 'apt-get %s\n' "$*" >> "$TEST_CALLS"
+if [ "$1" = update ] && [ "${MISSING_SESSION_PACKAGES:-0}" = 1 ]; then exit 0; fi
 exit 91
 EOF
 cat > "$tmp/bin/sleep" <<'EOF'
@@ -181,13 +196,14 @@ EOF
 touch "$tmp/bin/cage" "$tmp/bin/chromium"
 chmod 755 "$tmp/bin"/*
 
+sed -i "s|/etc/chromium-browser/policies/managed|$tmp/etc/chromium-browser/policies/managed|g; s|/etc/chromium/policies/managed|$tmp/etc/chromium/policies/managed|g; s|/snap/bin/chromium|$tmp/bin/chromium|g; s|/usr/bin/chromium|$tmp/bin/chromium|g" "$tmp/kit/platform.sh"
+
 script="$tmp/kit/install.sh"
 sed -i "s|PATH=/usr/sbin:/usr/bin:/sbin:/bin|PATH=$tmp/bin:/usr/sbin:/usr/bin:/sbin:/bin|" "$script"
 sed -i "s|readonly KIOSK_ROOT=/opt/cyber-shutteros|readonly KIOSK_ROOT=$tmp/opt/cyber-shutteros|" "$script"
 sed -i "s|readonly STAGE_ROOT=/opt|readonly STAGE_ROOT=$tmp/opt|" "$script"
 sed -i "s|readonly HOME_ROOT=\"/home/\$KIOSK_USER\"|readonly HOME_ROOT=$tmp/home/shutteros-kiosk|" "$script"
 sed -i "s|readonly LIB_ROOT=/usr/local/lib/shutteros-kiosk|readonly LIB_ROOT=$tmp/lib/shutteros-kiosk|" "$script"
-sed -i "s|readonly POLICY_ROOT=/etc/chromium-browser/policies/managed|readonly POLICY_ROOT=$tmp/etc/chromium-browser/policies/managed|" "$script"
 sed -i "s|/etc/systemd/system|$tmp/etc/systemd/system|g" "$script"
 sed -i "s|readonly OS_RELEASE_FILE=/etc/os-release|readonly OS_RELEASE_FILE=$tmp/etc/os-release|" "$script"
 sed -i "s|readonly KEYBOARD_DEFAULTS_FILE=/etc/default/keyboard|readonly KEYBOARD_DEFAULTS_FILE=$tmp/etc/default/keyboard|" "$script"
@@ -195,7 +211,6 @@ sed -i "s|readonly LOCALE_DEFAULTS_FILE=/etc/default/locale|readonly LOCALE_DEFA
 sed -i "s|readonly CAGE_COMMAND=/usr/bin/cage|readonly CAGE_COMMAND=$tmp/bin/cage|" "$script"
 sed -i "s|readonly PYTHON_COMMAND=/usr/bin/python3|readonly PYTHON_COMMAND=$tmp/bin/python3|" "$script"
 sed -i "s|readonly SNAP_COMMAND=/usr/bin/snap|readonly SNAP_COMMAND=$tmp/bin/snap|" "$script"
-sed -i "s|readonly CHROMIUM_COMMAND=/snap/bin/chromium|readonly CHROMIUM_COMMAND=$tmp/bin/chromium|" "$script"
 chmod 755 "$script"
 
 # Maintenance follows the same fully redirected filesystem/account boundary.
@@ -205,9 +220,9 @@ for maintenance in verify uninstall; do
   sed -i "s|readonly KIOSK_ROOT=/opt/cyber-shutteros|readonly KIOSK_ROOT=$tmp/opt/cyber-shutteros|" "$target"
   sed -i "s|readonly HOME_ROOT=\"/home/\$KIOSK_USER\"|readonly HOME_ROOT=$tmp/home/shutteros-kiosk|" "$target"
   sed -i "s|readonly LIB_ROOT=/usr/local/lib/shutteros-kiosk|readonly LIB_ROOT=$tmp/lib/shutteros-kiosk|" "$target"
-  sed -i "s|/etc/chromium-browser/policies/managed|$tmp/etc/chromium-browser/policies/managed|g" "$target"
   sed -i "s|/etc/systemd/system|$tmp/etc/systemd/system|g" "$target"
   sed -i "s|-user root|-user $(/usr/bin/id -u)|g" "$target"
+  sed -i "s|readonly OS_RELEASE_FILE=/etc/os-release|readonly OS_RELEASE_FILE=$tmp/etc/os-release|" "$target"
   chmod 755 "$target"
 done
 run_maintenance() {
@@ -227,7 +242,12 @@ run_install() {
 run_install "$tmp/dist"
 grep -qx shutteros-kiosk "$tmp/accounts"
 grep -qx shutteros-static "$tmp/accounts"
-grep -q '^snap wait system seed.loaded$' "$tmp/calls"
+if [ "${TEST_DISTRO:-ubuntu}" = ubuntu ]; then
+  grep -q '^snap wait system seed.loaded$' "$tmp/calls"
+else
+  if grep -q '^snap ' "$tmp/calls"; then exit 1; fi
+  test -f "$tmp/etc/chromium/policies/managed/shutteros.json"
+fi
 grep -q '^sleep 3$' "$tmp/calls"
 if grep -q '^apt-get ' "$tmp/calls"; then exit 1; fi
 if grep -q '^snap install ' "$tmp/calls"; then exit 1; fi
@@ -266,6 +286,34 @@ cmp -s "$tmp/dist-update/index.html" "$tmp/opt/cyber-shutteros/site/index.html"
 cmp -s "$tmp/original-session" "$tmp/lib/shutteros-kiosk/session"
 [ ! -e "$tmp/opt/cyber-shutteros/.site-rollback" ]
 mv "$tmp/original-session" "$tmp/kit/session"
+
+# Frozen Ubuntu kit from 7673bfc predates platform.sh and selects Snap directly.
+# A failed upgrade must restore that working launcher and unit, not a hybrid kit.
+if [ "${TEST_DISTRO:-ubuntu}" = ubuntu ]; then
+  legacy="$repo_root/deployment/ubuntu/tests/fixtures/ubuntu-snap-v1"
+  cp "$legacy/launch-chromium" "$tmp/lib/shutteros-kiosk/launch-chromium"
+  cp "$legacy/shutteros-kiosk.service" "$tmp/etc/systemd/system/shutteros-kiosk.service"
+  rm "$tmp/lib/shutteros-kiosk/platform.sh"
+  rm -f "$tmp/home/shutteros-kiosk/session-active"
+  if FAIL_KIOSK_RESTART_ONCE=1 run_install "$tmp/dist-bad-start" 2>/dev/null; then exit 1; fi
+  [ ! -e "$tmp/lib/shutteros-kiosk/platform.sh" ]
+  cmp -s "$legacy/launch-chromium" "$tmp/lib/shutteros-kiosk/launch-chromium"
+  cmp -s "$legacy/shutteros-kiosk.service" "$tmp/etc/systemd/system/shutteros-kiosk.service"
+  cmp -s "$tmp/dist-update/index.html" "$tmp/opt/cyber-shutteros/site/index.html"
+  [ -e "$tmp/home/shutteros-kiosk/session-active" ]
+  rm "$tmp/home/shutteros-kiosk/restart-failed"
+  run_install "$tmp/dist-update"
+  cmp -s "$tmp/kit/platform.sh" "$tmp/lib/shutteros-kiosk/platform.sh"
+  cmp -s "$tmp/kit/launch-chromium" "$tmp/lib/shutteros-kiosk/launch-chromium"
+  cmp -s "$tmp/kit/shutteros-kiosk.service" "$tmp/etc/systemd/system/shutteros-kiosk.service"
+fi
+
+# Verification detects a lost Snap policy interface without changing the installation.
+if [ "${TEST_DISTRO:-ubuntu}" = ubuntu ]; then
+  if DISCONNECTED_POLICY=1 run_maintenance verify >/dev/null 2>&1; then exit 1; fi
+  if DISCONNECTED_POLICY=1 run_install "$tmp/dist-bad-start" >/dev/null 2>&1; then exit 1; fi
+  cmp -s "$tmp/dist-update/index.html" "$tmp/opt/cyber-shutteros/site/index.html"
+fi
 
 # Verification detects a damaged launcher without mutating the installation.
 run_maintenance verify >/dev/null
@@ -308,6 +356,25 @@ run_maintenance uninstall >/dev/null
 [ ! -s "$tmp/accounts" ]
 [ ! -e "$tmp/opt/cyber-shutteros" ]
 [ ! -e "$tmp/home/shutteros-kiosk" ]
+
+# Missing PAM/session dependencies are requested before accounts or services are mutated.
+: > "$tmp/calls"
+if MISSING_SESSION_PACKAGES=1 run_install "$tmp/dist" >/dev/null 2>&1; then exit 1; fi
+grep -q '^apt-get update$' "$tmp/calls"
+grep -q '^apt-get install -y libpam-systemd dbus-user-session$' "$tmp/calls"
+[ ! -s "$tmp/accounts" ]
+[ ! -e "$tmp/opt/cyber-shutteros" ]
+
+# Debian requests its native browser when absent; it never falls back to Snap.
+if [ "${TEST_DISTRO:-ubuntu}" = debian ]; then
+  chmod 0644 "$tmp/bin/chromium"
+  : > "$tmp/calls"
+  if MISSING_SESSION_PACKAGES=1 run_install "$tmp/dist" >/dev/null 2>&1; then exit 1; fi
+  grep -q '^apt-get install -y chromium libpam-systemd dbus-user-session$' "$tmp/calls"
+  if grep -q '^snap ' "$tmp/calls"; then exit 1; fi
+  [ ! -s "$tmp/accounts" ]
+  chmod 0755 "$tmp/bin/chromium"
+fi
 
 # A useradd that creates its identity before failing is still owned by this attempt and removed.
 if FAIL_USER_SLICE_STOP=1 PARTIAL_USERADD=shutteros-kiosk run_install "$tmp/dist" 2>/dev/null; then
