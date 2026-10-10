@@ -6,7 +6,7 @@ Vous incarnez Camille Martin sur un poste fictif : une clé USB trouvée, des me
 
 L’[écran d’accueil](images/welcome.fr.png) présente la **barre de jeu**, visible pendant tout le parcours, et propose deux modes :
 
-- **Mode facile**, proposé par défaut : avancez une situation après l’autre, avec les choix affichés. La connexion commence par une question sur le rangement d’un mot de passe, puis une explication de chaque option.
+- **Mode facile**, proposé par défaut : avancez une situation après l’autre, avec les choix affichés. L’[écran de connexion](images/login-guided.fr.png) propose un QCM sur le rangement d’un mot de passe à côté du compte. Vous pouvez répondre ou ouvrir directement la session avec le mot de passe fictif.
 - **Mode défi (exploration libre)** : explorez les applications et trouvez les commandes pour agir. À la connexion, retrouvez le mot de passe fictif ; un indice aide après trois essais ratés ou deux minutes de recherche.
 
 Choisissez le niveau qui vous convient à l’accueil. Vous pouvez changer de mode à tout moment sans perdre votre progression.
@@ -14,6 +14,8 @@ Choisissez le niveau qui vous convient à l’accueil. Vous pouvez changer de mo
 Utiliser le post-it pour entrer dans la simulation n’est pas une faute : il illustre un secret mal protégé. Le gestionnaire cité dans les explications est celui configuré pour l’exercice, KeePassXC par défaut.
 
 Les fenêtres **Vigilance** invitent à examiner une situation ; celles portant **Protéger mon poste** proposent des gestes de sécurisation. Les libellés accompagnent les couleurs : le jeu ne demande pas de deviner la fonction d’une fenêtre.
+
+Dès l’accueil, le bouton de mode de la barre de jeu et les cartes de sélection restent synchronisés. « Un indice ? » rappelle comment commencer ; « Progression » reste désactivé avant la connexion.
 
 ## Trouver son chemin
 
@@ -37,7 +39,7 @@ Le sablier démarre après l’exercice de connexion et laisse trente minutes pa
 
 - **Langue** : FR ou EN dès l’accueil, puis dans la barre des tâches.
 - **Fenêtres** : déplacez-les par leur titre, redimensionnez les fenêtres principales par leurs bords, réduisez-les puis retrouvez-les dans la barre des tâches. Les indices et le fichier texte sont des fenêtres indépendantes.
-- **Taille** : les nouvelles activités s’ouvrent agrandies en mode facile et en taille normale en mode défi. Vous pouvez les restaurer ; passer en mode facile peut élargir la fenêtre courante pour accueillir les choix, sans la maximiser.
+- **Taille** : les nouvelles activités s’ouvrent en fenêtre dans les deux modes, pour garder le bureau visible. Vous pouvez les agrandir ; le QCM peut élargir la fenêtre pour accueillir les choix, sans la maximiser.
 - **Clavier** : Tab passe d’une commande à l’autre ; Entrée ou Espace active les boutons. Le mot de passe fictif est masqué ; le bouton œil permet de le vérifier.
 - **Déconnexion** : une confirmation évite d’effacer la progression par erreur. Le raccourci opérateur `Ctrl+Alt+Home` réinitialise immédiatement le jeu.
 
@@ -45,4 +47,4 @@ Le sablier démarre après l’exercice de connexion et laisse trente minutes pa
 
 Laissez la personne chercher, puis demandez « Qu’est-ce qui vous a fait choisir cette action ? ». Les erreurs et le recours aux indices ouvrent la discussion. Pour les usages réels, les procédures et la charte de votre organisation priment sur celles de l’exercice.
 
-Avant l’évènement, essayez les deux modes sur le poste prévu, avec changement de langue, déconnexion et remise à zéro. Vérifiez les contacts de sécurité affichés. Pour préparer le poste : [personnalisation](branding.md), [déploiement en borne](kiosk.md), [installation Ubuntu](ubuntu-kiosk.md). Les [notes pédagogiques](content.md) expliquent les scénarios **en dévoilant les solutions** ; ces documents techniques sont en anglais.
+Avant l’évènement, essayez les deux modes sur le poste prévu, avec changement de langue, déconnexion et remise à zéro. Vérifiez les contacts de sécurité affichés. Pour préparer le poste : [personnalisation](branding.md), [déploiement en borne](kiosk.md), [installation Debian/Ubuntu](ubuntu-kiosk.md). Les [notes pédagogiques](content.md) expliquent les scénarios **en dévoilant les solutions** ; ces documents techniques sont en anglais.

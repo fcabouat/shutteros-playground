@@ -40,7 +40,7 @@ jobs:
           "$RUNNER_TEMP/actionlint/actionlint"
       - run: npm install --global pnpm@11.19.0
       - run: pnpm install --frozen-lockfile
-      - name: Validate shell scripts and the Ubuntu kit without modifying the runner
+      - name: Validate shell scripts and the Linux kiosk kit without modifying the runner
         run: |
           shellcheck -x deployment/ubuntu/*.sh deployment/ubuntu/session deployment/ubuntu/launch-chromium deployment/ubuntu/tests/*.sh scripts/gitflow-init.sh scripts/publish-release.sh .gitflow/hooks/*
           for script in deployment/ubuntu/*.sh deployment/ubuntu/session deployment/ubuntu/launch-chromium deployment/ubuntu/tests/*.sh scripts/gitflow-init.sh scripts/publish-release.sh .gitflow/hooks/*; do
@@ -48,7 +48,11 @@ jobs:
           done
           node deployment/ubuntu/tests/configuration-contract.test.mjs
           sh deployment/ubuntu/tests/installer-refusal.test.sh
+          sh deployment/ubuntu/tests/launcher.test.sh
+          sh deployment/ubuntu/tests/platform.test.sh
           sh deployment/ubuntu/tests/installer-nominal.test.sh
+          TEST_RELEASE=26.04 sh deployment/ubuntu/tests/installer-nominal.test.sh
+          TEST_DISTRO=debian TEST_RELEASE=13 sh deployment/ubuntu/tests/installer-nominal.test.sh
           python3 -m json.tool deployment/ubuntu/chromium-policy.json >/dev/null
           python3 deployment/ubuntu/validate-config.py static/kiosk-config.json
           sed 's|^ExecStart=/usr/local/lib/shutteros-kiosk/session$|ExecStart=/usr/bin/true|' \

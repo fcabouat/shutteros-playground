@@ -329,6 +329,7 @@ button:active:not(:disabled) {
   padding: 9px 8px;
 }
 .desktop-icon .app-icon {
+  flex-shrink: 0;
   width: 42px;
   height: 42px;
 }
@@ -931,7 +932,8 @@ button:active:not(:disabled) {
   min-width: 0;
   height: 100%;
   overflow: auto;
-  grid-template-rows: repeat(auto-fill, 86px);
+  /* Reserve room for a square icon and a two-line label. */
+  grid-template-rows: repeat(auto-fill, 104px);
   grid-auto-flow: column;
   grid-auto-columns: 112px;
   gap: 0;
@@ -1171,6 +1173,9 @@ button:active:not(:disabled) {
   height: 24px;
 }
 @media (max-height: 800px) {
+  .desktop-icons {
+    grid-template-rows: repeat(auto-fill, 96px);
+  }
   .desktop-icon {
     min-height: 82px;
     padding-block: 6px;

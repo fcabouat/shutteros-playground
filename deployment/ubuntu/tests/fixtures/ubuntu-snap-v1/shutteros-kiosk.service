@@ -23,6 +23,7 @@ Environment=XDG_SESSION_TYPE=wayland
 Environment=XDG_CURRENT_DESKTOP=ShutterOS
 EnvironmentFile=/usr/local/lib/shutteros-kiosk/environment
 ExecStartPre=/usr/bin/test -x /usr/bin/cage
+ExecStartPre=/usr/bin/test -x /snap/bin/chromium
 ExecStart=/usr/local/lib/shutteros-kiosk/session
 Restart=always
 RestartSec=2s

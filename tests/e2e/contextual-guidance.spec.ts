@@ -562,7 +562,7 @@ test('guided choices keep hint visibility independent from the restored window s
   await enter(page);
   await switchToGuided(page);
   const frame = page.locator('.window-layer .os-window');
-  await expect(frame).toHaveClass(/maximized/);
+  await expect(frame).not.toHaveClass(/maximized/);
   await expect(page.locator('.action-dock-panel')).toBeVisible();
   await expect(page.locator('.hint-window-layer')).toBeHidden();
   const hintControl = page.locator('.primary-help-slot .guidance-trigger');
@@ -574,6 +574,8 @@ test('guided choices keep hint visibility independent from the restored window s
   await page.getByRole('button', { name: fr.guidance.minimize, exact: true }).click();
   await expect(page.locator('.hint-window-layer')).toBeHidden();
   await expect(hintControl).toHaveText(fr.guidance.restore);
+  await frame.getByRole('button', { name: fr.os.maximize, exact: true }).click();
+  await expect(frame).toHaveClass(/maximized/);
   await frame.getByRole('button', { name: fr.os.restoreSize, exact: true }).click();
   await expect(frame).not.toHaveClass(/maximized/);
   await expect(page.locator('.action-dock-panel')).toBeVisible();
@@ -611,16 +613,16 @@ test('activity windows and mode switches preserve only the state that belongs to
   const guidedActivity = page.locator('[data-challenge][data-step="choose"]');
   await expect(guidedActivity).toBeVisible();
   const guidedId = await guidedActivity.getAttribute('data-challenge');
-  await expect(frame).toHaveClass(/maximized/);
+  await expect(frame).not.toHaveClass(/maximized/);
 
   await switchToFree(page);
   await expect(page.locator('.finish-experience')).toHaveText(fr.experience.guided);
   await expect(page.locator(`[data-challenge="${guidedId}"][data-step="choose"]`)).toBeVisible();
   await expect(page.locator('.action-dock-panel')).toHaveCount(0);
-  await expect(frame).toHaveClass(/maximized/);
+  await expect(frame).not.toHaveClass(/maximized/);
 
   await switchToGuided(page);
   await expect(page.locator(`[data-challenge="${guidedId}"][data-step="choose"]`)).toBeVisible();
   await expect(page.locator('.action-dock-panel')).toBeVisible();
-  await expect(frame).toHaveClass(/maximized/);
+  await expect(frame).not.toHaveClass(/maximized/);
 });

@@ -5,13 +5,7 @@ set -eu
 : "${HOME:?missing kiosk home}"
 : "${XDG_RUNTIME_DIR:?missing PAM/logind runtime directory}"
 
-# shellcheck source=deployment/ubuntu/platform.sh
-. /usr/local/lib/shutteros-kiosk/platform.sh
-# shellcheck source=/dev/null
-. /etc/os-release
-kiosk_platform "${ID:-}"
-[ -x "$CHROMIUM_COMMAND" ] || exit 69
-profile="$HOME/$PROFILE_RELATIVE"
+profile="$HOME/snap/chromium/common/shutteros-kiosk"
 mkdir -p "$profile"
 chmod 700 "$profile"
 # A stale singleton is safe to remove before Chromium starts and avoids a crash loop after power loss.
@@ -19,7 +13,7 @@ rm -f "$profile"/SingletonCookie "$profile"/SingletonLock "$profile"/SingletonSo
 
 case "${SHUTTEROS_INSPECT_POLICY:-0}" in
   0)
-    exec "$CHROMIUM_COMMAND" \
+    exec /snap/bin/chromium \
       --ozone-platform=wayland \
       --kiosk 'http://127.0.0.1:8080/?kiosk=1' \
       --disable-pinch \
@@ -31,7 +25,7 @@ case "${SHUTTEROS_INSPECT_POLICY:-0}" in
     ;;
   1)
     # A root-controlled, temporary systemd override uses the same account and Wayland session.
-    exec "$CHROMIUM_COMMAND" \
+    exec /snap/bin/chromium \
       --ozone-platform=wayland \
       --incognito \
       --no-first-run \
