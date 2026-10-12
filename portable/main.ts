@@ -4,7 +4,7 @@ import {
   configuration,
   embeddedOrganizationLogo,
   embeddedPartnerOrganizationLogo,
-} from './configuration.generated';
+} from '$generated/configuration.generated';
 import '@shutteros/components/theme.css';
 
 mount(Application, {

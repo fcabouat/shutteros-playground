@@ -6,7 +6,7 @@ Conflicts=getty@tty1.service
 StartLimitIntervalSec=0
 
 [Service]
-# Ubuntu 24.04's PAM helper retains the exec-status pipe: Type=exec stays activating
+# The PAM helper can retain the exec-status pipe: Type=exec stays activating
 # even after Cage starts. Installer checks HTTP and process stability explicitly.
 Type=simple
 User=shutteros-kiosk

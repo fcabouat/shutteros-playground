@@ -139,6 +139,7 @@ trap 'exit 143' TERM
 . "$SOURCE_DIR/platform.sh"
 # shellcheck disable=SC1090
 . "$OS_RELEASE_FILE"
+kiosk_supported_release "${ID:-}" "${VERSION_ID:-}" || die 'unsupported release'
 kiosk_platform "${ID:-}" || die 'unsupported distribution'
 readonly POLICY_ROOT
 readonly POLICY_FILE="$POLICY_ROOT/shutteros.json"

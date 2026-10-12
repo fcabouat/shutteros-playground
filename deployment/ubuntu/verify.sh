@@ -46,8 +46,9 @@ marker_value() {
 . "$SOURCE_DIR/platform.sh"
 # shellcheck disable=SC1090
 . "$OS_RELEASE_FILE"
+kiosk_supported_release "${ID:-}" "${VERSION_ID:-}" || fail 'unsupported release'
 kiosk_platform "${ID:-}" || fail 'unsupported distribution'
-readonly CHROMIUM_COMMAND POLICY_ROOT CHROMIUM_SNAP
+readonly CHROMIUM_COMMAND POLICY_ROOT
 readonly POLICY_FILE="$POLICY_ROOT/shutteros.json"
 
 id "$KIOSK_USER" >/dev/null 2>&1 || fail 'kiosk account is missing'
@@ -117,11 +118,9 @@ root_owned_regular "$POLICY_FILE" || fail 'policy file is missing or unsafe'
 cmp -s "$SOURCE_DIR/chromium-policy.json" "$POLICY_FILE" || fail 'installed policy differs from reviewed policy'
 
 [ -x "$CHROMIUM_COMMAND" ] || fail 'Chromium command is missing'
-if [ "$CHROMIUM_SNAP" = true ]; then
-  snap connections chromium |
-    awk '$2 == "chromium:etc-chromium-browser-policies" && $3 != "-" { found = 1 } END { exit !found }' ||
-    fail 'Chromium policy interface is disconnected'
-fi
+snap connections chromium |
+  awk '$2 == "chromium:etc-chromium-browser-policies" && $3 != "-" { found = 1 } END { exit !found }' ||
+  fail 'Chromium policy interface is disconnected'
 systemctl --quiet is-active shutteros-static.service || fail 'static service is not active'
 systemctl --quiet is-active shutteros-kiosk.service || fail 'kiosk service is not active'
 python3 -c 'from urllib.request import urlopen; urlopen("http://127.0.0.1:8080/", timeout=3).read(1)'

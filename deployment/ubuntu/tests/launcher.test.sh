@@ -1,10 +1,27 @@
 #!/bin/sh
-# Exercise the actual launcher on both layouts without starting a browser.
+# Exercise the actual launcher on the Ubuntu Snap layout without starting a browser.
 set -eu
 repo_root=$(CDPATH='' cd -- "$(dirname -- "$0")/../../.." && pwd)
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT HUP INT TERM
 mkdir -p "$tmp/home" "$tmp/runtime"
+# Exercise the real session arguments and propagate compositor failure without
+# opening a fallback shell or starting Cage/Chromium.
+cat > "$tmp/cage" <<'COMPOSITOR'
+#!/bin/sh
+printf '%s\n' "$@"
+exit "${TEST_CAGE_STATUS:-0}"
+COMPOSITOR
+chmod 755 "$tmp/cage"
+sed "s|/usr/bin/cage|$tmp/cage|" "$repo_root/deployment/ubuntu/session" > "$tmp/session"
+sh "$tmp/session" > "$tmp/session-args"
+printf '%s\n' '-d' '-s' '--' '/usr/local/lib/shutteros-kiosk/launch-chromium' > "$tmp/expected-session-args"
+cmp -s "$tmp/expected-session-args" "$tmp/session-args"
+if TEST_CAGE_STATUS=42 sh "$tmp/session" >/dev/null; then
+  exit 1
+else
+  [ "$?" = 42 ]
+fi
 cp "$repo_root/deployment/ubuntu/platform.sh" "$tmp/platform.sh"
 sed "s|/usr/local/lib/shutteros-kiosk/platform.sh|$tmp/platform.sh|; s|/etc/os-release|$tmp/os-release|" \
   "$repo_root/deployment/ubuntu/launch-chromium" > "$tmp/launch"
@@ -13,28 +30,28 @@ cat > "$tmp/chromium" <<'BROWSER'
 printf '%s\n' "$@"
 BROWSER
 chmod 755 "$tmp/chromium"
-sed -i "s|/snap/bin/chromium|$tmp/chromium|; s|/usr/bin/chromium|$tmp/chromium|" "$tmp/platform.sh"
-for distro in ubuntu debian; do
-  printf 'ID=%s\n' "$distro" > "$tmp/os-release"
-  case "$distro" in
-    ubuntu) profile="$tmp/home/snap/chromium/common/shutteros-kiosk" ;;
-    debian) profile="$tmp/home/.config/shutteros-kiosk" ;;
-  esac
-  mkdir -p "$profile"
-  touch "$tmp/keep"
-  ln -s "$tmp/keep" "$profile/SingletonLock"
-  HOME="$tmp/home" XDG_RUNTIME_DIR="$tmp/runtime" sh "$tmp/launch" > "$tmp/args"
-  grep -qx -- '--ozone-platform=wayland' "$tmp/args"
-  grep -qx -- '--kiosk' "$tmp/args"
-  grep -qx -- 'http://127.0.0.1:8080/?kiosk=1' "$tmp/args"
-  grep -qx -- "--user-data-dir=$profile" "$tmp/args"
-  if grep -q -- '--no-sandbox' "$tmp/args"; then exit 1; fi
-  [ ! -L "$profile/SingletonLock" ] && [ -f "$tmp/keep" ]
-  [ "$(stat -c %a "$profile")" = 700 ]
-  HOME="$tmp/home" XDG_RUNTIME_DIR="$tmp/runtime" SHUTTEROS_INSPECT_POLICY=1 sh "$tmp/launch" > "$tmp/args"
-  grep -qx 'chrome://policy' "$tmp/args"
-  if grep -qx -- '--kiosk' "$tmp/args"; then exit 1; fi
-  if HOME="$tmp/home" XDG_RUNTIME_DIR="$tmp/runtime" SHUTTEROS_INSPECT_POLICY=bad sh "$tmp/launch" >/dev/null 2>&1; then exit 1; fi
+sed -i "s|/snap/bin/chromium|$tmp/chromium|" "$tmp/platform.sh"
+printf 'ID=ubuntu\nVERSION_ID=26.04\n' > "$tmp/os-release"
+profile="$tmp/home/snap/chromium/common/shutteros-kiosk"
+mkdir -p "$profile"
+touch "$tmp/keep"
+ln -s "$tmp/keep" "$profile/SingletonLock"
+HOME="$tmp/home" XDG_RUNTIME_DIR="$tmp/runtime" sh "$tmp/launch" > "$tmp/args"
+grep -qx -- '--ozone-platform=wayland' "$tmp/args"
+grep -qx -- '--kiosk' "$tmp/args"
+grep -qx -- 'http://127.0.0.1:8080/?kiosk=1' "$tmp/args"
+grep -qx -- "--user-data-dir=$profile" "$tmp/args"
+if grep -q -- '--no-sandbox' "$tmp/args"; then exit 1; fi
+[ ! -L "$profile/SingletonLock" ] && [ -f "$tmp/keep" ]
+[ "$(stat -c %a "$profile")" = 700 ]
+HOME="$tmp/home" XDG_RUNTIME_DIR="$tmp/runtime" SHUTTEROS_INSPECT_POLICY=1 sh "$tmp/launch" > "$tmp/args"
+grep -qx 'chrome://policy' "$tmp/args"
+if grep -qx -- '--kiosk' "$tmp/args"; then exit 1; fi
+if HOME="$tmp/home" XDG_RUNTIME_DIR="$tmp/runtime" SHUTTEROS_INSPECT_POLICY=bad sh "$tmp/launch" >/dev/null 2>&1; then exit 1; fi
+# Unsupported hosts must never launch the browser.
+for pair in ubuntu:24.04 debian:13; do
+  printf 'ID=%s\nVERSION_ID=%s\n' "${pair%:*}" "${pair#*:}" > "$tmp/os-release"
+  if HOME="$tmp/home" XDG_RUNTIME_DIR="$tmp/runtime" sh "$tmp/launch" >/dev/null 2>&1; then exit 1; fi
 done
 # The historical launcher restored by the migration test must still open the game.
 sed "s|/snap/bin/chromium|$tmp/chromium|g" \

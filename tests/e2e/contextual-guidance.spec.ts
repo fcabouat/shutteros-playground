@@ -1,3 +1,4 @@
+import { buildRoot } from '../../scripts/build-paths.mjs';
 import { test, expect, type Page } from '@playwright/test';
 import { fr } from '@shutteros/core/data/fr';
 import { guidanceDelayMs } from '@shutteros/core/model/game';
@@ -94,7 +95,7 @@ test('free hints and guided choices independently expose guidance and selected f
     .evaluate((element) =>
       Promise.all(element.getAnimations({ subtree: true }).map((animation) => animation.finished)),
     );
-  await page.screenshot({ path: 'test-results/previews/usb-first-hint.png' });
+  await page.screenshot({ path: `${buildRoot}/test-results/previews/usb-first-hint.png` });
   await expect(page.locator('.action-dock-panel')).toHaveCount(0);
   await switchToGuided(page);
   await expect(page.locator('.hint-window-layer')).toBeVisible();
@@ -462,7 +463,7 @@ for (const locale of ['fr', 'en'] as const) {
     expect(await trigger.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(
       true,
     );
-    await page.screenshot({ path: `test-results/previews/desktop-${locale}.png` });
+    await page.screenshot({ path: `${buildRoot}/test-results/previews/desktop-${locale}.png` });
   });
 }
 

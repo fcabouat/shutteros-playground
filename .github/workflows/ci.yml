@@ -51,8 +51,11 @@ jobs:
           sh deployment/ubuntu/tests/launcher.test.sh
           sh deployment/ubuntu/tests/platform.test.sh
           sh deployment/ubuntu/tests/installer-nominal.test.sh
-          TEST_RELEASE=26.04 sh deployment/ubuntu/tests/installer-nominal.test.sh
-          TEST_DISTRO=debian TEST_RELEASE=13 sh deployment/ubuntu/tests/installer-nominal.test.sh
+          shellcheck deployment/ubuntu/autoinstall/*.sh
+          for script in deployment/ubuntu/autoinstall/*.sh; do
+            bash -n "$script"
+          done
+          python3 -B -m unittest discover -s deployment/ubuntu/autoinstall/tests
           python3 -m json.tool deployment/ubuntu/chromium-policy.json >/dev/null
           python3 deployment/ubuntu/validate-config.py static/kiosk-config.json
           sed 's|^ExecStart=/usr/local/lib/shutteros-kiosk/session$|ExecStart=/usr/bin/true|' \
@@ -71,7 +74,7 @@ jobs:
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: shutteros-static-and-portable
-          path: dist/
+          path: ../shutteros-build/dist/
           retention-days: 14
       - name: Select the GitHub Pages base path
         env:
@@ -87,17 +90,17 @@ jobs:
       - name: Build and exercise the Pages artifact
         run: |
           pnpm build:site
-          BUILD_ROOT=dist/site/demo BASE_PATH="$BASE_PATH/demo" pnpm test:e2e
+          BUILD_ROOT=../shutteros-build/dist/site/demo BASE_PATH="$BASE_PATH/demo" pnpm test:e2e
           pnpm test:site
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         if: github.ref == 'refs/heads/main'
         with:
-          path: dist/site/
+          path: ../shutteros-build/dist/site/
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: failure()
         with:
           name: browser-test-report
-          path: playwright-report/
+          path: ../shutteros-build/playwright-report/
           retention-days: 7
 
   deploy:
@@ -146,18 +149,21 @@ jobs:
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: shutteros-static-and-portable
-          path: dist
+          path: ../shutteros-build/dist
       - name: Package the kiosk build
         env:
           TAG: ${{ github.ref_name }}
         run: |
-          cp dist/portable/shutteros.html "shutteros-portable-$TAG.html"
-          (cd dist && zip -qr "../shutteros-kiosk-$TAG.zip" . -x 'portable/*')
+          release_root="$GITHUB_WORKSPACE/../shutteros-build/release"
+          mkdir -p "$release_root"
+          cp ../shutteros-build/dist/portable/shutteros.html "$release_root/shutteros-portable-$TAG.html"
+          (cd ../shutteros-build/dist && zip -qr "$release_root/shutteros-kiosk-$TAG.zip" . -x 'portable/*')
       - name: Create or repair the GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
           TAG: ${{ github.ref_name }}
         run: |
+          release_root="$GITHUB_WORKSPACE/../shutteros-build/release"
           sh scripts/publish-release.sh "$TAG" \
-            "shutteros-portable-$TAG.html" "shutteros-kiosk-$TAG.zip"
+            "$release_root/shutteros-portable-$TAG.html" "$release_root/shutteros-kiosk-$TAG.zip"

@@ -1,10 +1,13 @@
+import { buildRoot, distRoot } from './scripts/build-paths.mjs';
 import adapter from '@sveltejs/adapter-static';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 
 export default {
   preprocess: vitePreprocess(),
   kit: {
-    adapter: adapter({ pages: 'dist', assets: 'dist', strict: true }),
+    outDir: `${buildRoot}/svelte-kit`,
+    alias: { $generated: `${buildRoot}/generated` },
+    adapter: adapter({ pages: distRoot, assets: distRoot, strict: true }),
     paths: { base: process.env.BASE_PATH ?? '' },
     csp: {
       mode: 'hash',

@@ -19,6 +19,27 @@ After that installation, Bun remains a supported manual runner for individual de
 
 Knip runs in `verify` and detects unused files, dependencies and exports across the application and core workspace. Framework entry points come from its plugins; `knip.jsonc` declares the test-server and static-site assets loaded outside imports, and checks core entry exports. Remove unused code or document a real entry point instead of adding broad ignore rules.
 
+## Source and local build directories
+
+Keep the repository checkout in `shutteros/` and development outputs in its sibling
+`shutteros-build/`. `scripts/build-paths.mjs` supplies the shared paths: generated
+branding/configuration, SvelteKit intermediates, caches, static deliveries, ISO
+assembly and browser reports all stay outside the source tree. `node_modules`
+remains the conventional dependency directory. Committed documentation images
+remain in `docs/images`.
+
+`private/` contains only local branding input and its logos. Operator credentials,
+ISO input, dependency caches and VM evidence belong under `../shutteros-build`,
+never under `private/` or in Git. This separation keeps source review and publication
+independent of large local runtime assets and machine-specific evidence.
+
+The dedicated OS target is Ubuntu Server 26.04 amd64 with Chromium Snap. Keeping one
+release, browser packaging format and offline USB path makes provisioning and
+recovery easier to verify. Debian and Ubuntu 24.04 are outside the current deployment
+contract. `pnpm kiosk:prepare` uses an operator-supplied Ubuntu 26.04 environment;
+`pnpm kiosk:iso` assembles the local media. Neither command is run automatically in
+CI or starts a VM. See [the deployment guide](docs/ubuntu-kiosk.md).
+
 ## Scope and design
 
 Keep `packages/core` independent of Svelte, the DOM, storage, system time, and package dependencies. It is a standalone workspace package so the rules can be type-checked separately from the browser application. Keep the versioned external JSON contract in `src/lib/contract` independent of `@shutteros/core`. The independently checked `packages/components` package renders props and emits intents; it does not import application or infrastructure modules or contain game outcomes or timing rules. Preserve the state-machine invariants: absolute deadlines, monotonic time, no duplicate result for a challenge, and a full reset on logout or global expiry.

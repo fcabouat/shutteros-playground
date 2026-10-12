@@ -1,10 +1,13 @@
+import { buildPaths } from './build-paths.mjs';
 import { readFile, writeFile, readdir, stat, rm, realpath } from 'node:fs/promises';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { parse } from 'parse5';
 
+const { distPath } = buildPaths(process.cwd());
+
 // Inventory rendered JavaScript in both deliveries. Tailwind's emitted CSS also needs its license.
-const manifests = ['dist/bundled-packages.json', 'dist/portable/bundled-packages.json'];
+const manifests = [distPath('bundled-packages.json'), distPath('portable/bundled-packages.json')];
 const manifest = new Set([await realpath('node_modules/tailwindcss')]);
 for (const file of manifests) {
   const directories = JSON.parse(await readFile(file, 'utf8'));
@@ -34,7 +37,7 @@ for (const directory of manifest) {
 }
 entries.sort();
 const notices = ['ShutterOS — Third-party software notices', ...entries].join('\n\n');
-await writeFile('dist/THIRD-PARTY-NOTICES.txt', notices);
+await writeFile(distPath('THIRD-PARTY-NOTICES.txt'), notices);
 const sourceNoticesPath = 'static/THIRD-PARTY-NOTICES.txt';
 let sourceNotices;
 try {
@@ -55,10 +58,10 @@ if (sourceNotices?.trimEnd() !== notices.trimEnd()) {
   }
 }
 const license = await readFile('LICENSE', 'utf8');
-await writeFile('dist/LICENSE', license);
+await writeFile(distPath('LICENSE'), license);
 const escape = (text) =>
   text.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
-let html = await readFile('dist/portable/index.html', 'utf8');
+let html = await readFile(distPath('portable/index.html'), 'utf8');
 // Parse with HTML rules before granting CSP hashes: tag casing, attributes and
 // raw-text termination must agree with the browser. This validates our generated
 // single-file format; it does not sanitize arbitrary HTML or authorize extra scripts.
@@ -93,11 +96,11 @@ html = html.replace(
   '</body>',
   () => `<template id="third-party-notices"><pre>${escape(notices)}</pre></template>\n</body>`,
 );
-await writeFile('dist/portable/shutteros.html', html);
+await writeFile(distPath('portable/shutteros.html'), html);
 // Do not distribute intermediate artifacts or build-machine paths.
-for (const file of [...manifests, 'dist/portable/index.html']) await rm(file);
+for (const file of [...manifests, distPath('portable/index.html')]) await rm(file);
 console.log(
-  `Portable artifact: dist/portable/shutteros.html (${Math.round(Buffer.byteLength(html) / 1024)} KiB; ${entries.length} bundled package notices).`,
+  `Portable artifact: ${distPath('portable/shutteros.html')} (${Math.round(Buffer.byteLength(html) / 1024)} KiB; ${entries.length} bundled package notices).`,
 );
 
 function* walk(node) {

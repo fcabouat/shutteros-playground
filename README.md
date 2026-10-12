@@ -45,7 +45,7 @@ Build the ordinary kiosk delivery and optional portable file with:
 pnpm build
 ```
 
-This writes `dist/` and `dist/portable/shutteros.html`. Serve `dist/` over local HTTP
+This writes `../shutteros-build/dist/` and `../shutteros-build/dist/portable/shutteros.html`. Serve `../shutteros-build/dist/` over local HTTP
 for a kiosk; `pnpm preview` is for development verification. Configure the
 organisation name, branding, and local security contact as described in the
 [kiosk guide](docs/kiosk.md) and [branding guide](docs/branding.md).
@@ -53,17 +53,53 @@ En français : [déploiement en borne](docs/kiosk.fr.md) · [personnalisation](d
 
 Bun can run the existing scripts after the locked pnpm installation (`bun run dev`, `bun run build`, and `bun run check`).
 
+## Prepare an offline USB kiosk
+
+The dedicated OS kit supports Ubuntu Server 26.04 amd64 only. Prepare the dependency
+cache once in a supplied Ubuntu 26.04 VM with Internet access, using the exact
+official Server ISO that will be remastered. Keep its verified `SHA256SUMS` beside
+it. From the source checkout available in that VM:
+
+```sh
+sudo pnpm kiosk:prepare --base-iso /path/to/ubuntu-26.04-live-server-amd64.iso
+# Without pnpm in that VM, use the equivalent Python entry point:
+sudo python3 -B deployment/ubuntu/prepare-offline-cache.py \
+  --output ../shutteros-build/cache/offline \
+  --base-iso /path/to/ubuntu-26.04-live-server-amd64.iso
+```
+
+Copy `../shutteros-build/cache/offline` back to the build machine if necessary,
+then assemble the media there with the same base ISO:
+
+```sh
+pnpm kiosk:iso --base-iso /path/to/ubuntu-26.04-live-server-amd64.iso
+# Or, after the locked dependency installation:
+bun run kiosk:iso --base-iso /path/to/ubuntu-26.04-live-server-amd64.iso
+```
+
+`kiosk:iso` rebuilds the current local branding and writes the image and checksums
+under `../shutteros-build/kiosk-iso`. The cache must match the selected ISO's
+installed package baseline. These commands do not create a VM or download missing
+payload files during assembly. The installer asks the operator to select and
+confirm the target disk. Installation and first boot can run without Internet
+access on each kiosk PC.
+
+Read the [USB and recovery guide](docs/ubuntu-kiosk.md) or the
+[French deployment guide](docs/kiosk.fr.md#clé-usb-ubuntu-2604-hors-ligne) for cache
+preparation, the local administrator password and validation status. The complete
+ISO installation validation is still in progress.
+
 ## Build the public site
 
 The site build assembles the landing page, demo, deployment documentation, generated API
-reference, and Storybook under `dist/site/`:
+reference, and Storybook under `../shutteros-build/dist/site/`:
 
 ```sh
 pnpm build:site
 pnpm test:site
 ```
 
-The site build includes TypeDoc; `pnpm docs:api` regenerates only its reference in `.site-build/api`. Run `pnpm build` again before distributing the root-path kiosk edition.
+The site build includes TypeDoc; `pnpm docs:api` regenerates only its reference in `../shutteros-build/api`. Run `pnpm build` again before distributing the root-path kiosk edition.
 
 ## Architecture
 

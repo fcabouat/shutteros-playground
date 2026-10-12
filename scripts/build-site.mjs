@@ -1,3 +1,4 @@
+import { buildRoot, distRoot, distPath } from './build-paths.mjs';
 import { cp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -18,14 +19,14 @@ if (!process.argv.includes('--assemble-only')) {
   run('docs:api');
 }
 const version = JSON.parse(await readFile('package.json', 'utf8')).version;
-const output = 'dist/site';
+const output = distPath('site');
 await rm(output, { recursive: true, force: true });
 await mkdir(`${output}/demo`, { recursive: true });
-for (const entry of await readdir('dist')) {
-  if (entry !== 'site') await cp(`dist/${entry}`, `${output}/demo/${entry}`, { recursive: true });
+for (const entry of await readdir(distRoot)) {
+  if (entry !== 'site') await cp(distPath(entry), `${output}/demo/${entry}`, { recursive: true });
 }
-await cp('storybook-static', `${output}/storybook`, { recursive: true });
-await cp('.site-build/api', `${output}/api`, { recursive: true });
+await cp(path.join(buildRoot, 'storybook-static'), `${output}/storybook`, { recursive: true });
+await cp(path.join(buildRoot, 'api'), `${output}/api`, { recursive: true });
 await mkdir(`${output}/assets`, { recursive: true });
 for (const file of ['shell.css', 'site.css', 'locale.js']) {
   await cp(`site/${file}`, `${output}/assets/${file}`);
@@ -35,7 +36,7 @@ await cp('docs/images', `${output}/docs/images`, { recursive: true });
 for (const suffix of ['', '.fr'])
   await cp(`docs/images/desktop${suffix}.png`, `${output}/assets/desktop${suffix}.png`);
 await cp('LICENSE', `${output}/LICENSE`);
-await cp('dist/THIRD-PARTY-NOTICES.txt', `${output}/THIRD-PARTY-NOTICES.txt`);
+await cp(distPath('THIRD-PARTY-NOTICES.txt'), `${output}/THIRD-PARTY-NOTICES.txt`);
 for (const locale of ['en', 'fr']) {
   await writeFile(`${output}/${locale === 'en' ? 'index' : 'fr'}.html`, landing(locale, version));
 }
@@ -124,7 +125,8 @@ console.log(`Product site: ${output}/ (demo base ${base}/demo)`);
 function run(script, extraEnv = {}) {
   const result = spawnSync('pnpm', [script], {
     stdio: 'inherit',
-    env: { ...process.env, ...extraEnv },
+    // The public showcase must never inherit the operator's private identity.
+    env: { ...process.env, ...extraEnv, SHUTTEROS_PUBLIC_BUILD: '1' },
   });
   if (result.status !== 0) throw new Error(`pnpm ${script} failed`);
 }

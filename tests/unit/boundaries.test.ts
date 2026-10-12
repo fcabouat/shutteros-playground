@@ -61,7 +61,7 @@ describe('components package boundaries', () => {
     "import { browserClock } from '../../../src/lib/infrastructure/clock';",
     "import { decodeConfiguration } from '../../../src/lib/contract/configuration';",
     "import { base } from '$app/paths';",
-    "import { branding } from '../../../src/lib/branding.generated';",
+    "import { branding } from '$generated/branding.generated';",
   ])('blocks application-owned imports', async (source) => {
     expect(await lintComponents(source)).toContain('no-restricted-imports');
   });

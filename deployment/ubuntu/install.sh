@@ -1,5 +1,5 @@
 #!/bin/sh
-# Review this local script before running it as root on a dedicated Debian or Ubuntu kiosk host.
+# Review this local script before running it as root on a dedicated Ubuntu 26.04 kiosk host.
 set -eu
 
 PATH=/usr/sbin:/usr/bin:/sbin:/bin
@@ -47,7 +47,8 @@ An interactive terminal offers a keyboard menu unless --keyboard-layout is set.
 
 Copies a reviewed ShutterOS static build into /opt/cyber-shutteros/site, creates
 separate browser and static-server accounts, and enables local Python, Cage,
-and Chromium services on tty1.
+and Chromium services on tty1. Dependencies must already be installed from the
+offline USB; this script does not download packages.
 EOF
 }
 
@@ -455,7 +456,7 @@ done
 # shellcheck disable=SC1090
 . "$OS_RELEASE_FILE"
 kiosk_platform "${ID:-}" || die 'unsupported distribution'
-readonly CHROMIUM_COMMAND POLICY_ROOT CHROMIUM_SNAP
+readonly CHROMIUM_COMMAND POLICY_ROOT
 readonly POLICY_FILE="$POLICY_ROOT/shutteros.json"
 kiosk_supported_release "${ID:-}" "${VERSION_ID:-}" || die 'unsupported release'
 
@@ -494,42 +495,24 @@ assert_no_graphical_display_manager
 prepare_environment
 prepare_stage
 
-missing_packages=
-[ -x "$CAGE_COMMAND" ] || missing_packages="$missing_packages cage"
-[ -x "$PYTHON_COMMAND" ] || missing_packages="$missing_packages python3"
-if [ "$CHROMIUM_SNAP" = true ]; then
-  [ -x "$SNAP_COMMAND" ] || missing_packages="$missing_packages snapd"
-else
-  [ -x "$CHROMIUM_COMMAND" ] || missing_packages="$missing_packages chromium"
-fi
-# PAM/logind must create the unprivileged Wayland runtime directory, even on minimal servers.
+# The offline USB must provision dependencies before this installer runs.
+# Fail without contacting apt repositories or the Snap Store.
+[ -x "$CAGE_COMMAND" ] || die 'Cage is missing; provision it from the offline USB first'
+[ -x "$PYTHON_COMMAND" ] || die 'Python is missing; provision it from the offline USB first'
+[ -x "$SNAP_COMMAND" ] || die 'Snap is missing; provision it from the offline USB first'
 for package in libpam-systemd dbus-user-session; do
-  if [ "$(dpkg-query -W -f='${Status}' "$package" 2>/dev/null || true)" != 'install ok installed' ]; then
-    missing_packages="$missing_packages $package"
-  fi
+  [ "$(dpkg-query -W -f='${Status}' "$package" 2>/dev/null || true)" = 'install ok installed' ] ||
+    die "$package is missing; provision it from the offline USB first"
 done
-if [ -n "$missing_packages" ]; then
-  export DEBIAN_FRONTEND=noninteractive
-  apt-get update
-  # Package names above are fixed constants; splitting passes each as an argument.
-  # shellcheck disable=SC2086
-  apt-get install -y $missing_packages
-fi
-[ -x "$CAGE_COMMAND" ] || die 'Cage is unavailable after package installation'
-[ -x "$PYTHON_COMMAND" ] || die 'Python is unavailable after package installation'
 "$PYTHON_COMMAND" "$SOURCE_DIR/validate-config.py" "$stage_site/kiosk-config.json" ||
   die 'kiosk-config.json is invalid'
-if [ "$CHROMIUM_SNAP" = true ]; then
-  [ -x "$SNAP_COMMAND" ] || die 'Snap is unavailable after package installation'
-  "$SNAP_COMMAND" wait system seed.loaded
-  if ! "$SNAP_COMMAND" list chromium >/dev/null 2>&1; then
-    "$SNAP_COMMAND" install chromium
-  fi
-  "$SNAP_COMMAND" connections chromium |
-    awk '$2 == "chromium:etc-chromium-browser-policies" && $3 != "-" { found = 1 } END { exit !found }' ||
-    die 'the Chromium snap policy interface is not connected'
-fi
-[ -x "$CHROMIUM_COMMAND" ] || die 'Chromium is unavailable after installation'
+"$SNAP_COMMAND" wait system seed.loaded
+"$SNAP_COMMAND" list chromium >/dev/null 2>&1 ||
+  die 'Chromium Snap is missing; provision it from the offline USB first'
+[ -x "$CHROMIUM_COMMAND" ] || die 'Chromium Snap command is unavailable'
+"$SNAP_COMMAND" connections chromium |
+  awk '$2 == "chromium:etc-chromium-browser-policies" && $3 != "-" { found = 1 } END { exit !found }' ||
+  die 'the Chromium snap policy interface is not connected'
 
 if [ "$installation_mode" = fresh ]; then
   fresh_mutation_started=true

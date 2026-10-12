@@ -13,7 +13,7 @@ pnpm install --frozen-lockfile
 pnpm build
 ```
 
-La construction produit `dist/`. Servez ce dossier avec Python, en remplaçant le chemin par son emplacement absolu :
+La construction produit `../shutteros-build/dist/`. Servez ce dossier avec Python, en remplaçant le chemin par son emplacement absolu :
 
 ```sh
 python3 -m http.server 8080 --bind 127.0.0.1 --directory /chemin/vers/dist
@@ -30,7 +30,7 @@ Après `pnpm build:site`, relancez `pnpm build` avant de distribuer une borne se
 Le même `pnpm build` produit :
 
 ```text
-dist/portable/shutteros.html
+../shutteros-build/dist/portable/shutteros.html
 ```
 
 Ce fichier peut être ouvert directement dans le navigateur, sans serveur HTTP. Il intègre la configuration de `static/kiosk-config.json`, les logos configurés et les notices de licences. Les fichiers de logos sont vérifiés avant intégration. Pour changer un paramètre ou une image, modifiez les sources puis reconstruisez le livrable.
@@ -71,13 +71,75 @@ Les phrases du jeu sont publiques et fictives : n’utilisez jamais un vrai mot 
 
 ## Préparer le poste
 
-Le dépôt fournit `deployment/ubuntu/install.sh`, des scripts de vérification et de désinstallation pour Debian 13 et Ubuntu Server 24.04 / 26.04 LTS. Le [guide de déploiement Linux](ubuntu-kiosk.md), en anglais, détaille les prérequis, la configuration Cage/Chromium, la recette matérielle et la récupération.
+Le kit système cible uniquement Ubuntu Server 26.04 amd64 avec Cage et Chromium
+Snap. Le [guide technique](ubuntu-kiosk.md), en anglais, décrit les contrôles de
+politique navigateur, la recette matérielle et la récupération.
 
-Le système hôte reste responsable du confinement : raccourcis système, accès physique, sortie du navigateur et redémarrage après incident. ShutterOS dispose d’un raccourci volontaire de remise à zéro, `Ctrl+Alt+Home`, qui revient à l’accueil ; il ne verrouille pas le système d’exploitation.
+## Clé USB Ubuntu 26.04 hors ligne
 
-Le lanceur Ubuntu active une protection de confort avec `?kiosk=1`. Lors du clic de démarrage, le jeu demande le plein écran et le verrouillage clavier si le navigateur le permet. Il filtre certains raccourcis tout en laissant fonctionner la saisie, la navigation clavier et le raccourci opérateur. Le menu contextuel, les clics auxiliaires et le zoom par Ctrl + molette sont désactivés dans ce mode ; le défilement et le tactile restent disponibles.
+Préparez une fois les dépendances avec Internet dans une VM Ubuntu 26.04 fournie
+par l’opérateur, avec APT, snapd, `xorriso`, `unsquashfs` (squashfs-tools), `python3-yaml` et le trousseau Ubuntu.
+Avant de préparer le cache, placez l’ISO officielle Ubuntu Server 26.04.1 amd64 dans
+`../shutteros-build/cache/ubuntu/ubuntu-26.04.1-live-server-amd64.iso`, depuis le
+checkout accessible dans cette VM, avec son `SHA256SUMS` vérifié à côté. Utilisez
+ce même fichier ISO pour la préparation et l’assemblage. Depuis ce checkout :
 
-Cette protection n’est pas un confinement du poste : sa capture peut échouer et un appui prolongé sur Échap peut la libérer. Le jeu ne redemande pas le plein écran sans un nouveau clic de démarrage. La démo publique n’active pas cette protection.
+```sh
+sudo pnpm kiosk:prepare
+# Sans pnpm dans cette VM, point d’entrée Python équivalent :
+sudo python3 -B deployment/ubuntu/prepare-offline-cache.py \
+  --output ../shutteros-build/cache/offline \
+  --base-iso ../shutteros-build/cache/ubuntu/ubuntu-26.04.1-live-server-amd64.iso
+```
+
+Le cache est calculé depuis les paquets installés dans cette ISO exacte, et non
+ceux de la VM de préparation. La simulation APT hors ligne refuse tout retrait de paquet (`--no-remove`) ou dépendance incompatible.
+La commande ne crée ni ne démarre la VM. Elle produit
+`../shutteros-build/cache/offline`, avec les DEB et les Snap signés nécessaires.
+Si la machine de construction est distincte, copiez-y ce cache et la même ISO
+avec son `SHA256SUMS`, aux mêmes emplacements relatifs au checkout.
+
+Après l’installation verrouillée des dépendances du projet :
+
+```sh
+pnpm kiosk:iso
+# Ou :
+bun run kiosk:iso
+```
+
+Cette commande reconstruit le jeu avec la personnalisation locale courante et
+assemble l’image dans `../shutteros-build/kiosk-iso`. Elle ne télécharge pas de
+paquets manquants. L’option `--skip-build` exige un build racine dont les métadonnées
+correspondent aux sources, à la configuration et au branding actuels ; elle refuse
+un ancien build public. `--base-iso` et `--cache` permettent d’utiliser d’autres
+emplacements locaux.
+
+Par défaut, le compte administrateur est `kiosk-admin`. Son mot de passe aléatoire
+reste dans `../shutteros-build/config/operator-password.txt`, en mode `0600` ; son
+hash est dans `../shutteros-build/config/operator.json`. Le compte et son hash sont
+inclus dans le média : protégez la clé et conservez le mot de passe pour la
+récupération. Pour une configuration administrateur distincte, passez
+`--admin-config /chemin/operator.json`. Ne placez aucun de ces fichiers dans
+`private/`, réservé au branding, ni dans Git.
+
+Écrivez l’ISO sur la clé avec votre outil habituel, en vérifiant le périphérique
+visé. Au démarrage de chaque PC, sélectionnez le disque puis confirmez
+l’installation dans l’installateur. Le partitionnement reste interactif. La clé
+contient les dépendances pour l’installation et le premier démarrage : aucun
+accès Internet n’est requis sur les postes. Le premier démarrage installe les
+Snap signés, connecte leur interface de politiques puis configure la borne.
+
+La validation complète de cette ISO est **en cours**. Effectuez la recette sur le
+modèle de PC prévu avant de déployer les autres bornes. En cas d’échec, utilisez
+`Ctrl+Alt+F2` puis authentifiez-vous avec le compte administrateur et son mot de
+passe, ou utilisez SSH. Cage autorise ce changement de console pendant que la
+borne fonctionne ; `Ctrl+Alt+F1` revient au jeu. Un administrateur configuré
+uniquement avec des clés SSH a un mot de passe verrouillé et nécessite SSH sur
+un réseau local pour la récupération. Consultez
+`/var/log/shutteros-provisioning/firstboot.log` et
+`journalctl -u shutteros-firstboot.service`. Les détails de reprise sont dans le
+[guide technique](ubuntu-kiosk.md#recovery-and-removal). Ni la construction ISO ni
+les essais VM ne sont exécutés automatiquement ou dans la CI.
 
 ## Avant d’accueillir les participants
 
@@ -94,9 +156,9 @@ Le compteur se resynchronise au retour du focus ou de la visibilité. Si le proc
 
 ## Fichiers produits
 
-| Chemin                                | Contenu                                                                         |
-| ------------------------------------- | ------------------------------------------------------------------------------- |
-| `dist/`                               | Site statique, configuration et licences ; copier et servir le dossier complet. |
-| `dist/portable/shutteros.html`        | Édition autonome en un fichier.                                                 |
-| `.svelte-kit/`                        | Fichiers intermédiaires du compilateur, ignorés par Git.                        |
-| `src/app.html`, `portable/index.html` | Modèles sources des deux éditions.                                              |
+| Chemin                                            | Contenu                                                                         |
+| ------------------------------------------------- | ------------------------------------------------------------------------------- |
+| `../shutteros-build/dist/`                        | Site statique, configuration et licences ; copier et servir le dossier complet. |
+| `../shutteros-build/dist/portable/shutteros.html` | Édition autonome en un fichier.                                                 |
+| `../shutteros-build/svelte-kit/`                  | Fichiers intermédiaires du compilateur, ignorés par Git.                        |
+| `src/app.html`, `portable/index.html`             | Modèles sources des deux éditions.                                              |

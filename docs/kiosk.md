@@ -2,7 +2,7 @@
 
 [Français](kiosk.fr.md)
 
-ShutterOS is a static browser application. Build with `pnpm build`, then serve `dist/` over local HTTP with Python; `pnpm preview` is for development verification and `pnpm dev` is for development. A portable HTML artifact is optional. It does not require an application server, database, identity provider, external API, CDN, or Internet connection after its files are available.
+ShutterOS is a static browser application. Build with `pnpm build`, then serve `../shutteros-build/dist/` over local HTTP with Python; `pnpm preview` is for development verification and `pnpm dev` is for development. A portable HTML artifact is optional. It does not require an application server, database, identity provider, external API, CDN, or Internet connection after its files are available.
 
 ## Standard static build
 
@@ -13,10 +13,10 @@ pnpm install --frozen-lockfile
 pnpm build
 ```
 
-The regular SvelteKit output is written to `dist/`. For the kiosk, serve it with Python's static server (replace the path with the absolute build path):
+The regular SvelteKit output is written to `../shutteros-build/dist/`. For the kiosk, serve it with Python's static server (replace the path with the absolute build path):
 
 ```sh
-python3 -m http.server 8080 --bind 127.0.0.1 --directory /path/to/dist
+python3 -m http.server 8080 --bind 127.0.0.1 --directory ../shutteros-build/dist
 ```
 
 At startup, the application requests `kiosk-config.json` from the deployed base path. Keep that JSON beside the generated site and serve it as JSON. If it names an optional `organizationLogo`, keep that PNG, WebP, or SVG file beside the JSON and site entry point as well. The value is a local filename such as `logo-organisation.svg`, never a path or URL.
@@ -28,7 +28,7 @@ After building the public product site with `pnpm build:site`, run `pnpm build` 
 `pnpm build` also runs the portable Vite configuration. It imports `static/kiosk-config.json` while building and packages it in a standalone page. If the JSON names an organisation logo, the prebuild validates the file under `static/` and embeds it separately from the validated JSON. The packaging step adds the content security policy and license notices, then writes the finished page to:
 
 ```text
-dist/portable/shutteros.html
+../shutteros-build/dist/portable/shutteros.html
 ```
 
 Use this artifact where a single local file is preferable. Because the configuration is embedded, edit `static/kiosk-config.json` and rebuild to change it. The standard build instead reads the deployed JSON at runtime.
@@ -49,9 +49,50 @@ Session duration accepts 1 to 30 minutes. Address fields are bounded, simple ema
 
 Treat the accepted passwords as public game content. They are not credentials and must never be copied from a real account. The simulated login uses an ordinary text input, outside a form, with autocomplete disabled; Enter and the session button both work. Its value is not stored, logged, or sent. Where supported, CSS masks the text input; other browsers use a password-input fallback. The field is outside a credential form. This reduces the normal credential-form trigger, but a web page cannot control every browser or password-manager extension: [autocomplete is only a browser hint](https://developer.mozilla.org/en-US/docs/Web/Security/Practical_implementation_guides/Turning_off_form_autocompletion).
 
-## Debian and Ubuntu setup kit
+## Ubuntu 26.04 offline USB
 
-The repository includes `deployment/ubuntu/install.sh`, its support files, verification, and uninstall scripts for a dedicated Debian 13 or Ubuntu Server 24.04 / 26.04 LTS host. See [the Linux deployment guide](ubuntu-kiosk.md) for prerequisites, validation status, hardware acceptance checks, and recovery.
+The dedicated OS kit supports Ubuntu Server 26.04 amd64 only. Prepare its complete
+DEB and signed Snap cache once, with Internet access, inside an operator-supplied
+Ubuntu 26.04 VM. Preinstall APT, snapd, `xorriso`, `unsquashfs` (squashfs-tools),
+Python with `python3-yaml` and the Ubuntu archive keyring in that VM. Before running
+the preparer, place the official Server ISO at
+`../shutteros-build/cache/ubuntu/ubuntu-26.04.1-live-server-amd64.iso` relative to
+its source checkout, with the verified `SHA256SUMS` beside it. Use this same ISO
+for preparation and assembly. The command does not start or create the VM:
+
+```sh
+sudo pnpm kiosk:prepare
+# Without pnpm in that VM, use the equivalent Python entry point:
+sudo python3 -B deployment/ubuntu/prepare-offline-cache.py \
+  --output ../shutteros-build/cache/offline \
+  --base-iso ../shutteros-build/cache/ubuntu/ubuntu-26.04.1-live-server-amd64.iso
+```
+
+Preparation reads the exact ISO's installed package baseline, then checks the DEB
+closure with an offline `--no-download --no-remove` APT simulation; the cache
+records the ISO's name and hash.
+
+If the build machine is separate, copy the resulting
+`../shutteros-build/cache/offline` and the same ISO with its `SHA256SUMS` there. Then run `pnpm kiosk:iso` or `bun run kiosk:iso`; it rebuilds the current
+local branding and writes media under `../shutteros-build/kiosk-iso`. It refuses
+missing cache files instead of downloading them.
+
+The installer leaves storage interactive: select and confirm the intended disk on
+each PC. The prepared USB supplies installation and first-boot dependencies without
+Internet access. The default administrator is `kiosk-admin`; its random password is
+stored locally in `../shutteros-build/config/operator-password.txt` with mode `0600`.
+The corresponding password hash is in `config/operator.json` under the same build
+root. Protect those files and the USB media. Use `--admin-config` for a reviewed
+administrator configuration; game passwords remain unrelated fictional content.
+
+For local recovery, use `Ctrl+Alt+F2` and authenticate with that administrator
+account and password. Cage allows the switch while the kiosk runs; `Ctrl+Alt+F1`
+returns to the game. An administrator configured with SSH keys only has a locked
+password and needs SSH over a local network for recovery.
+
+See [the USB, hardware acceptance and recovery guide](ubuntu-kiosk.md). Full offline
+ISO installation validation is still in progress. These operator commands are
+excluded from CI and do not run a VM automatically.
 
 ## Host policy
 
@@ -73,7 +114,7 @@ The game has no persistent progress, so refreshing the page, closing the browser
 
 Use a dedicated browser profile with password saving and autofill disabled through your normal host policy. Keep game passwords and scenario identities fictional; use the organisation's real branding and security reporting contact. Try the entire game on the actual screen, with its mouse or touch input, and verify logout plus one timed reset. The app works without sound; the welcome screen explains the controls and the language selector remains available.
 
-For `file:///` use, open `dist/portable/shutteros.html` directly when the optional artifact is required. For normal use, deploy the whole `dist/` directory over local HTTP. Use the production build for a kiosk; keep `pnpm dev` for development.
+For `file:///` use, open `../shutteros-build/dist/portable/shutteros.html` directly when the optional artifact is required. For normal use, deploy the whole `../shutteros-build/dist/` directory over local HTTP. Use the production build for a kiosk; keep `pnpm dev` for development.
 
 After updating files or configuration, reload the page or restart Chromium. An open tab keeps its loaded code and configuration; leaving the game session does not reload them. There is no service worker, but browser or hosting caches can still affect delivery: verify the deployed version after reloading. The Ubuntu installer restarts the kiosk browser during an update. For development verification, restart `pnpm preview` after rebuilding.
 
@@ -81,9 +122,9 @@ The session clock is checked against elapsed time and resynchronises on visibili
 
 ## Output directories
 
-| Path                                  | Purpose                                                                                     |
-| ------------------------------------- | ------------------------------------------------------------------------------------------- |
-| `dist/`                               | Static site, runtime configuration and license notices; copy and serve the whole directory. |
-| `dist/portable/shutteros.html`        | Self-contained single-file edition.                                                         |
-| `.svelte-kit/`                        | Ignored compiler intermediates.                                                             |
-| `src/app.html`, `portable/index.html` | Source templates for the two builds.                                                        |
+| Path                                              | Purpose                                                                                     |
+| ------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `../shutteros-build/dist/`                        | Static site, runtime configuration and license notices; copy and serve the whole directory. |
+| `../shutteros-build/dist/portable/shutteros.html` | Self-contained single-file edition.                                                         |
+| `../shutteros-build/svelte-kit/`                  | Ignored compiler intermediates.                                                             |
+| `src/app.html`, `portable/index.html`             | Source templates for the two builds.                                                        |

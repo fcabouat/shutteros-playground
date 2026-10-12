@@ -1,13 +1,13 @@
+import { distPath, buildRoot } from '../../scripts/build-paths.mjs';
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { pathToFileURL } from 'node:url';
-import { resolve } from 'node:path';
 import { fr } from '@shutteros/core/data/fr';
 import { en } from '@shutteros/core/data/en';
 import config from '../../static/kiosk-config.json' with { type: 'json' };
 import { beginGuided } from './helpers';
 
-const portable = pathToFileURL(resolve('dist/portable/shutteros.html')).href;
+const portable = pathToFileURL(distPath('portable/shutteros.html')).href;
 
 for (const locale of ['fr', 'en'] as const) {
   for (const delivery of ['http', 'file'] as const) {
@@ -58,7 +58,7 @@ for (const locale of ['fr', 'en'] as const) {
       expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
       if (delivery === 'http')
         await page.screenshot({
-          path: `test-results/previews/welcome-${locale}.png`,
+          path: `${buildRoot}/test-results/previews/welcome-${locale}.png`,
           fullPage: true,
         });
       await page.getByRole('button', { name: copy.welcome.begin, exact: true }).click();
@@ -73,7 +73,7 @@ for (const locale of ['fr', 'en'] as const) {
       await expect(page.getByRole('button', { name: copy.login.enter, exact: true })).toBeVisible();
       if (delivery === 'http')
         await page.screenshot({
-          path: `test-results/previews/login-side-quiz-${locale}.png`,
+          path: `${buildRoot}/test-results/previews/login-side-quiz-${locale}.png`,
           fullPage: true,
         });
       const controlsAfter = await page.locator('.session-controls').boundingBox();
@@ -97,7 +97,7 @@ for (const locale of ['fr', 'en'] as const) {
       if (delivery === 'http') {
         expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
         await page.screenshot({
-          path: `test-results/previews/guided-login-feedback-${locale}.png`,
+          path: `${buildRoot}/test-results/previews/guided-login-feedback-${locale}.png`,
         });
       }
       // The live clock keeps running during the accessibility scan and screenshot.
@@ -223,7 +223,7 @@ test('recap distinguishes viewed hints from guided choices and survives minimisa
   await chat.getByRole('radio', { name: fr.ai.generic, exact: true }).check();
   await chat.getByRole('button', { name: fr.ai.confirm, exact: true }).click();
   await page.getByRole('button', { name: fr.experience.next, exact: true }).click();
-  await page.screenshot({ path: 'test-results/previews/guided-routines.png' });
+  await page.screenshot({ path: `${buildRoot}/test-results/previews/guided-routines.png` });
   await page
     .getByRole('button', {
       name: fr.routines.passwordAction,
@@ -245,7 +245,7 @@ test('recap distinguishes viewed hints from guided choices and survives minimisa
   await expect(page.getByRole('button', { name: fr.shell.nextPlayer, exact: true })).toHaveCount(0);
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await expect(page.locator('.summary-fact').first()).toHaveCSS('animation-name', 'none');
-  await page.screenshot({ path: 'test-results/previews/journey-summary.png' });
+  await page.screenshot({ path: `${buildRoot}/test-results/previews/journey-summary.png` });
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   await page.getByRole('button', { name: fr.debrief.summary.detailed, exact: true }).click();
   await expect(page.getByRole('heading', { name: fr.debrief.title })).toBeVisible();
@@ -312,7 +312,9 @@ for (const width of [1440, 390]) {
     await checkControls();
     await page.locator('.finish-experience').click();
     await checkControls();
-    await page.screenshot({ path: `test-results/previews/unified-controls-${width}.png` });
+    await page.screenshot({
+      path: `${buildRoot}/test-results/previews/unified-controls-${width}.png`,
+    });
   });
 }
 

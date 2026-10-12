@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { execFile } from 'node:child_process';
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { resolve } from 'node:path';
+import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 import { describe, expect, it } from 'vitest';
@@ -15,10 +15,11 @@ const fixtureNotices = `ShutterOS — Third-party software notices\n\n${`tailwin
 // A minimal installed-package tree isolates packaging rules from Vite and the current
 // lockfile. Tailwind is present because its CSS attribution is an explicit inventory input.
 async function fixtureFor(html: string) {
-  const root = await mkdtemp(resolve(tmpdir(), 'shutteros-notices-'));
+  const root = resolve(await mkdtemp(resolve(tmpdir(), 'shutteros-notices-')), 'source');
+  await mkdir(root);
   const dependency = resolve(root, 'node_modules/tailwindcss');
   await mkdir(resolve(root, 'static'));
-  await mkdir(resolve(root, 'dist/portable'), { recursive: true });
+  await mkdir(resolve(root, '../shutteros-build/dist/portable'), { recursive: true });
   await mkdir(dependency, { recursive: true });
   await writeFile(resolve(root, 'LICENSE'), 'Application license');
   await writeFile(
@@ -26,9 +27,9 @@ async function fixtureFor(html: string) {
     JSON.stringify({ name: 'tailwindcss', version: '1.2.3' }),
   );
   await writeFile(resolve(dependency, 'LICENSE'), 'Dependency license');
-  await writeFile(resolve(root, 'dist/bundled-packages.json'), '[]');
-  await writeFile(resolve(root, 'dist/portable/bundled-packages.json'), '[]');
-  await writeFile(resolve(root, 'dist/portable/index.html'), html);
+  await writeFile(resolve(root, '../shutteros-build/dist/bundled-packages.json'), '[]');
+  await writeFile(resolve(root, '../shutteros-build/dist/portable/bundled-packages.json'), '[]');
+  await writeFile(resolve(root, '../shutteros-build/dist/portable/index.html'), html);
   await writeFile(resolve(root, 'static/THIRD-PARTY-NOTICES.txt'), fixtureNotices);
   return root;
 }
@@ -43,13 +44,16 @@ describe('portable artifact packaging', () => {
       );
       try {
         await execFileAsync(process.execPath, [script], { cwd: root });
-        const packaged = await readFile(resolve(root, 'dist/portable/shutteros.html'), 'utf8');
+        const packaged = await readFile(
+          resolve(root, '../shutteros-build/dist/portable/shutteros.html'),
+          'utf8',
+        );
         const hash = createHash('sha256')
           .update('globalThis.ready = true;\n// A second line\n')
           .digest('base64');
         expect(packaged).toContain(`script-src 'sha256-${hash}'`);
       } finally {
-        await rm(root, { recursive: true, force: true });
+        await rm(dirname(root), { recursive: true, force: true });
       }
     },
   );
@@ -63,7 +67,10 @@ describe('portable artifact packaging', () => {
       await execFileAsync(process.execPath, [script], {
         cwd: root,
       });
-      const packaged = await readFile(resolve(root, 'dist/portable/shutteros.html'), 'utf8');
+      const packaged = await readFile(
+        resolve(root, '../shutteros-build/dist/portable/shutteros.html'),
+        'utf8',
+      );
       const hash = createHash('sha256').update(source).digest('base64');
       expect(packaged).toContain(`script-src 'sha256-${hash}'`);
       expect(packaged).toContain("script-src-attr 'none'");
@@ -73,7 +80,7 @@ describe('portable artifact packaging', () => {
       expect(packaged.match(/Application license/g)).toBeNull();
       expect(packaged).not.toContain('bundled-packages.json');
     } finally {
-      await rm(root, { recursive: true, force: true });
+      await rm(dirname(root), { recursive: true, force: true });
     }
   });
 
@@ -94,7 +101,7 @@ describe('portable artifact packaging', () => {
         readFile(resolve(root, 'static/THIRD-PARTY-NOTICES.txt'), 'utf8'),
       ).resolves.toContain('tailwindcss 1.2.3');
     } finally {
-      await rm(root, { recursive: true, force: true });
+      await rm(dirname(root), { recursive: true, force: true });
     }
   });
 
@@ -106,14 +113,19 @@ describe('portable artifact packaging', () => {
       const text = "Legal tokens: $& $` $' <example> </pre><ScRiPt>1</script >";
       await writeFile(resolve(root, 'node_modules/tailwindcss/NOTICE'), text);
       await execFileAsync(process.execPath, [script, '--update-source'], { cwd: root });
-      const packaged = await readFile(resolve(root, 'dist/portable/shutteros.html'), 'utf8');
+      const packaged = await readFile(
+        resolve(root, '../shutteros-build/dist/portable/shutteros.html'),
+        'utf8',
+      );
       expect(packaged).toContain("Legal tokens: $&amp; $` $' &lt;example&gt;");
       const names = nodeNames(parse(packaged));
       expect(names.filter((name) => name === 'body')).toHaveLength(1);
       expect(names.filter((name) => name === 'script')).toHaveLength(1);
-      expect(await readFile(resolve(root, 'dist/THIRD-PARTY-NOTICES.txt'), 'utf8')).toContain(text);
+      expect(
+        await readFile(resolve(root, '../shutteros-build/dist/THIRD-PARTY-NOTICES.txt'), 'utf8'),
+      ).toContain(text);
     } finally {
-      await rm(root, { recursive: true, force: true });
+      await rm(dirname(root), { recursive: true, force: true });
     }
   });
 
@@ -130,7 +142,7 @@ describe('portable artifact packaging', () => {
         }),
       ).rejects.toThrow('No license file found');
     } finally {
-      await rm(root, { recursive: true, force: true });
+      await rm(dirname(root), { recursive: true, force: true });
     }
   });
 
@@ -147,7 +159,7 @@ describe('portable artifact packaging', () => {
           }),
         ).rejects.toThrow('must contain exactly one script element');
       } finally {
-        await rm(root, { recursive: true, force: true });
+        await rm(dirname(root), { recursive: true, force: true });
       }
     },
   );
@@ -165,7 +177,7 @@ describe('portable artifact packaging', () => {
         'Portable artifact',
       );
     } finally {
-      await rm(root, { recursive: true, force: true });
+      await rm(dirname(root), { recursive: true, force: true });
     }
   });
 });

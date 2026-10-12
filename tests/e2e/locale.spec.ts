@@ -1,5 +1,5 @@
+import { distPath } from '../../scripts/build-paths.mjs';
 import { test, expect } from '@playwright/test';
-import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { en } from '@shutteros/core/data/en';
 import { fr } from '@shutteros/core/data/fr';
@@ -13,7 +13,7 @@ for (const delivery of ['http', 'file'] as const) {
     page,
   }) => {
     await page.goto(
-      delivery === 'file' ? pathToFileURL(resolve('dist/portable/shutteros.html')).href : './',
+      delivery === 'file' ? pathToFileURL(distPath('portable/shutteros.html')).href : './',
     );
     await expect(page.locator('html')).toHaveAttribute('lang', 'en');
     await beginFree(page, 'en');
@@ -50,7 +50,7 @@ for (const delivery of ['http', 'file'] as const) {
     page,
   }) => {
     await page.goto(
-      `${delivery === 'file' ? pathToFileURL(resolve('dist/portable/shutteros.html')).href : './'}?lang=fr`,
+      `${delivery === 'file' ? pathToFileURL(distPath('portable/shutteros.html')).href : './'}?lang=fr`,
     );
     await expect(page.locator('html')).toHaveAttribute('lang', 'fr');
     await beginFree(page);

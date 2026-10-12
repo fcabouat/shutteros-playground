@@ -1,6 +1,6 @@
 import { cp, mkdir, mkdtemp, readFile, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { resolve } from 'node:path';
+import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
@@ -12,11 +12,15 @@ const script = fileURLToPath(
 );
 
 async function fixtureFor(configuration: unknown) {
-  const root = await mkdtemp(resolve(tmpdir(), 'shutteros-portable-config-'));
+  const root = resolve(await mkdtemp(resolve(tmpdir(), 'shutteros-portable-config-')), 'source');
+  await mkdir(root);
   await mkdir(resolve(root, 'scripts'));
   await mkdir(resolve(root, 'static'));
-  await mkdir(resolve(root, 'portable'));
   await cp(script, resolve(root, 'scripts/prepare-portable-configuration.mjs'));
+  await cp(
+    new URL('../../scripts/build-paths.mjs', import.meta.url),
+    resolve(root, 'scripts/build-paths.mjs'),
+  );
   await writeFile(resolve(root, 'static/kiosk-config.json'), JSON.stringify(configuration));
   return root;
 }
@@ -41,7 +45,7 @@ describe('portable configuration preparation', () => {
       );
       await run(root);
       const generated = await readFile(
-        resolve(root, 'portable/configuration.generated.ts'),
+        resolve(root, '../shutteros-build/generated/configuration.generated.ts'),
         'utf8',
       );
       expect(generated).toContain('organizationLogo":"logo-organisation.svg');
@@ -50,7 +54,7 @@ describe('portable configuration preparation', () => {
       expect(generated).toContain('\\u003c/ScRiPt\\u003e');
       expect(generated).not.toContain('<script>');
     } finally {
-      await rm(root, { recursive: true, force: true });
+      await rm(dirname(root), { recursive: true, force: true });
     }
   });
 
@@ -67,7 +71,7 @@ describe('portable configuration preparation', () => {
       await writeFile(resolve(root, 'static/partner.svg'), '<svg></svg>');
       await run(root);
       const generated = await readFile(
-        resolve(root, 'portable/configuration.generated.ts'),
+        resolve(root, '../shutteros-build/generated/configuration.generated.ts'),
         'utf8',
       );
       expect(generated).toContain(
@@ -77,7 +81,7 @@ describe('portable configuration preparation', () => {
         'embeddedPartnerOrganizationLogo: string | undefined = "data:image/svg+xml',
       );
     } finally {
-      await rm(root, { recursive: true, force: true });
+      await rm(dirname(root), { recursive: true, force: true });
     }
   });
 
@@ -86,10 +90,10 @@ describe('portable configuration preparation', () => {
     try {
       await run(root);
       await expect(
-        readFile(resolve(root, 'portable/configuration.generated.ts'), 'utf8'),
+        readFile(resolve(root, '../shutteros-build/generated/configuration.generated.ts'), 'utf8'),
       ).resolves.toContain('embeddedOrganizationLogo: string | undefined = undefined');
     } finally {
-      await rm(root, { recursive: true, force: true });
+      await rm(dirname(root), { recursive: true, force: true });
     }
   });
 
@@ -104,7 +108,7 @@ describe('portable configuration preparation', () => {
     try {
       await expect(run(root)).rejects.toThrow('must be a local PNG, WebP, or SVG filename');
     } finally {
-      await rm(root, { recursive: true, force: true });
+      await rm(dirname(root), { recursive: true, force: true });
     }
   });
 
@@ -115,7 +119,7 @@ describe('portable configuration preparation', () => {
         'partnerOrganizationLogo requires partnerOrganizationName',
       );
     } finally {
-      await rm(root, { recursive: true, force: true });
+      await rm(dirname(root), { recursive: true, force: true });
     }
   });
 
@@ -131,9 +135,9 @@ describe('portable configuration preparation', () => {
       await expect(run(oversized)).rejects.toThrow('must be at most 256 KiB');
       await expect(run(escaping)).rejects.toThrow('symlink must resolve inside static/');
     } finally {
-      await rm(missing, { recursive: true, force: true });
-      await rm(oversized, { recursive: true, force: true });
-      await rm(escaping, { recursive: true, force: true });
+      await rm(dirname(missing), { recursive: true, force: true });
+      await rm(dirname(oversized), { recursive: true, force: true });
+      await rm(dirname(escaping), { recursive: true, force: true });
     }
   });
 });

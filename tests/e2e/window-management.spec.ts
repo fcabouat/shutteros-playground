@@ -1,3 +1,4 @@
+import { buildRoot } from '../../scripts/build-paths.mjs';
 import { test, expect, type Page } from '@playwright/test';
 import { fr } from '@shutteros/core/data/fr';
 import { beginFree, switchToFree, switchToGuided } from './helpers';
@@ -77,7 +78,7 @@ for (const viewport of [
     await expect(frame).toBeVisible();
     expect(await frame.boundingBox()).toEqual(workspace);
     if (viewport.width === 1440)
-      await page.screenshot({ path: 'test-results/previews/maximized-welcome.png' });
+      await page.screenshot({ path: `${buildRoot}/test-results/previews/maximized-welcome.png` });
     expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   });
 }
@@ -132,7 +133,7 @@ test('document and hint have independent taskbar entries and retain their state'
     .evaluate((element) =>
       Promise.all(element.getAnimations({ subtree: true }).map((animation) => animation.finished)),
     );
-  await page.screenshot({ path: 'test-results/previews/floating-hint.png' });
+  await page.screenshot({ path: `${buildRoot}/test-results/previews/floating-hint.png` });
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   await switchToGuided(page);
   await expect(hint).toBeVisible();

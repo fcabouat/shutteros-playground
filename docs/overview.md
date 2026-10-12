@@ -34,4 +34,11 @@ The core owns onboarding, the selected route, the session deadline, assistance p
 
 The same application is built as a static site and as a standalone HTML file. The public product site adds the demo, guides, generated API reference and Storybook; this documentation tooling is separate from the game runtime.
 
+The source checkout owns application and deployment code; its sibling
+`../shutteros-build` owns generated files, compiled deliveries, caches, installation
+media and local validation evidence. `private/` is reserved for branding inputs.
+This keeps rebuildable and machine-specific data out of source review. The dedicated
+OS deployment targets only Ubuntu Server 26.04 amd64 and Chromium Snap, using a USB
+payload prepared once for installation without Internet access on each kiosk.
+
 See [verification](verification.md) for checks, [publication](publishing.md) for artifacts and hosting, and [kiosk setup](kiosk.md) for deployment responsibilities.

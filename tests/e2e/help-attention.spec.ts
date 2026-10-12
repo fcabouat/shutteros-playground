@@ -1,3 +1,4 @@
+import { buildRoot } from '../../scripts/build-paths.mjs';
 import { test, expect, type Page } from '@playwright/test';
 import { fr } from '@shutteros/core/data/fr';
 import { beginFree, switchToGuided } from './helpers';
@@ -25,7 +26,7 @@ test('desktop help draws attention after waiting without moving the click target
   expect(await help.boundingBox()).toEqual(position);
   await expect(help.locator('.help-cue')).toHaveCSS('animation-iteration-count', '3');
   await expect(help.locator('.help-cue')).toHaveCSS('animation-duration', '0.7s');
-  await page.screenshot({ path: 'test-results/previews/help-nudge.png' });
+  await page.screenshot({ path: `${buildRoot}/test-results/previews/help-nudge.png` });
   await help.click();
   await page.getByRole('button', { name: fr.guide.dismiss, exact: true }).click();
   await expect(help).not.toHaveClass(/help-attention/);

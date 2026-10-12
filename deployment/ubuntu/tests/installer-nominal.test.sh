@@ -9,7 +9,7 @@ mkdir -p "$tmp/bin" "$tmp/kit" "$tmp/opt" "$tmp/etc/default" "$tmp/etc/systemd/s
 cp -a "$repo_root/deployment/ubuntu/." "$tmp/kit/"
 cp -a "$repo_root/static/." "$tmp/dist/"
 printf '<!doctype html><title>initial</title>' > "$tmp/dist/index.html"
-printf 'ID=%s\nVERSION_ID=%s\n' "${TEST_DISTRO:-ubuntu}" "${TEST_RELEASE:-24.04}" > "$tmp/etc/os-release"
+printf 'ID=%s\nVERSION_ID=%s\n' ubuntu 26.04 > "$tmp/etc/os-release"
 printf 'XKBMODEL="pc105"\nXKBLAYOUT="fr"\nXKBVARIANT="oss"\nXKBOPTIONS="compose:ralt"\n' > "$tmp/etc/default/keyboard"
 printf 'LANG="fr_FR.UTF-8"\n' > "$tmp/etc/default/locale"
 : > "$tmp/accounts"
@@ -143,7 +143,8 @@ case "${1:-}" in
     [ "${DISCONNECTED_POLICY:-0}" != 1 ] || slot=-
     printf 'Interface Plug Slot Notes\nsystem-files chromium:etc-chromium-browser-policies %s -\n' "$slot"
     ;;
-  list|wait) exit 0 ;;
+  list) [ "${MISSING_CHROMIUM_SNAP:-0}" != 1 ] ;;
+  wait) exit 0 ;;
   install) exit 90 ;;
 esac
 EOF
@@ -196,7 +197,7 @@ EOF
 touch "$tmp/bin/cage" "$tmp/bin/chromium"
 chmod 755 "$tmp/bin"/*
 
-sed -i "s|/etc/chromium-browser/policies/managed|$tmp/etc/chromium-browser/policies/managed|g; s|/etc/chromium/policies/managed|$tmp/etc/chromium/policies/managed|g; s|/snap/bin/chromium|$tmp/bin/chromium|g; s|/usr/bin/chromium|$tmp/bin/chromium|g" "$tmp/kit/platform.sh"
+sed -i "s|/etc/chromium-browser/policies/managed|$tmp/etc/chromium-browser/policies/managed|g; s|/snap/bin/chromium|$tmp/bin/chromium|g" "$tmp/kit/platform.sh"
 
 script="$tmp/kit/install.sh"
 sed -i "s|PATH=/usr/sbin:/usr/bin:/sbin:/bin|PATH=$tmp/bin:/usr/sbin:/usr/bin:/sbin:/bin|" "$script"
@@ -242,12 +243,8 @@ run_install() {
 run_install "$tmp/dist"
 grep -qx shutteros-kiosk "$tmp/accounts"
 grep -qx shutteros-static "$tmp/accounts"
-if [ "${TEST_DISTRO:-ubuntu}" = ubuntu ]; then
-  grep -q '^snap wait system seed.loaded$' "$tmp/calls"
-else
-  if grep -q '^snap ' "$tmp/calls"; then exit 1; fi
-  test -f "$tmp/etc/chromium/policies/managed/shutteros.json"
-fi
+grep -q '^snap wait system seed.loaded$' "$tmp/calls"
+test -f "$tmp/etc/chromium-browser/policies/managed/shutteros.json"
 grep -q '^sleep 3$' "$tmp/calls"
 if grep -q '^apt-get ' "$tmp/calls"; then exit 1; fi
 if grep -q '^snap install ' "$tmp/calls"; then exit 1; fi
@@ -357,24 +354,28 @@ run_maintenance uninstall >/dev/null
 [ ! -e "$tmp/opt/cyber-shutteros" ]
 [ ! -e "$tmp/home/shutteros-kiosk" ]
 
-# Missing PAM/session dependencies are requested before accounts or services are mutated.
+# Missing offline dependencies fail before accounts or services are mutated.
 : > "$tmp/calls"
-if MISSING_SESSION_PACKAGES=1 run_install "$tmp/dist" >/dev/null 2>&1; then exit 1; fi
-grep -q '^apt-get update$' "$tmp/calls"
-grep -q '^apt-get install -y libpam-systemd dbus-user-session$' "$tmp/calls"
+if MISSING_SESSION_PACKAGES=1 run_install "$tmp/dist" > /dev/null 2> "$tmp/missing-error"; then exit 1; fi
+grep -q 'libpam-systemd is missing' "$tmp/missing-error"
+if grep -Eq '^(apt-get|snap install|useradd) ' "$tmp/calls"; then exit 1; fi
 [ ! -s "$tmp/accounts" ]
 [ ! -e "$tmp/opt/cyber-shutteros" ]
 
-# Debian requests its native browser when absent; it never falls back to Snap.
-if [ "${TEST_DISTRO:-ubuntu}" = debian ]; then
-  chmod 0644 "$tmp/bin/chromium"
-  : > "$tmp/calls"
-  if MISSING_SESSION_PACKAGES=1 run_install "$tmp/dist" >/dev/null 2>&1; then exit 1; fi
-  grep -q '^apt-get install -y chromium libpam-systemd dbus-user-session$' "$tmp/calls"
-  if grep -q '^snap ' "$tmp/calls"; then exit 1; fi
-  [ ! -s "$tmp/accounts" ]
-  chmod 0755 "$tmp/bin/chromium"
-fi
+: > "$tmp/calls"
+if MISSING_CHROMIUM_SNAP=1 run_install "$tmp/dist" > /dev/null 2> "$tmp/missing-error"; then exit 1; fi
+grep -q 'Chromium Snap is missing' "$tmp/missing-error"
+if grep -Eq '^(apt-get|snap install|useradd) ' "$tmp/calls"; then exit 1; fi
+[ ! -s "$tmp/accounts" ]
+[ ! -e "$tmp/opt/cyber-shutteros" ]
+
+chmod 0644 "$tmp/bin/chromium"
+: > "$tmp/calls"
+if run_install "$tmp/dist" > /dev/null 2> "$tmp/missing-error"; then exit 1; fi
+grep -q 'Chromium Snap command is unavailable' "$tmp/missing-error"
+if grep -Eq '^(apt-get|snap install|useradd) ' "$tmp/calls"; then exit 1; fi
+[ ! -s "$tmp/accounts" ]
+chmod 0755 "$tmp/bin/chromium"
 
 # A useradd that creates its identity before failing is still owned by this attempt and removed.
 if FAIL_USER_SLICE_STOP=1 PARTIAL_USERADD=shutteros-kiosk run_install "$tmp/dist" 2>/dev/null; then

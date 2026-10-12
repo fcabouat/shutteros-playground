@@ -1,10 +1,10 @@
+import { distPath, buildRoot } from '../../scripts/build-paths.mjs';
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { fr } from '@shutteros/core/data/fr';
 import { en } from '@shutteros/core/data/en';
 import { challenges } from '@shutteros/core/data/challenges';
 import { englishChallenges } from '@shutteros/core/data/challenges.en';
-import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { beginFree } from './helpers';
 
@@ -19,7 +19,7 @@ for (const locale of ['fr', 'en'] as const) {
     }) => {
       const copy = locale === 'fr' ? fr : en;
       await page.goto(
-        delivery === 'http' ? './' : pathToFileURL(resolve('dist/portable/shutteros.html')).href,
+        delivery === 'http' ? './' : pathToFileURL(distPath('portable/shutteros.html')).href,
       );
       if (locale === 'en') await page.getByRole('button', { name: 'EN', exact: true }).click();
       await beginFree(page, locale);
@@ -39,7 +39,9 @@ for (const locale of ['fr', 'en'] as const) {
       await expect(scene.locator('.ai-preview')).toHaveText(copy.ai.routinePrompt);
       await expect(page.locator('.feedback-card')).toHaveCount(0);
       expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
-      await page.screenshot({ path: `test-results/previews/ai-${locale}-${delivery}.png` });
+      await page.screenshot({
+        path: `${buildRoot}/test-results/previews/ai-${locale}-${delivery}.png`,
+      });
       const outgoing: string[] = [];
       page.on('request', (request) => outgoing.push(request.url()));
       await page.getByRole('button', { name: copy.ai.send, exact: true }).click();
@@ -64,7 +66,9 @@ for (const locale of ['fr', 'en'] as const) {
         await expect(page.getByText(rule, { exact: true })).toBeVisible();
       await expect(page.locator('.feedback-card[data-outcome="risky"]')).toBeVisible();
       expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
-      await page.screenshot({ path: `test-results/previews/ai-policy-${locale}-${delivery}.png` });
+      await page.screenshot({
+        path: `${buildRoot}/test-results/previews/ai-policy-${locale}-${delivery}.png`,
+      });
       await rereadPolicy.click();
       await expect(page.getByText(copy.ai.policyIntro, { exact: true })).toBeHidden();
       expect(outgoing).toEqual([]);
@@ -97,7 +101,9 @@ for (const locale of ['fr', 'en'] as const) {
       );
       await expect(review.locator('.decision-review-tool-note')).toHaveCount(1);
       expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
-      await page.screenshot({ path: `test-results/previews/ai-review-${locale}-${delivery}.png` });
+      await page.screenshot({
+        path: `${buildRoot}/test-results/previews/ai-review-${locale}-${delivery}.png`,
+      });
 
       await page.getByRole('button', { name: copy.feedback.continue, exact: true }).click();
       await openAiFromDesktop(page);
@@ -106,7 +112,7 @@ for (const locale of ['fr', 'en'] as const) {
         copy.ai.confidentialPrompt,
       );
       await page.screenshot({
-        path: `test-results/previews/ai-${locale}-${delivery}-confidential.png`,
+        path: `${buildRoot}/test-results/previews/ai-${locale}-${delivery}-confidential.png`,
       });
       await page.getByRole('button', { name: copy.ai.send, exact: true }).click();
       await expect(page.locator('.feedback-card[data-outcome="risky"]')).toContainText(

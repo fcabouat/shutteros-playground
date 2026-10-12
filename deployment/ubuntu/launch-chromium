@@ -9,6 +9,7 @@ set -eu
 . /usr/local/lib/shutteros-kiosk/platform.sh
 # shellcheck source=/dev/null
 . /etc/os-release
+kiosk_supported_release "${ID:-}" "${VERSION_ID:-}"
 kiosk_platform "${ID:-}"
 [ -x "$CHROMIUM_COMMAND" ] || exit 69
 profile="$HOME/$PROFILE_RELATIVE"

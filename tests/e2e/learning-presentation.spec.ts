@@ -1,3 +1,4 @@
+import { buildRoot } from '../../scripts/build-paths.mjs';
 import { test, expect } from '@playwright/test';
 import { fr } from '@shutteros/core/data/fr';
 import { beginFree } from './helpers';
@@ -14,7 +15,7 @@ for (const [locale, copy] of [
     await page.getByLabel(copy.login.password, { exact: true }).fill('password');
     await page.getByRole('button', { name: copy.login.enter, exact: true }).click();
     await expect(page.locator('.intro-card mark')).toHaveText(copy.intro.principleEmphasis);
-    await page.screenshot({ path: `test-results/previews/intro-${locale}.png` });
+    await page.screenshot({ path: `${buildRoot}/test-results/previews/intro-${locale}.png` });
     await page.getByRole('button', { name: copy.intro.start, exact: true }).click();
     await page.locator('.desktop-icon:has([data-app="usb"])').click();
     const help = page.locator('.primary-help-slot .guidance-trigger');
@@ -24,7 +25,7 @@ for (const [locale, copy] of [
     expect(await help.boundingBox()).toEqual(position);
     await expect(page.locator('.learning-takeaway mark')).toBeVisible();
     expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
-    await page.screenshot({ path: `test-results/previews/learning-${locale}.png` });
+    await page.screenshot({ path: `${buildRoot}/test-results/previews/learning-${locale}.png` });
   });
 }
 
