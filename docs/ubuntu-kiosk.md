@@ -4,8 +4,9 @@
 
 The dedicated OS kit supports **Ubuntu Server 26.04 amd64**, Cage and the official
 Chromium Snap. Prepare one USB image with local dependencies, then install each
-kiosk without Internet access. Storage selection and installation confirmation
-remain interactive. Use a dedicated machine without an active graphical display
+kiosk without Internet access. The administrator identity, password, machine name,
+storage selection and installation confirmation are entered on each PC. Use a
+dedicated machine without an active graphical display
 manager. The static game remains available separately for ordinary HTTP hosting.
 
 ## Prepare the media
@@ -60,13 +61,12 @@ are local operator work, excluded from CI, and never start a VM automatically.
 build metadata for the current sources, root path, configuration and private
 branding. It does not accept an old public build as the local organisation's kiosk.
 
-By default, the wrapper creates `kiosk-admin` with a random administrator password.
-The local plaintext password is in
-`../shutteros-build/config/operator-password.txt` with mode `0600`; its hash and
-settings are in `../shutteros-build/config/operator.json`. Repeated runs reuse that
-configuration. Protect both the configuration and installation media: the media
-contains the administrator password hash. These files belong outside the source
-checkout; `private/` contains branding only.
+By default, Subiquity prompts for the administrator account, machine name and
+password during each PC installation. You may choose `kiosk-admin` as the account
+name. The shared ISO contains no administrator password hash. Store the password
+according to your organisation's administration rules so you can later use the
+local console or SSH. Existing `../shutteros-build/config/operator.json` and
+`operator-password.txt` are not silently reused; `private/` contains branding only.
 
 To provide a reviewed administrator configuration:
 
@@ -74,15 +74,17 @@ To provide a reviewed administrator configuration:
 pnpm kiosk:iso --admin-config /path/to/operator.json
 ```
 
-It requires `username` and a `password_hash` (SHA-512 or yescrypt) or
-`ssh_authorized_keys`. Optional fields select the hostname prefix, locale and
-keyboard layout/variant. Key-only administrators have a locked password and
-passwordless sudo. See the [offline payload contract](../deployment/ubuntu/autoinstall/README.md).
+This explicit option requires `username` and a `password_hash` (SHA-512 or
+yescrypt) or `ssh_authorized_keys`. Optional fields select the hostname prefix,
+locale and keyboard layout/variant. The hash or public keys are then included on
+the ISO. Key-only administrators have a locked password and passwordless sudo.
+See the [offline payload contract](../deployment/ubuntu/autoinstall/README.md).
 
 ## Install from USB
 
 Write the ISO to the intended USB device with your normal imaging tool. Boot the
-PC, select the intended target disk and confirm installation in Subiquity. Check
+PC, enter its administrator account, machine name and password, select the intended
+target disk, and confirm installation in Subiquity. Check
 that the disk contains no data you need before confirming: installation replaces
 its selected storage layout.
 
@@ -90,7 +92,8 @@ The local payload supplies DEBs without repository downloads. At first boot,
 `shutteros-firstboot.service` installs asserted local Snap revisions, connects
 `chromium:etc-chromium-browser-policies`, then runs the kiosk installer and verifier.
 Missing dependencies fail without a store fallback. The machine gets a unique
-hostname derived from its fresh machine-id. Ethernet DHCP and SSH provide an
+hostname chosen during installation. The explicit `--admin-config` mode instead
+derives one from the fresh machine-id. Ethernet DHCP and SSH provide an
 administrator recovery path when a local network is available; Internet is not
 required for installation or first boot. Normal security-update policy resumes
 after successful provisioning.

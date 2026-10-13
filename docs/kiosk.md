@@ -77,13 +77,13 @@ If the build machine is separate, copy the resulting
 local branding and writes media under `../shutteros-build/kiosk-iso`. It refuses
 missing cache files instead of downloading them.
 
-The installer leaves storage interactive: select and confirm the intended disk on
-each PC. The prepared USB supplies installation and first-boot dependencies without
-Internet access. The default administrator is `kiosk-admin`; its random password is
-stored locally in `../shutteros-build/config/operator-password.txt` with mode `0600`.
-The corresponding password hash is in `config/operator.json` under the same build
-root. Protect those files and the USB media. Use `--admin-config` for a reviewed
-administrator configuration; game passwords remain unrelated fictional content.
+The installer asks for the administrator username, machine name, password and
+target disk on each PC. The prepared USB supplies installation and first-boot
+dependencies without Internet access. No administrator password is embedded in
+the default ISO. Existing local `../shutteros-build/config/operator.json` and
+`operator-password.txt` files are not silently reused. Pass `--admin-config`
+explicitly for a reviewed prepared administrator configuration; its password
+hash or SSH keys will be on the media. Game passwords remain fictional content.
 
 For local recovery, use `Ctrl+Alt+F2` and authenticate with that administrator
 account and password. Cage allows the switch while the kiosk runs; `Ctrl+Alt+F1`

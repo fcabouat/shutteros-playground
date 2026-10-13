@@ -80,13 +80,14 @@ bun run kiosk:iso --base-iso /path/to/ubuntu-26.04-live-server-amd64.iso
 `kiosk:iso` rebuilds the current local branding and writes the image and checksums
 under `../shutteros-build/kiosk-iso`. The cache must match the selected ISO's
 installed package baseline. These commands do not create a VM or download missing
-payload files during assembly. The installer asks the operator to select and
-confirm the target disk. Installation and first boot can run without Internet
+payload files during assembly. The installer asks for the administrator name,
+machine name, password and target disk on each PC. The default ISO contains no
+administrator password. Installation and first boot can run without Internet
 access on each kiosk PC.
 
 Read the [USB and recovery guide](docs/ubuntu-kiosk.md) or the
 [French deployment guide](docs/kiosk.fr.md#clé-usb-ubuntu-2604-hors-ligne) for cache
-preparation, the local administrator password and validation status. The complete
+preparation, administrator recovery and validation status. The complete
 ISO installation validation is still in progress.
 
 ## Build the public site

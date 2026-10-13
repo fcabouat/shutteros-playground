@@ -114,17 +114,20 @@ correspondent aux sources, à la configuration et au branding actuels ; elle ref
 un ancien build public. `--base-iso` et `--cache` permettent d’utiliser d’autres
 emplacements locaux.
 
-Par défaut, le compte administrateur est `kiosk-admin`. Son mot de passe aléatoire
-reste dans `../shutteros-build/config/operator-password.txt`, en mode `0600` ; son
-hash est dans `../shutteros-build/config/operator.json`. Le compte et son hash sont
-inclus dans le média : protégez la clé et conservez le mot de passe pour la
-récupération. Pour une configuration administrateur distincte, passez
-`--admin-config /chemin/operator.json`. Ne placez aucun de ces fichiers dans
-`private/`, réservé au branding, ni dans Git.
+Par défaut, l’installateur demande sur chaque PC le nom de la machine, le nom du
+compte administrateur et son mot de passe. Vous pouvez choisir `kiosk-admin` comme
+nom de compte. Le mot de passe saisi n’est pas intégré à l’ISO commune : conservez-le
+selon vos règles d’administration, car il sert à la récupération en console et à
+SSH. Les anciens fichiers `../shutteros-build/config/operator.json` et
+`operator-password.txt`, s’ils existent, ne sont pas repris automatiquement.
+L’option explicite `--admin-config /chemin/operator.json` reste disponible pour une
+configuration préparée à l’avance ; son hash ou ses clés SSH sont alors présents
+sur le média. Gardez ces fichiers hors de `private/`, réservé au branding, et de Git.
 
 Écrivez l’ISO sur la clé avec votre outil habituel, en vérifiant le périphérique
-visé. Au démarrage de chaque PC, sélectionnez le disque puis confirmez
-l’installation dans l’installateur. Le partitionnement reste interactif. La clé
+visé. Au démarrage de chaque PC, renseignez le compte administrateur et son mot de
+passe, sélectionnez le disque puis confirmez l’installation dans l’installateur.
+Vérifiez attentivement le disque choisi : son contenu sera remplacé. La clé
 contient les dépendances pour l’installation et le premier démarrage : aucun
 accès Internet n’est requis sur les postes. Le premier démarrage installe les
 Snap signés, connecte leur interface de politiques puis configure la borne.

@@ -15,6 +15,7 @@ their exact downloaded revisions:
   "version": 1,
   "ubuntu_release": "26.04",
   "architecture": "amd64",
+  "admin_interactive": true,
   "hostname_prefix": "shutteros",
   "debs": ["debs/package_version_amd64.deb"],
   "snaps": [
@@ -60,17 +61,24 @@ refuses a different ISO. An old cache without this compatibility check must be
 prepared again or explicitly repaired before assembly. DEB repair retains the
 downloaded signed snaps and reruns the same baseline compatibility check.
 
-Generate NoCloud `user-data` using
-`python3 -B kit/autoinstall/render-user-data.py ADMIN.json --output user-data`.
-Administrator JSON requires `username` and either `password_hash` (SHA-512 or
-yescrypt) or `ssh_authorized_keys` (an array of public keys). Optional fields are
-`hostname_prefix`, `locale`, `keyboard_layout`, and `keyboard_variant`. A key-only
-administrator has a locked password and passwordless sudo. Password hashes and
-public keys are written into the installation media, so protect that media and
-the configuration. No shared real credentials are embedded in this repository.
+Generate the default NoCloud `user-data` with
+`python3 -B kit/autoinstall/render-user-data.py --output user-data`. Subiquity asks
+for the administrator identity, machine name and password on each PC, as well as
+storage selection. `admin_interactive: true` in the manifest preserves the machine
+name entered at installation. This default media contains no administrator
+password hash.
 
-The generated config keeps storage interactive: the operator selects the disk
-and confirms the install in Subiquity. Provisioning scripts do not partition or
+For an explicitly prepared administrator, pass `ADMIN.json` before `--output`.
+It requires `username` and either `password_hash` (SHA-512 or yescrypt) or
+`ssh_authorized_keys` (an array of public keys). Optional fields are
+`hostname_prefix`, `locale`, `keyboard_layout`, and `keyboard_variant`. A key-only
+administrator has a locked password and passwordless sudo. That mode records
+`admin_interactive: false`, puts the hash or public keys on the media and derives
+a unique hostname from the prefix and target machine-id. Protect the media and
+configuration. No real credentials are embedded in this repository.
+
+The generated config keeps storage interactive in both modes: the operator selects
+the disk and confirms the install in Subiquity. Provisioning scripts do not partition or
 erase disks. Installer refresh, driver installation, and codecs are disabled;
 the installer has no DHCP or configured mirror and uses offline fallback.
 `updates: security` is a supported schema value; `updates: none` is not.
@@ -99,8 +107,10 @@ after `multi-user.target`. Disabled cloud-init can return normally; cloud-init
 errors stop provisioning and remain in the logs. `RuntimeMaxSec=20min` bounds the
 whole running script, including that wait. An active/running unit means work is
 in progress; the success marker is written only after verification completes.
-The script derives a hostname from the administrator prefix and the fresh target
-machine-id, and preserves installer-generated SSH host keys. Target Ethernet
+With an interactive administrator, the script keeps the hostname chosen in
+Subiquity. With explicit administrator configuration, it derives a hostname from
+the configured prefix and fresh target machine-id. It preserves installer-generated
+SSH host keys. Target Ethernet
 DHCP is configured through cloud-init for administrator recovery. Snapd's prior
 `store.access` value is saved across retries, then set to `offline`; missing
 dependencies therefore fail without downloading. Commands and the complete
