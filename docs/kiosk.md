@@ -90,9 +90,12 @@ account and password. Cage allows the switch while the kiosk runs; `Ctrl+Alt+F1`
 returns to the game. An administrator configured with SSH keys only has a locked
 password and needs SSH over a local network for recovery.
 
-See [the USB, hardware acceptance and recovery guide](ubuntu-kiosk.md). Full offline
-ISO installation validation is still in progress. These operator commands are
-excluded from CI and do not run a VM automatically.
+The local ISO assembled on 2026-10-13 passed offline installation on a fresh
+virtual disk, interactive administrator setup, first boot, visible game and
+administrator console and restricted localhost SSH checks. USB boot and physical
+hardware acceptance remain outstanding; qualify one target PC before deploying
+the others. See [the USB, hardware acceptance and recovery guide](ubuntu-kiosk.md).
+These operator commands are excluded from CI and do not run a VM automatically.
 
 ## Host policy
 

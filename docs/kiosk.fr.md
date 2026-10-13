@@ -132,8 +132,12 @@ contient les dépendances pour l’installation et le premier démarrage : aucun
 accès Internet n’est requis sur les postes. Le premier démarrage installe les
 Snap signés, connecte leur interface de politiques puis configure la borne.
 
-La validation complète de cette ISO est **en cours**. Effectuez la recette sur le
-modèle de PC prévu avant de déployer les autres bornes. En cas d’échec, utilisez
+L’ISO locale du 13 octobre 2026 a passé une installation hors ligne sur disque
+virtuel vierge, avec saisie interactive du compte administrateur, premier
+démarrage, affichage du jeu et accès administrateur par console et SSH local.
+Cette recette VM ne valide pas le démarrage USB ni le matériel des PC prévus :
+effectuez d’abord une installation et une recette complètes sur un PC physique
+avant de déployer les autres bornes. En cas d’échec, utilisez
 `Ctrl+Alt+F2` puis authentifiez-vous avec le compte administrateur et son mot de
 passe, ou utilisez SSH. Cage autorise ce changement de console pendant que la
 borne fonctionne ; `Ctrl+Alt+F1` revient au jeu. Un administrateur configuré
