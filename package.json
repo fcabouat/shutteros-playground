@@ -11,7 +11,7 @@
   "packageManager": "pnpm@11.19.0",
   "scripts": {
     "dev": "node scripts/prepare-branding.mjs && vite dev --host 127.0.0.1",
-    "build": "node scripts/prepare-branding.mjs && node scripts/prepare-portable-configuration.mjs && vite build && vite build --config vite.portable.config.ts && node scripts/package-notices.mjs && node scripts/record-build.mjs",
+    "build": "node scripts/prepare-branding.mjs && node scripts/prepare-portable-configuration.mjs && vite build && vite build --config vite.portable.config.ts && node scripts/sync-kiosk-configuration.mjs && node scripts/package-notices.mjs && node scripts/record-build.mjs",
     "notices:update": "node scripts/package-notices.mjs --update-source",
     "preview": "vite preview --host 127.0.0.1",
     "check:core": "tsc -p packages/core/tsconfig.json",

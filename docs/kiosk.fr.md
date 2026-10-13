@@ -33,13 +33,13 @@ Le même `pnpm build` produit :
 ../shutteros-build/dist/portable/shutteros.html
 ```
 
-Ce fichier peut être ouvert directement dans le navigateur, sans serveur HTTP. Il intègre la configuration de `static/kiosk-config.json`, les logos configurés et les notices de licences. Les fichiers de logos sont vérifiés avant intégration. Pour changer un paramètre ou une image, modifiez les sources puis reconstruisez le livrable.
+Ce fichier peut être ouvert directement dans le navigateur, sans serveur HTTP. Il intègre la configuration locale de `private/configuration.json` si `game` y est défini, sinon celle de `static/kiosk-config.json`, ainsi que les logos et les notices de licences. Pour changer un paramètre ou une image, modifiez la configuration privée puis reconstruisez le livrable.
 
 À l’inverse, le site HTTP lit le JSON déployé au chargement : ses paramètres peuvent être changés sans recompilation.
 
 ## Configurer la session
 
-Le fichier `static/kiosk-config.json` utilise le format version 1. Il contient les phrases de connexion fictives, la durée de session, l’identité des organisations, le contact de sécurité et les adresses des messages simulés.
+Le fichier public `static/kiosk-config.json` utilise le format version 1. Pour une borne propre à votre organisation, placez ce même objet sous la clé `game` dans le fichier ignoré `private/configuration.json`, aux côtés des champs d’identité visuelle. `pnpm build` l’intègre au site local et au fichier autonome ; les builds publics continuent d’utiliser la version générique. La configuration contient les phrases de connexion fictives, la durée de session, le contact de sécurité et les adresses des messages simulés. Voir la [configuration privée unique](branding.fr.md#personnalisation-privée-à-la-construction).
 
 | Paramètre                        | Usage                                                                                                           |
 | -------------------------------- | --------------------------------------------------------------------------------------------------------------- |
@@ -122,7 +122,8 @@ SSH. Les anciens fichiers `../shutteros-build/config/operator.json` et
 `operator-password.txt`, s’ils existent, ne sont pas repris automatiquement.
 L’option explicite `--admin-config /chemin/operator.json` reste disponible pour une
 configuration préparée à l’avance ; son hash ou ses clés SSH sont alors présents
-sur le média. Gardez ces fichiers hors de `private/`, réservé au branding, et de Git.
+sur le média. Gardez ces fichiers hors de `private/`, réservé à la configuration
+locale du jeu et à ses images, et de Git.
 
 Écrivez l’ISO sur la clé avec votre outil habituel, en vérifiant le périphérique
 visé. Au démarrage de chaque PC, renseignez le compte administrateur et son mot de
@@ -131,6 +132,15 @@ Vérifiez attentivement le disque choisi : son contenu sera remplacé. La clé
 contient les dépendances pour l’installation et le premier démarrage : aucun
 accès Internet n’est requis sur les postes. Le premier démarrage installe les
 Snap signés, connecte leur interface de politiques puis configure la borne.
+
+Sur une clé plus grande que l’ISO hybride, `fdisk` peut signaler que la copie de
+secours de la table GPT se trouve à la fin de l’image, pas à la fin de la clé.
+Ce décalage de capacité n’empêche pas, à lui seul, l’amorçage UEFI. Ne modifiez
+pas la table de partitions de l’ISO pour l’adapter à une taille de clé : elle
+doit fonctionner sur plusieurs capacités. Vérifiez le SHA-256 du **fichier ISO**,
+la présence des partitions de données et EFI sur la clé, puis effectuez le test
+d’amorçage sur un PC cible. Une lecture intégrale de la clé peut différer de
+l’ISO dans les métadonnées GPT après manipulation de la clé.
 
 L’ISO locale du 13 octobre 2026 a passé une installation hors ligne sur disque
 virtuel vierge, avec saisie interactive du compte administrateur, premier

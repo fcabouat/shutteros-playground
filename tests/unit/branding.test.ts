@@ -17,11 +17,15 @@ async function runBranding(branding: unknown, logo = true) {
   await mkdir(resolve(root, 'private'));
   await cp(script, resolve(root, 'scripts/prepare-branding.mjs'));
   await cp(
+    new URL('../../scripts/kiosk-config-source.mjs', import.meta.url),
+    resolve(root, 'scripts/kiosk-config-source.mjs'),
+  );
+  await cp(
     new URL('../../scripts/build-paths.mjs', import.meta.url),
     resolve(root, 'scripts/build-paths.mjs'),
   );
   if (logo) await writeFile(resolve(root, 'private/logo.png'), tinyPng);
-  await writeFile(resolve(root, 'private/branding.json'), JSON.stringify(branding));
+  await writeFile(resolve(root, 'private/configuration.json'), JSON.stringify(branding));
   return { root, output: resolve(root, '../shutteros-build/generated/branding.generated.ts') };
 }
 
@@ -39,7 +43,7 @@ describe('private branding preparation', () => {
 
   it('verifies the public identity without reading or changing private configuration', async () => {
     const fixture = await runBranding({ applicationName: 'Private identity' });
-    const input = resolve(fixture.root, 'private/branding.json');
+    const input = resolve(fixture.root, 'private/configuration.json');
     // Even an invalid local configuration must not affect a public verification.
     await writeFile(input, '{invalid private json');
     vi.stubEnv('SHUTTEROS_PUBLIC_BUILD', '1');

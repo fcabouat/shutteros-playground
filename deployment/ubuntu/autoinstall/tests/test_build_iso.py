@@ -28,7 +28,7 @@ class BuildPreflight(unittest.TestCase):
         (self.dist / "kiosk-config.json").write_text("{}")
         self.info = {"basePath": "", "publicBuild": False,
                      "indexSha256": builder.digest(self.dist / "index.html")}
-        self.branding = self.root / "private/branding.json"
+        self.branding = self.root / "private/configuration.json"
         self.write_info()
 
     def write_info(self):

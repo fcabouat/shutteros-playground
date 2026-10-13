@@ -47,13 +47,13 @@ Rechargez la page après modification. Le dossier `../shutteros-build/dist/` est
 
 ## Personnaliser le fichier HTML autonome
 
-Le livrable `../shutteros-build/dist/portable/shutteros.html` contient sa configuration et ses logos. Pour les modifier, éditez `static/kiosk-config.json`, placez les images nommées dans `static/`, puis lancez `pnpm build`.
+Le livrable `../shutteros-build/dist/portable/shutteros.html` contient sa configuration et ses logos. Pour un build local personnalisé, éditez `private/configuration.json` ; le fichier public `static/kiosk-config.json` reste générique. Placez les images nommées par le JSON du jeu dans `static/`, puis lancez `pnpm build`.
 
 La construction vérifie chaque image avant de l’intégrer : présence, taille, format conforme à l’extension et emplacement dans `static/`, y compris après résolution des liens symboliques. Une image non conforme fait échouer le build. Modifier uniquement le JSON d’un site déployé ne change pas le fichier HTML autonome.
 
 ## Personnalisation privée à la construction
 
-Pour modifier aussi le nom du système fictif ou le nom de campagne, créez `private/branding.json` :
+Créez un seul fichier ignoré `private/configuration.json` pour l’identité et les paramètres du jeu :
 
 ```json
 {
@@ -65,7 +65,9 @@ Pour modifier aussi le nom du système fictif ou le nom de campagne, créez `pri
 }
 ```
 
-`applicationName` est le nom du système ; `organizationName` est celui de l’organisation. Les champs facultatifs `partnerOrganizationName` et `partnerOrganizationLogo` ajoutent un partenaire, avec son image également placée dans `private/`. Définissez `showOrganizationNames` à `true` pour garder les deux noms visibles même lorsque leurs logos se chargent correctement. Cette option vaut `false` par défaut et n’est disponible que dans `private/branding.json`, pas dans `kiosk-config.json`.
+`applicationName` est le nom du système ; `organizationName` est celui de l’organisation. Les champs facultatifs `partnerOrganizationName` et `partnerOrganizationLogo` ajoutent un partenaire, avec son image également placée dans `private/`. Définissez `showOrganizationNames` à `true` pour garder les deux noms visibles même lorsque leurs logos se chargent correctement. Cette option vaut `false` par défaut et n’est disponible que dans `private/configuration.json`, pas dans `kiosk-config.json`.
+
+Pour personnaliser les coordonnées et la simulation, ajoutez au même objet une clé `game` contenant **l’objet complet** de `static/kiosk-config.json` (format version 1), puis changez ses valeurs locales. Sans cette clé, le build utilise le fichier public générique. Le build local copie ce sous-objet dans `../shutteros-build/dist/kiosk-config.json` et l’intègre au HTML autonome. `pnpm verify` et `pnpm build:site` n’utilisent jamais le fichier privé. Les phrases de connexion restent fictives : ne mettez aucun vrai mot de passe ou secret opérationnel dans ce fichier ou dans l’ISO.
 
 Cette méthode accepte des logos PNG, WebP ou SVG de 256 Kio au maximum. Les SVG doivent être autonomes, comme pour la configuration de déploiement. Les commandes de développement, de vérification, de build et de Storybook préparent automatiquement l’identité. Elles vérifient les noms, le format réel des images et leur emplacement, puis génèrent le module local ignoré par Git `../shutteros-build/generated/branding.generated.ts`. Aucune URL distante n’est acceptée.
 
@@ -75,7 +77,7 @@ L’identité privée prend le pas sur celle du déploiement, indépendamment po
 
 Le dossier `private/` et le module généré ne doivent pas être versionnés. Ne mettez aucun mot de passe réel, identifiant d’accès ou secret dans la configuration.
 
-Un livrable personnalisé contient malgré tout les noms et logos intégrés : ignorer leurs fichiers sources dans Git ne les retire pas du HTML ou du JavaScript généré. Pour la démonstration publique, construisez depuis une copie propre du dépôt, sans personnalisation privée. Avant de commiter, vérifiez les fichiers préparés : `.gitignore` n’exclut pas un fichier déjà suivi.
+Un livrable personnalisé contient les identités et coordonnées locales : ignorer le fichier source dans Git ne les retire pas du HTML, du JSON produit ou de l’ISO. Ces livrables restent dans `../shutteros-build/`, hors du dépôt public. Pour la démonstration publique, `pnpm build:site` impose la configuration générique. Avant de commiter, vérifiez les fichiers préparés : `.gitignore` n’exclut pas un fichier déjà suivi.
 
 Pour les autres paramètres et la mise en service, consultez le [déploiement en borne](kiosk.fr.md).
 

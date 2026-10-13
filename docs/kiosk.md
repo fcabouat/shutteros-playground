@@ -25,17 +25,17 @@ After building the public product site with `pnpm build:site`, run `pnpm build` 
 
 ## Portable build
 
-`pnpm build` also runs the portable Vite configuration. It imports `static/kiosk-config.json` while building and packages it in a standalone page. If the JSON names an organisation logo, the prebuild validates the file under `static/` and embeds it separately from the validated JSON. The packaging step adds the content security policy and license notices, then writes the finished page to:
+`pnpm build` also runs the portable Vite configuration. It embeds `game` from the ignored `private/configuration.json` when present, otherwise the tracked `static/kiosk-config.json`. If the JSON names an organisation logo, the prebuild validates the file under `static/` and embeds it separately. The packaging step adds the content security policy and license notices, then writes the finished page to:
 
 ```text
 ../shutteros-build/dist/portable/shutteros.html
 ```
 
-Use this artifact where a single local file is preferable. Because the configuration is embedded, edit `static/kiosk-config.json` and rebuild to change it. The standard build instead reads the deployed JSON at runtime.
+Use this artifact where a single local file is preferable. Because the configuration is embedded, edit the private configuration and rebuild to change it. The standard build instead reads the deployed JSON at runtime.
 
 ## Configuration
 
-`static/kiosk-config.json` uses version 1. It sets the fictional accepted passwords, global session duration, organisation labels, optional local organisation-logo filename, security contact details, and fictional mail addresses used in the simulation. `mailLegitimateAddress` is the familiar sender of the unusual request; `mailImpersonatorAddress` is the suspicious sender of the ordinary request. The global session duration defaults to thirty minutes.
+The tracked `static/kiosk-config.json` uses version 1. For an organisation-specific kiosk, put that same object under `game` in ignored `private/configuration.json`, alongside branding fields. Local builds embed it in the deployed JSON and portable HTML; public builds keep the generic default. See [private build configuration](branding.md#optional-private-build-time-branding). The configuration sets the fictional accepted passwords, global session duration, organisation labels, optional local organisation-logo filename, security contact details, and fictional mail addresses used in the simulation. `mailLegitimateAddress` is the familiar sender of the unusual request; `mailImpersonatorAddress` is the suspicious sender of the ordinary request. The global session duration defaults to thirty minutes.
 
 `supportLabel` and `supportContact` identify the organisation’s security reporting channel. Configure that direct contact; the general help desk can be a fallback if your procedure requires it. Routine workstation maintenance remains an IT responsibility.
 

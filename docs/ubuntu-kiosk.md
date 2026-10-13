@@ -51,7 +51,7 @@ pnpm kiosk:iso
 bun run kiosk:iso
 ```
 
-The wrapper rebuilds a root-path game with the current local `private/branding.json`
+The wrapper rebuilds a root-path game with the current local `private/configuration.json`
 and logos, without the public-verification branding override. The image, SHA-256
 file and manifest are written under `../shutteros-build/kiosk-iso`. Missing ISO or
 cache inputs fail locally; assembly does not fetch substitutes. These commands
@@ -66,7 +66,8 @@ password during each PC installation. You may choose `kiosk-admin` as the accoun
 name. The shared ISO contains no administrator password hash. Store the password
 according to your organisation's administration rules so you can later use the
 local console or SSH. Existing `../shutteros-build/config/operator.json` and
-`operator-password.txt` are not silently reused; `private/` contains branding only.
+`operator-password.txt` are not silently reused; `private/` contains local
+branding and fictional game configuration only.
 
 To provide a reviewed administrator configuration:
 
@@ -87,6 +88,13 @@ PC, enter its administrator account, machine name and password, select the inten
 target disk, and confirm installation in Subiquity. Check
 that the disk contains no data you need before confirming: installation replaces
 its selected storage layout.
+
+On a USB drive larger than the hybrid ISO, `fdisk` may report that the backup GPT
+ends at the image boundary instead of the physical drive boundary. This capacity
+mismatch alone does not establish a boot failure. The ISO cannot encode the final
+sector of every USB size. Verify the SHA-256 of the ISO file, check that the USB
+shows the data and EFI partitions, then test UEFI boot on a target PC. A whole-USB
+byte comparison can differ in GPT metadata after the drive has been inspected.
 
 The local payload supplies DEBs without repository downloads. At first boot,
 `shutteros-firstboot.service` installs asserted local Snap revisions, connects

@@ -1,8 +1,8 @@
 import { existsSync, readFileSync, realpathSync, writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, extname, relative, resolve, sep } from 'node:path';
 import { projectRoot as root, buildRoot } from './build-paths.mjs';
+import { readPrivateConfiguration } from './kiosk-config-source.mjs';
 
-const inputPath = resolve(root, 'private/branding.json');
 const outputPath = resolve(buildRoot, 'generated/branding.generated.ts');
 // The generated module lives outside the checkout's node_modules resolution tree.
 const brandingTypePath = relative(
@@ -12,7 +12,6 @@ const brandingTypePath = relative(
   .split(sep)
   .join('/');
 const fallback = { applicationName: 'ShutterOS' };
-const maxJsonBytes = 32 * 1024;
 const allowedKeys = new Set([
   'applicationName',
   'organizationName',
@@ -21,6 +20,7 @@ const allowedKeys = new Set([
   'partnerOrganizationName',
   'partnerOrganizationLogo',
   'showOrganizationNames',
+  'game',
 ]);
 const allowed = new Map([
   ['.png', 'image/png'],
@@ -32,18 +32,8 @@ function fail(message) {
   throw new Error(`Branding: ${message}`);
 }
 
-let branding = fallback;
-// Verification explicitly selects the public identity without touching private files.
-// Normal builds still reject invalid private configuration.
-if (process.env.SHUTTEROS_PUBLIC_BUILD !== '1' && existsSync(inputPath)) {
-  const source = readFileSync(inputPath);
-  if (source.byteLength > maxJsonBytes) fail('private/branding.json must be at most 32 KiB');
-  try {
-    branding = JSON.parse(source.toString('utf8'));
-  } catch (error) {
-    fail(`private/branding.json is not valid JSON (${error.message})`);
-  }
-}
+// Public verification does not read the private file.
+const branding = readPrivateConfiguration(root)?.configuration ?? fallback;
 if (!branding || typeof branding !== 'object' || Array.isArray(branding))
   fail('configuration must be an object');
 for (const key of Object.keys(branding)) if (!allowedKeys.has(key)) fail(`unknown key: ${key}`);

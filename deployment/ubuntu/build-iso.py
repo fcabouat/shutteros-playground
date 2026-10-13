@@ -49,7 +49,7 @@ def validate_build(dist: Path, *, private_branding: Path | None = None,
         raise ValueError("ISO requires a fresh root-path game build, not a Pages/site build")
     if source_fingerprint is not None and info.get("sourceSha256") != source_fingerprint:
         raise ValueError("game sources, configuration or private branding changed since the build")
-    branding = private_branding if private_branding is not None else PROJECT / "private/branding.json"
+    branding = private_branding if private_branding is not None else PROJECT / "private/configuration.json"
     if branding.exists() and info["publicBuild"]:
         raise ValueError("private branding exists but this build uses the public identity; rebuild locally")
     return info

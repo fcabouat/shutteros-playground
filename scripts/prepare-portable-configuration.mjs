@@ -1,11 +1,10 @@
 import { existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
 import { extname, resolve } from 'node:path';
 import { projectRoot as root, buildRoot } from './build-paths.mjs';
+import { readKioskConfiguration } from './kiosk-config-source.mjs';
 
 const staticRoot = realpathSync(resolve(root, 'static'));
-const inputPath = resolve(staticRoot, 'kiosk-config.json');
 const outputPath = resolve(buildRoot, 'generated/configuration.generated.ts');
-const maxConfigurationBytes = 32 * 1024;
 const maxLogoBytes = 256 * 1024;
 const logoPattern = /^[a-z0-9][a-z0-9._-]*\.(png|webp|svg)$/i;
 
@@ -13,14 +12,7 @@ function fail(message) {
   throw new Error(`Portable configuration: ${message}`);
 }
 
-const source = readFileSync(inputPath);
-if (source.byteLength > maxConfigurationBytes) fail('kiosk-config.json must be at most 32 KiB');
-let configuration;
-try {
-  configuration = JSON.parse(source.toString('utf8'));
-} catch (error) {
-  fail(`kiosk-config.json is not valid JSON (${error.message})`);
-}
+const { configuration } = readKioskConfiguration(root);
 
 function embedStaticLogo(reference, key) {
   if (typeof reference !== 'string' || reference.length > 120 || !logoPattern.test(reference)) {

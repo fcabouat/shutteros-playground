@@ -18,6 +18,14 @@ async function fixtureFor(configuration: unknown) {
   await mkdir(resolve(root, 'static'));
   await cp(script, resolve(root, 'scripts/prepare-portable-configuration.mjs'));
   await cp(
+    new URL('../../scripts/kiosk-config-source.mjs', import.meta.url),
+    resolve(root, 'scripts/kiosk-config-source.mjs'),
+  );
+  await cp(
+    new URL('../../scripts/sync-kiosk-configuration.mjs', import.meta.url),
+    resolve(root, 'scripts/sync-kiosk-configuration.mjs'),
+  );
+  await cp(
     new URL('../../scripts/build-paths.mjs', import.meta.url),
     resolve(root, 'scripts/build-paths.mjs'),
   );
@@ -25,13 +33,79 @@ async function fixtureFor(configuration: unknown) {
   return root;
 }
 
-async function run(root: string) {
-  return execFileAsync(process.execPath, [
-    resolve(root, 'scripts/prepare-portable-configuration.mjs'),
-  ]);
+async function run(root: string, publicBuild = false) {
+  return execFileAsync(
+    process.execPath,
+    [resolve(root, 'scripts/prepare-portable-configuration.mjs')],
+    { env: { ...process.env, SHUTTEROS_PUBLIC_BUILD: publicBuild ? '1' : '0' } },
+  );
 }
 
 describe('portable configuration preparation', () => {
+  it('keeps organisation-specific settings private while public builds use the tracked default', async () => {
+    const root = await fixtureFor({ version: 1, supportContact: 'public@example.invalid' });
+    const local = { version: 1, supportContact: 'private@example.invalid' };
+    const generated = resolve(root, '../shutteros-build/generated/configuration.generated.ts');
+    const dist = resolve(root, '../shutteros-build/dist');
+    try {
+      await mkdir(resolve(root, 'private'));
+      await mkdir(dist, { recursive: true });
+      await writeFile(resolve(root, 'private/configuration.json'), JSON.stringify({ game: local }));
+      await run(root);
+      await execFileAsync(
+        process.execPath,
+        [resolve(root, 'scripts/sync-kiosk-configuration.mjs')],
+        {
+          env: { ...process.env, SHUTTEROS_PUBLIC_BUILD: '0' },
+        },
+      );
+      expect(await readFile(generated, 'utf8')).toContain('private@example.invalid');
+      expect(JSON.parse(await readFile(resolve(dist, 'kiosk-config.json'), 'utf8'))).toEqual(local);
+      expect(await readFile(resolve(root, 'static/kiosk-config.json'), 'utf8')).toContain(
+        'public@example.invalid',
+      );
+
+      await run(root, true);
+      await execFileAsync(
+        process.execPath,
+        [resolve(root, 'scripts/sync-kiosk-configuration.mjs')],
+        {
+          env: { ...process.env, SHUTTEROS_PUBLIC_BUILD: '1' },
+        },
+      );
+      expect(await readFile(generated, 'utf8')).toContain('public@example.invalid');
+      expect(await readFile(generated, 'utf8')).not.toContain('private@example.invalid');
+      expect(await readFile(resolve(dist, 'kiosk-config.json'), 'utf8')).not.toContain(
+        'private@example.invalid',
+      );
+
+      // Public verification must not inspect a malformed private operator file.
+      await writeFile(resolve(root, 'private/configuration.json'), '{invalid local json');
+      await run(root, true);
+      await execFileAsync(
+        process.execPath,
+        [resolve(root, 'scripts/sync-kiosk-configuration.mjs')],
+        {
+          env: { ...process.env, SHUTTEROS_PUBLIC_BUILD: '1' },
+        },
+      );
+    } finally {
+      await rm(dirname(root), { recursive: true, force: true });
+    }
+  });
+
+  it('refuses a linked private configuration instead of reading outside private', async () => {
+    const root = await fixtureFor({ version: 1 });
+    try {
+      await mkdir(resolve(root, 'private'));
+      await writeFile(resolve(root, 'outside.json'), '{"version":1}');
+      await symlink(resolve(root, 'outside.json'), resolve(root, 'private/configuration.json'));
+      await expect(run(root)).rejects.toThrow('must be a regular file');
+    } finally {
+      await rm(dirname(root), { recursive: true, force: true });
+    }
+  });
+
   it('embeds a bounded SVG separately from script-safe configuration', async () => {
     const root = await fixtureFor({
       organizationName: '</ScRiPt><script>compromised</script>',

@@ -36,7 +36,7 @@ Only the session deadline limits play; there is no countdown for individual answ
 The browser fixture serves `../shutteros-build/dist/` by default, or the directory selected by `BUILD_ROOT`, on loopback port 4183. It has no development-server fallback and does not reuse an interactive preview. Keep that port available while running the suite.
 
 The `pnpm verify` command always builds with the generic public identity, even when
-`private/branding.json` exists. It leaves private files untouched. Normal `pnpm dev`
+`private/configuration.json` exists. It leaves private files untouched. Normal `pnpm dev`
 and `pnpm build` commands continue to use the local branding. `pnpm build:site`
 always selects the public identity for its demo and Storybook, so private logos do
 not change the site's public browser fixtures.
