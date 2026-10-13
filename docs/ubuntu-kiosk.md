@@ -108,15 +108,18 @@ after successful provisioning.
 
 ## Validation
 
-The locally generated ISO of 2026-10-13 passed installation on a fresh 20GB
+An earlier locally generated ISO of 2026-10-13 passed installation on a fresh 20GB
 virtual disk with 1536MiB RAM, one CPU, UEFI and no network device. The operator
 selected only that virtual disk and entered the administrator identity in
 Subiquity. Offline package installation, first boot, the visible branded game,
 the first-boot success marker, administrator login and sudo on tty2, and return
 to tty1 passed. On a separate boot of the same installed disk, restricted QEMU
 user networking with one localhost SSH forward confirmed administrator login.
-The virtual machine shut down cleanly after each check. Build and qualification
-evidence is kept outside Git under `../shutteros-build/validation`.
+The virtual machine shut down cleanly after each check. A later ISO rebuilt with
+private game configuration passed checksum and payload checks plus a UEFI boot
+to Subiquity, but has not had a repeat full installation or firstboot test.
+The exact hashes and evidence are kept outside Git under
+`../shutteros-build/validation`.
 
 This does not establish USB boot, storage selection, graphics, input devices or
 firmware behavior on the intended physical PC. Qualify one target PC before

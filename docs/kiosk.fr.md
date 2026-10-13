@@ -142,10 +142,12 @@ la présence des partitions de données et EFI sur la clé, puis effectuez le te
 d’amorçage sur un PC cible. Une lecture intégrale de la clé peut différer de
 l’ISO dans les métadonnées GPT après manipulation de la clé.
 
-L’ISO locale du 13 octobre 2026 a passé une installation hors ligne sur disque
-virtuel vierge, avec saisie interactive du compte administrateur, premier
-démarrage, affichage du jeu et accès administrateur par console et SSH local.
-Cette recette VM ne valide pas le démarrage USB ni le matériel des PC prévus :
+Une ISO antérieure du 13 octobre 2026 a passé l’installation hors ligne sur
+disque virtuel vierge, le premier démarrage, l’affichage du jeu et l’accès
+administrateur par console et SSH local. L’ISO reconstruite avec la
+configuration privée a passé le contrôle de son contenu et un démarrage UEFI
+jusqu’à Subiquity, sans nouvelle installation complète. Aucune de ces recettes
+VM ne valide le démarrage USB ni le matériel des PC prévus :
 effectuez d’abord une installation et une recette complètes sur un PC physique
 avant de déployer les autres bornes. En cas d’échec, utilisez
 `Ctrl+Alt+F2` puis authentifiez-vous avec le compte administrateur et son mot de
