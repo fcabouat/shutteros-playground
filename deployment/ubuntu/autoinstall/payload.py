@@ -93,6 +93,8 @@ def validate(root: Path) -> dict:
         raise ValueError("payload must target Ubuntu 26.04")
     if manifest.get("architecture") not in {"amd64", "arm64"}:
         raise ValueError("unsupported payload architecture")
+    if not isinstance(manifest.get("admin_interactive", False), bool):
+        raise ValueError("admin_interactive must be a boolean")
     prefix = manifest.get("hostname_prefix", "shutteros")
     if not isinstance(prefix, str) or not re.fullmatch(r"[a-z][a-z0-9-]{0,39}", prefix) or prefix.endswith("-"):
         raise ValueError("invalid hostname prefix")
@@ -249,6 +251,9 @@ def restore_store(saved: Path = Path("/var/lib/shutteros-provisioning/snap-store
 
 
 def set_hostname(manifest: dict) -> None:
+    # Subiquity already set the hostname chosen alongside the administrator.
+    if manifest.get("admin_interactive", False):
+        return
     # The installer supplies a fresh machine-id; never replace it or copy one from the ISO.
     machine_id = Path("/etc/machine-id").read_text().strip()
     if not re.fullmatch(r"[0-9a-f]{32}", machine_id) or machine_id == "0" * 32:

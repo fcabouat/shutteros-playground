@@ -1,6 +1,4 @@
-import { mkdir, readFile, writeFile, chmod } from 'node:fs/promises';
 import { resolve } from 'node:path';
-import { randomBytes } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { parseArgs } from 'node:util';
 import { buildRoot, projectRoot } from './build-paths.mjs';
@@ -15,45 +13,6 @@ const { values } = parseArgs({
     'skip-build': { type: 'boolean', default: false },
   },
 });
-const configRoot = resolve(buildRoot, 'config');
-await mkdir(configRoot, { recursive: true, mode: 0o700 });
-const adminPath = resolve(values['admin-config'] ?? resolve(configRoot, 'operator.json'));
-try {
-  await readFile(adminPath);
-} catch (error) {
-  if (values['admin-config'] || error.code !== 'ENOENT') throw error;
-  const password = randomBytes(24).toString('base64url');
-  const result = spawnSync('openssl', ['passwd', '-6', '-stdin'], {
-    input: password + '\n',
-    encoding: 'utf8',
-  });
-  if (result.error) throw result.error;
-  if (result.status !== 0)
-    throw new Error('openssl could not generate the administrator password hash.');
-  await writeFile(resolve(configRoot, 'operator-password.txt'), password + '\n', {
-    mode: 0o600,
-    flag: 'wx',
-  });
-  await writeFile(
-    adminPath,
-    JSON.stringify(
-      {
-        username: 'kiosk-admin',
-        password_hash: result.stdout.trim(),
-        hostname_prefix: 'shutteros',
-        locale: 'fr_FR.UTF-8',
-        keyboard_layout: 'fr',
-      },
-      null,
-      2,
-    ) + '\n',
-    { mode: 0o600, flag: 'wx' },
-  );
-  console.log(
-    `Administrator: kiosk-admin. Password stored locally in ${resolve(configRoot, 'operator-password.txt')}`,
-  );
-}
-await chmod(configRoot, 0o700);
 const env = { ...process.env };
 delete env.SHUTTEROS_PUBLIC_BUILD;
 delete env.BASE_PATH;
@@ -74,8 +33,7 @@ const result = spawnSync(
     ),
     '--cache',
     resolve(values.cache ?? resolve(buildRoot, 'cache/offline')),
-    '--admin-config',
-    adminPath,
+    ...(values['admin-config'] ? ['--admin-config', resolve(values['admin-config'])] : []),
   ],
   { cwd: projectRoot, env, stdio: 'inherit' },
 );

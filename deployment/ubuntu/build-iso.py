@@ -184,11 +184,11 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--base-iso", type=Path, required=True)
     parser.add_argument("--cache", type=Path, required=True)
-    parser.add_argument("--admin-config", type=Path, required=True)
+    parser.add_argument("--admin-config", type=Path)
     args = parser.parse_args()
     iso = args.base_iso.resolve(strict=True)
     cache = args.cache.absolute()
-    admin = args.admin_config.resolve(strict=True)
+    admin = args.admin_config.resolve(strict=True) if args.admin_config else None
     sums = iso.parent / "SHA256SUMS"
     expected = None
     for line in sums.read_text().splitlines():
@@ -240,7 +240,9 @@ def main() -> None:
         for path in (KIT / "autoinstall").iterdir():
             if path.is_file() and path.suffix in {".py", ".sh", ".service"}:
                 shutil.copy2(path, kit / "autoinstall" / path.name)
-        manifest["hostname_prefix"] = json.loads(admin.read_text()).get("hostname_prefix", "shutteros")
+        manifest["admin_interactive"] = admin is None
+        manifest["hostname_prefix"] = (json.loads(admin.read_text()).get("hostname_prefix", "shutteros")
+                                       if admin else "shutteros")
         manifest["build"] = {"version": version, "iso_sha256": expected,
                              "commit": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=PROJECT, text=True).strip()}
         (payload / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
@@ -251,7 +253,10 @@ def main() -> None:
         module.validate(payload)
         seed = work / "shutteros-seed"
         seed.mkdir()
-        run("python3", "-B", str(KIT / "autoinstall/render-user-data.py"), str(admin), "--output", str(seed / "user-data"))
+        render_args = ["python3", "-B", str(KIT / "autoinstall/render-user-data.py")]
+        if admin:
+            render_args.append(str(admin))
+        run(*render_args, "--output", str(seed / "user-data"))
         (seed / "meta-data").write_text("instance-id: shutteros-offline-installer\n")
         grub = work / "grub.cfg"
         run(xorriso, "-osirrox", "on", "-indev", str(iso), "-extract", "/boot/grub/grub.cfg", str(grub))

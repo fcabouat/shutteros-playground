@@ -318,7 +318,15 @@ class ProvisioningTests(unittest.TestCase):
         self.assertIn(("snap", "install", str(self.root / "snaps/core24_2124.snap")), calls)
         self.assertFalse(any(call[1] in {"connect", "unset"} for call in calls))
 
-    def test_credentials_required_storage_interactive(self):
+    def test_default_seed_prompts_for_local_identity_without_embedded_credentials(self):
+        config = renderer.render()["autoinstall"]
+        self.assertEqual(config["interactive-sections"], ["storage", "identity"])
+        self.assertNotIn("identity", config)
+        self.assertNotIn("users", config["user-data"])
+        self.assertEqual(config["ssh"], {"install-server": False, "authorized-keys": [], "allow-pw": True})
+        self.assertNotIn("storage", config)
+
+    def test_explicit_admin_config_preserves_unattended_identity(self):
         with self.assertRaisesRegex(ValueError, "password_hash or"):
             renderer.render({"username": "administrator"})
         config = renderer.render({"username": "administrator", "ssh_authorized_keys": ["ssh-ed25519 AAAA fixture"]})["autoinstall"]
@@ -329,6 +337,26 @@ class ProvisioningTests(unittest.TestCase):
         self.assertFalse(config["ssh"]["install-server"])
         self.assertEqual(config["identity"]["password"], "!")
         self.assertEqual(config["user-data"]["users"][0]["sudo"], "ALL=(ALL) NOPASSWD:ALL")
+        password_config = renderer.render({"username": "administrator", "password_hash": "$6$salt$hashed"})["autoinstall"]
+        self.assertEqual(password_config["identity"]["password"], "$6$salt$hashed")
+        self.assertTrue(password_config["ssh"]["allow-pw"])
+
+    def test_default_cli_seed_has_no_password_or_identity(self):
+        output = Path(self.temp.name) / "user-data"
+        subprocess.run(["python3", "-B", str(DIRECTORY / "render-user-data.py"),
+                        "--output", str(output)], check=True)
+        self.assertEqual(output.stat().st_mode & 0o777, 0o600)
+        data = json.loads(output.read_text().removeprefix("#cloud-config\n"))["autoinstall"]
+        self.assertEqual(data["interactive-sections"], ["storage", "identity"])
+        self.assertNotIn("identity", data)
+
+    def test_explicit_null_admin_config_cannot_select_default_identity(self):
+        config = Path(self.temp.name) / "operator.json"
+        config.write_text("null\n")
+        result = subprocess.run(["python3", "-B", str(DIRECTORY / "render-user-data.py"),
+                                 str(config)], text=True, capture_output=True)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("administrator configuration must be a JSON object", result.stderr)
 
 
 if __name__ == "__main__":
