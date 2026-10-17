@@ -155,14 +155,27 @@ The installer refuses unrelated existing accounts and paths. Its root-owned
 `0600` ownership marker records the original tty1 getty state. Reinstallation
 requires that marker and the expected accounts, stages the site before swapping,
 and restores the earlier site and support files on reported activation failure.
-Catchable failures are covered; power loss or `SIGKILL` during support-file updates
-can require administrator repair. An interrupted site swap with only
+Support files and the ownership marker are copied to temporary files in the
+same directory, compared with their source, synchronized and then renamed into
+place. The parent directory is synchronized after each rename. Before starting
+the game, the installer flushes the filesystems containing the site, launchers,
+account databases, service enablement and policy; a writeback error fails the
+installation. Catchable failures are covered; the whole installation is not a
+single transaction, so power loss or `SIGKILL` midway can still require
+administrator repair. An interrupted site swap with only
 `.site-rollback` is restored on the next verified reinstall; two competing site
 directories require manual inspection.
 
 `verify.sh` checks account shapes, ownership, permissions, configuration, reviewed
-units and policy, Snap policy connection, active services and loopback HTTP. A
-reachable server or stable process does not prove a visible, usable browser.
+units and policy, Snap policy connection, active services and loopback HTTP.
+The installer records every source site file in root-owned mode-0600
+`/opt/cyber-shutteros/.site-sha256.json`, outside the served directory, and checks
+the staged copy against it. Verification rejects missing, changed or extra files,
+empty entry points, and an HTTP response that differs from the installed HTML.
+For a configuration change, edit the reviewed source build and reinstall; editing
+the deployed JSON directly now deliberately fails the integrity check. Older
+installations without an inventory require a reviewed reinstall, with a valid
+ownership marker, before the new verifier can pass. A reachable server or stable process does not prove a visible, usable browser.
 Accept the target hardware only after checking:
 
 1. Cold boot, shutdown/power-on, display wake, the whole game, touch/mouse and keyboard navigation.
@@ -232,6 +245,34 @@ Correct the reported payload or host issue, then retry with
 `sudo systemctl restart shutteros-firstboot.service`. Failure retains offline
 store access and does not trigger Internet fallback.
 
+A unit reported as `masked` can be an empty regular file, not just a link to
+`/dev/null`. First inspect sizes rather than repeatedly unmasking or restarting:
+
+```sh
+sudo stat -c '%n : %F, %s bytes, modified %y' \
+  /etc/systemd/system/shutteros-{kiosk,static}.service \
+  /opt/cyber-shutteros/.shutteros-kiosk-owner \
+  /opt/cyber-shutteros/site/index.html
+sudo find /usr/local/lib/shutteros-kiosk /opt/cyber-shutteros/site -type f -empty -print
+findmnt -T /opt/cyber-shutteros -o TARGET,SOURCE,FSTYPE,OPTIONS
+sudo journalctl --list-boots
+sudo journalctl -k -b -p warning --no-pager
+sudo journalctl -b -1 -p warning --no-pager
+```
+
+Before repair, preserve the affected files and provisioning logs in a root-only
+backup. Compare deployed files with `/opt/shutteros-provisioning/kit` and
+`/opt/shutteros-provisioning/site`; validate the source payload before restoring
+anything. Do not reconstruct an empty ownership marker by guessing the original
+getty state, or remove the first-boot success marker to force a blind reinstall.
+Normal service shutdown does not truncate these installed files. Loss of pending
+writes is one possible explanation after a power cut, but empty files alone do
+not establish the cause. Neither a checksum read nor a live GUI proves that
+cached writes reached storage. See the Linux documentation for
+[fsync and directory persistence](https://man7.org/linux/man-pages/man2/fsync.2.html)
+and [ext4 delayed allocation](https://docs.kernel.org/admin-guide/ext4.html).
+A later successful reboot proves that run, not the cause of an earlier loss.
+
 For a failed graphical session, read the kiosk journal and user-session logs:
 
 ```sh
@@ -264,6 +305,12 @@ editing/recovery authentication, Magic SysRq, Ctrl+Alt+Delete (including its bur
 action), emergency/initramfs access, UEFI controls and disk encryption belong to the
 machine owner. A hidden GRUB menu is not authentication; encryption also changes
 unattended boot and recovery. Test each chosen control before and after OS updates.
+
+After installation or repair, use `sudo sync && sudo systemctl poweroff`, wait
+until the machine is fully off, then power it back on and check the game and
+file checksums. Do not cut the power strip while the system is shutting down.
+Synchronization relies on the filesystem and storage device honoring flushes;
+it is not a guarantee against defective storage or every interrupted upgrade.
 
 Schedule updates outside events and repeat hardware/policy acceptance after browser,
 kernel or firmware changes. A bounded Snap hold can cover an event:

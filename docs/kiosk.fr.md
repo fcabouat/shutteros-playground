@@ -160,6 +160,36 @@ un réseau local pour la récupération. Consultez
 [guide technique](ubuntu-kiosk.md#recovery-and-removal). Ni la construction ISO ni
 les essais VM ne sont exécutés automatiquement ou dans la CI.
 
+## Fichiers vides ou services masqués après un redémarrage
+
+Un service indiqué « masked » peut être un fichier d’unité de zéro octet.
+Un écran blanc peut aussi venir d’un `index.html` ou de fichiers JavaScript vides,
+même si les services sont actifs. Ce n’est pas un nettoyage normal de systemd.
+Conservez les fichiers endommagés et les journaux avant restauration ; le
+[diagnostic technique](ubuntu-kiosk.md#recovery-and-removal) donne les contrôles
+à effectuer. La seule présence de fichiers vides ne démontre ni une coupure
+électrique ni une panne du disque.
+
+Le kit synchronise désormais les fichiers sur disque avant de lancer le jeu,
+remplace les unités et lanceurs par renommage de fichiers complets, et conserve
+un inventaire SHA-256 du site. `verify.sh` détecte les fichiers manquants ou
+altérés et vérifie le contenu HTTP, pas seulement la réponse du serveur. Une
+modification volontaire de configuration doit passer par la source du build et
+une réinstallation pour renouveler cet inventaire. Le marqueur de réussite du
+premier démarrage est lui aussi synchronisé avant sa publication.
+
+Ces changements concernent les futures installations avec le nouveau kit ; ils
+ne modifient pas les ISO déjà générées ni les postes réparés. Une ancienne
+installation sans inventaire nécessite une réinstallation contrôlée pour passer
+le nouveau vérificateur. Si son marqueur de propriété est vide, ne devinez pas
+l’ancien état de la console et ne relancez pas aveuglément le premier démarrage.
+
+Après installation ou réparation, utilisez `sudo sync && sudo systemctl poweroff`,
+attendez l’extinction complète, puis rallumez et contrôlez le jeu et les sommes de
+contrôle. Les écritures synchronisées réduisent le risque de perte lors d’une
+coupure ; elles ne rendent pas toute l’installation indivisible et ne corrigent
+pas un stockage défectueux.
+
 ## Avant d’accueillir les participants
 
 - Utilisez un profil navigateur dédié, avec l’enregistrement des mots de passe et le remplissage automatique désactivés selon la politique du poste.

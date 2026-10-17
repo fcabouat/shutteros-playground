@@ -118,6 +118,14 @@ unit have time limits. After signed snaps and the Chromium policy interface
 are ready, first boot runs the existing `install.sh` and `verify.sh`. Only after
 these checks succeed does it restore the previous store setting, write
 `/var/lib/shutteros-provisioning/success`, and disable the provisioning unit.
+The kit compares the staged site with a recorded SHA-256 inventory, publishes
+support files through synchronized temporary files and renames, and flushes the
+installation filesystems before starting the game. HTTP checks require the actual
+nonempty index content. Firstboot flushes its state and `/etc` before publishing a
+complete, synchronized success marker, then persists the disabled unit. Readback
+from cache alone is not a durability check. Interrupted installation is still not
+fully transactional; do not infer that these barriers diagnose every power-loss
+or storage failure.
 The normal security-update policy is preserved after successful provisioning.
 
 On failure, use Ctrl+Alt+F2 and authenticate with the administrator account and
