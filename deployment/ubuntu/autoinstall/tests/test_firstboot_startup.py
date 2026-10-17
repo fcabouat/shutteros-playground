@@ -59,11 +59,12 @@ class FirstbootStartupTests(unittest.TestCase):
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("ordering cycle", result.stderr.lower())
 
-    def run_script_fixture(self, *, disabled=False, error=False, pause=False):
+    def run_script_fixture(self, *, disabled=False, error=False, pause=False, fail_flush=False, fail_marker=False):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             payload = root / "payload"
             (payload / "kit").mkdir(parents=True)
+            shutil.copyfile(DIRECTORY.parent / "durable-files.sh", payload / "kit/durable-files.sh")
             logs, state = root / "logs", root / "state"
             calls, release = root / "calls", root / "release-cloud-init"
             binary = root / "bin"
@@ -76,6 +77,15 @@ class FirstbootStartupTests(unittest.TestCase):
             test_script = root / "firstboot.sh"
             test_script.write_text(script)
             wrappers = {
+                "install": "#!/usr/bin/python3\nimport os, sys\n"
+                           "args = sys.argv[1:]\n"
+                           "while '-o' in args or '-g' in args:\n"
+                           "    i = args.index('-o') if '-o' in args else args.index('-g')\n"
+                           "    del args[i:i+2]\n"
+                           "os.execv('/usr/bin/install', ['install', *args])\n",
+                "sync": "#!/bin/sh\nprintf 'sync %s\\n' \"$*\" >> \"$FIRSTBOOT_CALLS\"\n"
+                        "if [ \"$1\" = -f ] && [ \"$FAIL_FLUSH\" = 1 ]; then exit 25; fi\n"
+                        "case \"$1\" in */.shutteros-file.*) [ \"$FAIL_MARKER\" != 1 ] || exit 25 ;; esac\n",
                 "id": "#!/bin/sh\nprintf '0\\n'\n",
                 "python3": "#!/bin/sh\n"
                            "[ \"${PATH##*:}\" = /snap/bin ] || exit 91\n"
@@ -97,7 +107,8 @@ class FirstbootStartupTests(unittest.TestCase):
                     "#!/bin/sh\nprintf 'kit-" + name + "\\n' >> \"$FIRSTBOOT_CALLS\"\n")
             env = dict(os.environ, FIRSTBOOT_CALLS=str(calls), CLOUD_INIT_RELEASE=str(release),
                        CLOUD_INIT_STATUS="disabled" if disabled else "error" if error else "done",
-                       CLOUD_INIT_EXIT="2" if error else "0")
+                       CLOUD_INIT_EXIT="2" if error else "0",
+                       FAIL_FLUSH="1" if fail_flush else "0", FAIL_MARKER="1" if fail_marker else "0")
             if not pause:
                 release.touch()
             process = subprocess.Popen(["/bin/bash", str(test_script)], env=env, text=True,
@@ -113,8 +124,8 @@ class FirstbootStartupTests(unittest.TestCase):
                     release.touch()
                 output, _ = process.communicate(timeout=5)
                 events = calls.read_text().splitlines()
-                self.assertEqual(process.returncode, 2 if error else 0, output)
-                self.assertEqual((state / "success").exists(), not error)
+                self.assertEqual(process.returncode, 2 if error else 25 if fail_flush or fail_marker else 0, output)
+                self.assertEqual((state / "success").exists(), not (error or fail_flush or fail_marker))
                 self.assertLess(events.index("cloud-init-wait"), events.index("cloud-init-return"))
                 if error:
                     self.assertNotIn("hostname", events)
@@ -125,7 +136,20 @@ class FirstbootStartupTests(unittest.TestCase):
                     self.assertLess(events.index("cloud-init-return"), events.index("hostname"))
                     self.assertLess(events.index("cloud-init-return"), events.index("install-snaps"))
                     self.assertLess(events.index("kit-verify"), events.index("restore-store"))
-                    self.assertEqual(events[-1], "systemctl disable shutteros-firstboot.service")
+                    if fail_flush or fail_marker:
+                        self.assertNotIn("systemctl disable shutteros-firstboot.service", events)
+                        self.assertIn("Provisioning failed", output)
+                        self.assertFalse(list(state.glob(".success.*")))
+                        self.assertFalse(list(state.glob(".shutteros-file.*")))
+                    else:
+                        self.assertGreater((state / "success").stat().st_size, 0)
+                        self.assertEqual((state / "success").stat().st_mode & 0o777, 0o600)
+                        flush = events.index("sync -f " + str(state) + " /etc")
+                        publish = next(i for i, event in enumerate(events) if event.startswith("sync " + str(state / ".shutteros-file.")))
+                        self.assertLess(events.index("restore-store"), flush)
+                        self.assertLess(flush, publish)
+                        self.assertLess(publish, events.index("systemctl disable shutteros-firstboot.service"))
+                        self.assertEqual(events[-1], "sync -f /etc")
                     if disabled:
                         self.assertIn("status: disabled", output)
             finally:
@@ -133,6 +157,12 @@ class FirstbootStartupTests(unittest.TestCase):
                 if process.poll() is None:
                     process.kill()
                     process.communicate(timeout=5)
+
+    def test_writeback_failure_cannot_publish_success_or_disable_retry(self):
+        self.run_script_fixture(fail_flush=True)
+
+    def test_success_marker_flush_failure_cannot_publish_empty_marker(self):
+        self.run_script_fixture(fail_marker=True)
 
     def test_running_cloud_init_blocks_mutations_inside_script_only(self):
         self.run_script_fixture(pause=True)

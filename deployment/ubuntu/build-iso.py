@@ -232,7 +232,7 @@ def main() -> None:
                 shutil.copy2(path, site / path.name)
         kit = payload / "kit"
         kit.mkdir()
-        for name in ("install.sh", "verify.sh", "uninstall.sh", "platform.sh", "session",
+        for name in ("install.sh", "verify.sh", "uninstall.sh", "platform.sh", "durable-files.sh", "site-integrity.py", "session",
                      "launch-chromium", "validate-config.py", "chromium-policy.json",
                      "shutteros-kiosk.service", "shutteros-static.service"):
             shutil.copy2(KIT / name, kit / name)

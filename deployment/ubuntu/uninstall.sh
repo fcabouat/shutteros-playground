@@ -150,7 +150,7 @@ validate_static_account
 read_original_getty_state
 assert_installed_getty_state
 
-[ -z "$(find "$KIOSK_ROOT" -mindepth 1 -maxdepth 1 ! -name site ! -name .site-rollback ! -name .shutteros-kiosk-owner -print -quit)" ] ||
+[ -z "$(find "$KIOSK_ROOT" -mindepth 1 -maxdepth 1 ! -name site ! -name .site-rollback ! -name .shutteros-kiosk-owner ! -name .site-sha256.json -print -quit)" ] ||
   die 'unexpected files exist in the kiosk root; move them aside before uninstalling'
 if [ -e "$LIB_ROOT" ] || [ -L "$LIB_ROOT" ]; then
   root_owned_directory "$LIB_ROOT" || die 'the launcher directory is unexpected'
@@ -158,7 +158,7 @@ if [ -e "$LIB_ROOT" ] || [ -L "$LIB_ROOT" ]; then
     die 'unexpected files exist in the launcher directory; move them aside before uninstalling'
 fi
 
-for path in "$LIB_ROOT/platform.sh" "$LIB_ROOT/session" "$LIB_ROOT/launch-chromium" "$LIB_ROOT/environment" "$STATIC_UNIT" "$KIOSK_UNIT" "$POLICY_FILE"; do
+for path in "$LIB_ROOT/platform.sh" "$LIB_ROOT/session" "$LIB_ROOT/launch-chromium" "$LIB_ROOT/environment" "$STATIC_UNIT" "$KIOSK_UNIT" "$POLICY_FILE" "$KIOSK_ROOT/.site-sha256.json"; do
   if [ -e "$path" ] || [ -L "$path" ]; then
     root_owned_regular "$path" || die "refusing to remove unexpected path: $path"
   fi

@@ -6,11 +6,15 @@ PATH=/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin
 export PATH
 readonly payload=/opt/shutteros-provisioning
 readonly state=/var/lib/shutteros-provisioning
+# shellcheck source=deployment/ubuntu/durable-files.sh
+source "$payload/kit/durable-files.sh"
 [[ $(id -u) == 0 ]] || { echo 'First-boot provisioning requires root.' >&2; exit 1; }
 install -d -m 0700 /var/log/shutteros-provisioning "$state"
 exec > >(tee -a /var/log/shutteros-provisioning/firstboot.log) 2>&1
+success_tmp=
 finish() {
   local status=$?
+  [[ -z "$success_tmp" ]] || rm -f "$success_tmp"
   if (( status != 0 )); then
     echo 'Provisioning failed; use Ctrl+Alt+F2 or administrator SSH.'
     echo 'Logs: /var/log/shutteros-provisioning/firstboot.log'
@@ -36,6 +40,14 @@ python3 -B "$payload/kit/autoinstall/payload.py" install-snaps "$payload"
 /bin/sh "$payload/kit/install.sh" --site-dir "$payload/site" </dev/null
 /bin/sh "$payload/kit/verify.sh"
 python3 -B "$payload/kit/autoinstall/payload.py" restore-store "$payload"
-date --utc --iso-8601=seconds > "$state/success"
+# Persist provisioning state before publishing the completion marker. Existence
+# of that marker skips provisioning on future boots, so an empty marker is unsafe.
+sync -f "$state" /etc
+success_tmp=$(mktemp "$state/.success.XXXXXX")
+date --utc --iso-8601=seconds > "$success_tmp"
+kiosk_install_file "$success_tmp" "$state/success" 0600
+rm -f "$success_tmp"
+success_tmp=
 systemctl disable shutteros-firstboot.service
+sync -f /etc
 echo 'ShutterOS offline provisioning succeeded. Complete the documented hardware acceptance checks.'

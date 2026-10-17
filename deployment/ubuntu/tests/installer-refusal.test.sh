@@ -35,6 +35,7 @@ done
 chmod 755 "$tmp/bin"/*
 
 prepare_script() {
+  cp "$repo_root/deployment/ubuntu/durable-files.sh" "$tmp/kit/durable-files.sh"
   cp "$repo_root/deployment/ubuntu/platform.sh" "$tmp/kit/platform.sh"
   cp "$repo_root/deployment/ubuntu/install.sh" "$tmp/kit/install.sh"
   sed -i "s|readonly KIOSK_ROOT=/opt/cyber-shutteros|readonly KIOSK_ROOT=$tmp/opt/cyber-shutteros|" "$tmp/kit/install.sh"
