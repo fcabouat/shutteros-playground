@@ -1,3 +1,4 @@
+import { buildRoot } from '../../scripts/build-paths.mjs';
 import { test, expect, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { fr } from '@shutteros/core/data/fr';
@@ -53,7 +54,9 @@ for (const viewport of [
     }
     await expectNoHorizontalOverflow(page, viewport.width);
     expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
-    await page.screenshot({ path: `test-results/previews/ai-free-${viewport.width}.png` });
+    await page.screenshot({
+      path: `${buildRoot}/test-results/previews/ai-free-${viewport.width}.png`,
+    });
 
     await switchToGuided(page);
     const confirm = page.getByRole('button', { name: fr.ai.confirm, exact: true });
@@ -78,6 +81,8 @@ for (const viewport of [
       await expect(chat.locator('.ai-prompt').last()).toBeInViewport({ ratio: 1 });
       await expect(confirm).toBeInViewport({ ratio: 1 });
     }
-    await page.screenshot({ path: `test-results/previews/ai-guided-${viewport.width}.png` });
+    await page.screenshot({
+      path: `${buildRoot}/test-results/previews/ai-guided-${viewport.width}.png`,
+    });
   });
 }

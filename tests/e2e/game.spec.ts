@@ -1,14 +1,14 @@
+import { distPath, buildRoot } from '../../scripts/build-paths.mjs';
 import { test, expect, type Page } from '@playwright/test';
 import { en } from '@shutteros/core/data/en';
 import { fr } from '@shutteros/core/data/fr';
 import AxeBuilder from '@axe-core/playwright';
-import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { mkdir } from 'node:fs/promises';
 import config from '../../static/kiosk-config.json' with { type: 'json' };
 import { beginFree, switchToFree, switchToGuided } from './helpers';
 
-const portable = pathToFileURL(path.resolve('dist/portable/shutteros.html')).href;
+const portable = pathToFileURL(distPath('portable/shutteros.html')).href;
 const sessionDurationMs = config.sessionMinutes * 60_000;
 
 function clockLabel(durationMs: number) {
@@ -186,7 +186,9 @@ test('guided completion sweeps remaining situations without local timers', async
   ];
   for (const viewport of recapViewports) {
     await page.setViewportSize(viewport);
-    await page.screenshot({ path: `test-results/previews/recap-${viewport.width}.png` });
+    await page.screenshot({
+      path: `${buildRoot}/test-results/previews/recap-${viewport.width}.png`,
+    });
   }
   await openDetailedRecap(page);
   await expect(page.getByText('7 bons réflexes sur 7 situations explorées')).toBeVisible();
@@ -214,7 +216,9 @@ test('guided completion sweeps remaining situations without local timers', async
         .locator('.window-body')
         .evaluate((element) => element.scrollHeight <= element.clientHeight + 1),
     ).toBe(true);
-    await page.screenshot({ path: `test-results/previews/recap-detailed-${viewport.width}.png` });
+    await page.screenshot({
+      path: `${buildRoot}/test-results/previews/recap-detailed-${viewport.width}.png`,
+    });
   }
   await page.setViewportSize({ width: 1440, height: 1000 });
   await expect(page.locator('.companion-trigger')).toBeDisabled();
@@ -245,9 +249,12 @@ for (const delivery of ['http', 'file'] as const) {
     await page.goto(delivery === 'file' ? portable : './');
     await beginFree(page);
     if (delivery === 'http') {
-      await mkdir('test-results/previews', { recursive: true });
+      await mkdir(`${buildRoot}/test-results/previews`, { recursive: true });
       await expect(page.getByLabel('Mot de passe', { exact: true })).toBeVisible();
-      await page.screenshot({ path: 'test-results/previews/login.png', fullPage: true });
+      await page.screenshot({
+        path: `${buildRoot}/test-results/previews/login.png`,
+        fullPage: true,
+      });
     }
     await enter(page, false);
     await page.getByRole('button', { name: 'Démarrer', exact: true }).click();
@@ -267,9 +274,15 @@ for (const delivery of ['http', 'file'] as const) {
     expect(taskbar!.height).toBeLessThanOrEqual(80);
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(1280);
     if (delivery === 'http')
-      await page.screenshot({ path: 'test-results/previews/desktop.png', fullPage: true });
+      await page.screenshot({
+        path: `${buildRoot}/test-results/previews/desktop.png`,
+        fullPage: true,
+      });
     else
-      await page.screenshot({ path: 'test-results/previews/desktop-portable.png', fullPage: true });
+      await page.screenshot({
+        path: `${buildRoot}/test-results/previews/desktop-portable.png`,
+        fullPage: true,
+      });
 
     await openNext(page, 'usb', false);
     await page.getByRole('button', { name: fr.usb.readme }).click();
@@ -328,7 +341,7 @@ for (const delivery of ['http', 'file'] as const) {
       page.getByRole('button', { name: fr.experience.review, exact: true }),
     ).toBeDisabled();
     if (delivery === 'http')
-      await page.screenshot({ path: 'test-results/previews/routines-pending.png' });
+      await page.screenshot({ path: `${buildRoot}/test-results/previews/routines-pending.png` });
     await page
       .locator('.window-titlebar')
       .getByRole('button', { name: fr.os.minimize, exact: true })
@@ -343,13 +356,13 @@ for (const delivery of ['http', 'file'] as const) {
       page.getByRole('button', { name: fr.experience.review, exact: true }),
     ).toBeEnabled();
     if (delivery === 'http')
-      await page.screenshot({ path: 'test-results/previews/routines-complete.png' });
+      await page.screenshot({ path: `${buildRoot}/test-results/previews/routines-complete.png` });
     await page.getByRole('button', { name: fr.experience.review, exact: true }).click();
     await expect(
       page.getByRole('heading', { name: fr.debrief.summary.title(config.playerName, true) }),
     ).toBeVisible();
     if (delivery === 'http')
-      await page.screenshot({ path: 'test-results/previews/recap-summary.png' });
+      await page.screenshot({ path: `${buildRoot}/test-results/previews/recap-summary.png` });
     await openDetailedRecap(page);
     await expect(
       page.getByText(
@@ -364,7 +377,7 @@ for (const delivery of ['http', 'file'] as const) {
       page.getByRole('button', { name: fr.experience.review, exact: true }),
     ).toBeVisible();
     if (delivery === 'http')
-      await page.screenshot({ path: 'test-results/previews/recap-minimized.png' });
+      await page.screenshot({ path: `${buildRoot}/test-results/previews/recap-minimized.png` });
     await page.getByRole('button', { name: fr.experience.review, exact: true }).click();
     await expect(page.locator('.debrief-view')).toBeVisible();
     await page.getByRole('button', { name: fr.shell.resume, exact: true }).click();
@@ -383,7 +396,7 @@ for (const delivery of ['http', 'file'] as const) {
       page.locator('li').filter({ hasText: fr.desktop.usb }).locator('[data-outcome="caution"]'),
     ).toBeVisible();
     if (delivery === 'http')
-      await page.screenshot({ path: 'test-results/previews/usb-caution-recap.png' });
+      await page.screenshot({ path: `${buildRoot}/test-results/previews/usb-caution-recap.png` });
     await page.getByRole('button', { name: 'Passer au joueur suivant' }).click();
     await page.getByRole('button', { name: 'Quitter et effacer ma progression' }).click();
     await expect(page.getByRole('heading', { name: fr.welcome.title })).toBeVisible();
@@ -656,7 +669,7 @@ test('native browser and MFA actions remain available before the optional answer
   await expect(
     page.getByRole('button', { name: `${fr.web.bookmark} · ${fr.web.knownDomain}`, exact: true }),
   ).toBeVisible();
-  await page.screenshot({ path: 'test-results/previews/browser.png' });
+  await page.screenshot({ path: `${buildRoot}/test-results/previews/browser.png` });
   await beginDecision(page, 'web');
   await expect(page.locator('.action-dock-panel')).toBeVisible();
   await expect(page.getByLabel('Adresse fictive du site')).toBeInViewport({ ratio: 1 });
@@ -665,7 +678,7 @@ test('native browser and MFA actions remain available before the optional answer
     .boundingBox();
   const panel = await page.locator('.action-dock-panel').boundingBox();
   expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(panel!.x);
-  await page.screenshot({ path: 'test-results/previews/browser-actions.png' });
+  await page.screenshot({ path: `${buildRoot}/test-results/previews/browser-actions.png` });
   await switchToFree(page);
   await expect(page.locator('.action-dock-panel')).toHaveCount(0);
   await openNext(page, 'mfa', false);
@@ -679,7 +692,7 @@ test('native browser and MFA actions remain available before the optional answer
   await expect(page.locator('.mfa-device').getByRole('button')).toHaveCount(3);
   await beginDecision(page, 'mfa');
   await expect(page.locator('.action-dock-panel .choice-button')).toHaveCount(3);
-  await page.screenshot({ path: 'test-results/previews/phone.png' });
+  await page.screenshot({ path: `${buildRoot}/test-results/previews/phone.png` });
   await expectNoAxeViolations(page);
 });
 
@@ -768,7 +781,7 @@ test('left Start menu opens updates and keeps their status for the session', asy
   await expect(page.locator('.os-taskbar')).not.toContainText('Exploration libre');
   await start.click();
   await expect(page.locator('.start-trigger svg')).toBeVisible();
-  await page.screenshot({ path: 'test-results/previews/start-menu.png' });
+  await page.screenshot({ path: `${buildRoot}/test-results/previews/start-menu.png` });
   await page.getByRole('button', { name: 'Mises à jour', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Mises à jour', exact: true })).toBeVisible();
   await expect(page.locator('.start-menu')).toHaveCount(0);
@@ -779,7 +792,7 @@ test('left Start menu opens updates and keeps their status for the session', asy
     .click();
   await expect(page.getByRole('status')).toContainText('Mise à jour planifiée');
   await expectNoAxeViolations(page);
-  await page.screenshot({ path: 'test-results/previews/updates.png' });
+  await page.screenshot({ path: `${buildRoot}/test-results/previews/updates.png` });
   await page.getByRole('button', { name: 'Fermer', exact: true }).click();
   await start.click();
   await page.getByRole('button', { name: 'Mises à jour', exact: true }).click();
@@ -898,7 +911,9 @@ for (const viewport of [
     await expect(send).toBeInViewport({ ratio: 0.99 });
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(viewport.width);
     await expectNoAxeViolations(page);
-    await page.screenshot({ path: `test-results/previews/ai-${viewport.width}.png` });
+    await page.screenshot({
+      path: `${buildRoot}/test-results/previews/ai-${viewport.width}.png`,
+    });
   });
 }
 
@@ -1037,11 +1052,15 @@ for (const width of [390, 960, 1440]) {
       ).toBeCloseTo(ratio, 2);
       await expect(brands.nth(index)).toBeInViewport({ ratio: 1 });
     }
-    await page.screenshot({ path: `test-results/previews/partners-login-${width}.png` });
+    await page.screenshot({
+      path: `${buildRoot}/test-results/previews/partners-login-${width}.png`,
+    });
     await enter(page);
     await expect(brands).toHaveCount(2);
     for (const brand of await brands.all()) await expect(brand).toBeInViewport({ ratio: 1 });
-    await page.screenshot({ path: `test-results/previews/partners-desktop-${width}.png` });
+    await page.screenshot({
+      path: `${buildRoot}/test-results/previews/partners-desktop-${width}.png`,
+    });
     const group = await page.locator('.organization-group').boundingBox();
     const icons = await page.locator('.desktop-icon').first().boundingBox();
     expect(group!.y + group!.height).toBeLessThanOrEqual(icons!.y);
@@ -1077,7 +1096,7 @@ test('the USB readme opens locally without recording an infection', async ({ pag
   await expect(page.getByRole('note')).toContainText(fr.usb.readmeAdvisoryTitle);
   await expect(page.getByRole('note')).toContainText(fr.usb.readmeAdvisory);
   await expect(page.getByRole('dialog', { name: fr.usb.readme, exact: true })).toBeFocused();
-  await page.screenshot({ path: 'test-results/previews/usb-readme-warning.png' });
+  await page.screenshot({ path: `${buildRoot}/test-results/previews/usb-readme-warning.png` });
   await page.keyboard.press('Escape');
   await expect(readme).toBeFocused();
   await expect(page.locator('.feedback-card')).toHaveCount(0);
@@ -1086,11 +1105,15 @@ test('the USB readme opens locally without recording an infection', async ({ pag
   await expect(feedback).toBeVisible();
   await expect(feedback).toContainText(fr.feedback.caution);
   await expect(feedback).toContainText(fr.usb.ejectedAfterReadme);
-  await page.screenshot({ path: 'test-results/previews/usb-caution-feedback.png' });
+  await page.screenshot({
+    path: `${buildRoot}/test-results/previews/usb-caution-feedback.png`,
+  });
   await page.getByRole('button', { name: 'EN', exact: true }).click();
   await expect(feedback).toContainText(en.feedback.caution);
   await expectNoAxeViolations(page);
-  await page.screenshot({ path: 'test-results/previews/usb-caution-feedback-en.png' });
+  await page.screenshot({
+    path: `${buildRoot}/test-results/previews/usb-caution-feedback-en.png`,
+  });
   await page.getByRole('button', { name: 'FR', exact: true }).click();
   await expect(feedback.locator('.decision-review [data-choice="eject"]')).toHaveAttribute(
     'data-outcome',
@@ -1149,7 +1172,7 @@ for (const width of [390, 1440]) {
       await explorer.getByRole('button', { name: fr.os.minimize, exact: true }).click();
       await expect(advisory).toBeInViewport({ ratio: 1 });
     }
-    await page.screenshot({ path: `test-results/previews/usb-editor-${width}.png` });
+    await page.screenshot({ path: `${buildRoot}/test-results/previews/usb-editor-${width}.png` });
     await editor.getByRole('button', { name: fr.usb.closePreview }).click();
     await expect(editor).toHaveCount(0);
     await expect(page.locator('#usb-file-2')).toBeFocused();

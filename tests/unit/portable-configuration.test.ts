@@ -1,6 +1,6 @@
 import { cp, mkdir, mkdtemp, readFile, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { resolve } from 'node:path';
+import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
@@ -12,22 +12,100 @@ const script = fileURLToPath(
 );
 
 async function fixtureFor(configuration: unknown) {
-  const root = await mkdtemp(resolve(tmpdir(), 'shutteros-portable-config-'));
+  const root = resolve(await mkdtemp(resolve(tmpdir(), 'shutteros-portable-config-')), 'source');
+  await mkdir(root);
   await mkdir(resolve(root, 'scripts'));
   await mkdir(resolve(root, 'static'));
-  await mkdir(resolve(root, 'portable'));
   await cp(script, resolve(root, 'scripts/prepare-portable-configuration.mjs'));
+  await cp(
+    new URL('../../scripts/kiosk-config-source.mjs', import.meta.url),
+    resolve(root, 'scripts/kiosk-config-source.mjs'),
+  );
+  await cp(
+    new URL('../../scripts/sync-kiosk-configuration.mjs', import.meta.url),
+    resolve(root, 'scripts/sync-kiosk-configuration.mjs'),
+  );
+  await cp(
+    new URL('../../scripts/build-paths.mjs', import.meta.url),
+    resolve(root, 'scripts/build-paths.mjs'),
+  );
   await writeFile(resolve(root, 'static/kiosk-config.json'), JSON.stringify(configuration));
   return root;
 }
 
-async function run(root: string) {
-  return execFileAsync(process.execPath, [
-    resolve(root, 'scripts/prepare-portable-configuration.mjs'),
-  ]);
+async function run(root: string, publicBuild = false) {
+  return execFileAsync(
+    process.execPath,
+    [resolve(root, 'scripts/prepare-portable-configuration.mjs')],
+    { env: { ...process.env, SHUTTEROS_PUBLIC_BUILD: publicBuild ? '1' : '0' } },
+  );
 }
 
 describe('portable configuration preparation', () => {
+  it('keeps organisation-specific settings private while public builds use the tracked default', async () => {
+    const root = await fixtureFor({ version: 1, supportContact: 'public@example.invalid' });
+    const local = { version: 1, supportContact: 'private@example.invalid' };
+    const generated = resolve(root, '../shutteros-build/generated/configuration.generated.ts');
+    const dist = resolve(root, '../shutteros-build/dist');
+    try {
+      await mkdir(resolve(root, 'private'));
+      await mkdir(dist, { recursive: true });
+      await writeFile(resolve(root, 'private/configuration.json'), JSON.stringify({ game: local }));
+      await run(root);
+      await execFileAsync(
+        process.execPath,
+        [resolve(root, 'scripts/sync-kiosk-configuration.mjs')],
+        {
+          env: { ...process.env, SHUTTEROS_PUBLIC_BUILD: '0' },
+        },
+      );
+      expect(await readFile(generated, 'utf8')).toContain('private@example.invalid');
+      expect(JSON.parse(await readFile(resolve(dist, 'kiosk-config.json'), 'utf8'))).toEqual(local);
+      expect(await readFile(resolve(root, 'static/kiosk-config.json'), 'utf8')).toContain(
+        'public@example.invalid',
+      );
+
+      await run(root, true);
+      await execFileAsync(
+        process.execPath,
+        [resolve(root, 'scripts/sync-kiosk-configuration.mjs')],
+        {
+          env: { ...process.env, SHUTTEROS_PUBLIC_BUILD: '1' },
+        },
+      );
+      expect(await readFile(generated, 'utf8')).toContain('public@example.invalid');
+      expect(await readFile(generated, 'utf8')).not.toContain('private@example.invalid');
+      expect(await readFile(resolve(dist, 'kiosk-config.json'), 'utf8')).not.toContain(
+        'private@example.invalid',
+      );
+
+      // Public verification must not inspect a malformed private operator file.
+      await writeFile(resolve(root, 'private/configuration.json'), '{invalid local json');
+      await run(root, true);
+      await execFileAsync(
+        process.execPath,
+        [resolve(root, 'scripts/sync-kiosk-configuration.mjs')],
+        {
+          env: { ...process.env, SHUTTEROS_PUBLIC_BUILD: '1' },
+        },
+      );
+    } finally {
+      await rm(dirname(root), { recursive: true, force: true });
+    }
+  });
+
+  it('refuses a linked private configuration instead of reading outside private', async () => {
+    const root = await fixtureFor({ version: 1 });
+    try {
+      await mkdir(resolve(root, 'private'));
+      await writeFile(resolve(root, 'outside.json'), '{"version":1}');
+      await symlink(resolve(root, 'outside.json'), resolve(root, 'private/configuration.json'));
+      await expect(run(root)).rejects.toThrow('must be a regular file');
+    } finally {
+      await rm(dirname(root), { recursive: true, force: true });
+    }
+  });
+
   it('embeds a bounded SVG separately from script-safe configuration', async () => {
     const root = await fixtureFor({
       organizationName: '</ScRiPt><script>compromised</script>',
@@ -41,7 +119,7 @@ describe('portable configuration preparation', () => {
       );
       await run(root);
       const generated = await readFile(
-        resolve(root, 'portable/configuration.generated.ts'),
+        resolve(root, '../shutteros-build/generated/configuration.generated.ts'),
         'utf8',
       );
       expect(generated).toContain('organizationLogo":"logo-organisation.svg');
@@ -50,7 +128,7 @@ describe('portable configuration preparation', () => {
       expect(generated).toContain('\\u003c/ScRiPt\\u003e');
       expect(generated).not.toContain('<script>');
     } finally {
-      await rm(root, { recursive: true, force: true });
+      await rm(dirname(root), { recursive: true, force: true });
     }
   });
 
@@ -67,7 +145,7 @@ describe('portable configuration preparation', () => {
       await writeFile(resolve(root, 'static/partner.svg'), '<svg></svg>');
       await run(root);
       const generated = await readFile(
-        resolve(root, 'portable/configuration.generated.ts'),
+        resolve(root, '../shutteros-build/generated/configuration.generated.ts'),
         'utf8',
       );
       expect(generated).toContain(
@@ -77,7 +155,7 @@ describe('portable configuration preparation', () => {
         'embeddedPartnerOrganizationLogo: string | undefined = "data:image/svg+xml',
       );
     } finally {
-      await rm(root, { recursive: true, force: true });
+      await rm(dirname(root), { recursive: true, force: true });
     }
   });
 
@@ -86,10 +164,10 @@ describe('portable configuration preparation', () => {
     try {
       await run(root);
       await expect(
-        readFile(resolve(root, 'portable/configuration.generated.ts'), 'utf8'),
+        readFile(resolve(root, '../shutteros-build/generated/configuration.generated.ts'), 'utf8'),
       ).resolves.toContain('embeddedOrganizationLogo: string | undefined = undefined');
     } finally {
-      await rm(root, { recursive: true, force: true });
+      await rm(dirname(root), { recursive: true, force: true });
     }
   });
 
@@ -104,7 +182,7 @@ describe('portable configuration preparation', () => {
     try {
       await expect(run(root)).rejects.toThrow('must be a local PNG, WebP, or SVG filename');
     } finally {
-      await rm(root, { recursive: true, force: true });
+      await rm(dirname(root), { recursive: true, force: true });
     }
   });
 
@@ -115,7 +193,7 @@ describe('portable configuration preparation', () => {
         'partnerOrganizationLogo requires partnerOrganizationName',
       );
     } finally {
-      await rm(root, { recursive: true, force: true });
+      await rm(dirname(root), { recursive: true, force: true });
     }
   });
 
@@ -131,9 +209,9 @@ describe('portable configuration preparation', () => {
       await expect(run(oversized)).rejects.toThrow('must be at most 256 KiB');
       await expect(run(escaping)).rejects.toThrow('symlink must resolve inside static/');
     } finally {
-      await rm(missing, { recursive: true, force: true });
-      await rm(oversized, { recursive: true, force: true });
-      await rm(escaping, { recursive: true, force: true });
+      await rm(dirname(missing), { recursive: true, force: true });
+      await rm(dirname(oversized), { recursive: true, force: true });
+      await rm(dirname(escaping), { recursive: true, force: true });
     }
   });
 });

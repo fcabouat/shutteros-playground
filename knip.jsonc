@@ -1,5 +1,7 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
+  // System tool required by the local ISO command, not an npm dependency.
+  "ignoreBinaries": ["openssl"],
   "workspaces": {
     ".": {
       // Playwright starts this fixture through a shell command, not an import.

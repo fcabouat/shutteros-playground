@@ -1,3 +1,4 @@
+import { distPath } from './build-paths.mjs';
 // Add the small set of notices needed by the documentation site. This is not a
 // dependency scanner: the game build already inventories the browser bundle, and
 // generated TypeDoc/Storybook assets retain their upstream comments and notices.
@@ -5,14 +6,14 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { createRequire } from 'node:module';
 
-const siteRoot = process.env.SITE_ROOT ?? 'dist/site';
+const siteRoot = process.env.SITE_ROOT ?? distPath('site');
 const require = createRequire(import.meta.url);
 const sections = ['ShutterOS — site software notices'];
 let gameNotices;
 
 for (const candidate of [
-  'dist/site/demo/THIRD-PARTY-NOTICES.txt',
-  'dist/THIRD-PARTY-NOTICES.txt',
+  distPath('site/demo/THIRD-PARTY-NOTICES.txt'),
+  distPath('THIRD-PARTY-NOTICES.txt'),
 ]) {
   try {
     gameNotices = await readFile(candidate, 'utf8');
@@ -23,7 +24,7 @@ for (const candidate of [
 }
 if (!gameNotices) {
   throw new Error(
-    'Game third-party notices are required; build the game into dist/ before packaging the site.',
+    'Game third-party notices are required; build the game into ../shutteros-build/dist/ before packaging the site.',
   );
 }
 sections.push(gameNotices);

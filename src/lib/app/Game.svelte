@@ -22,7 +22,7 @@
   import Session from '@shutteros/components/screens/Session.svelte';
   import Brand from '@shutteros/components/commons/Brand.svelte';
   import Icon from '@shutteros/components/commons/Icon.svelte';
-  import { branding } from '../branding.generated';
+  import { branding } from '$generated/branding.generated';
 
   let {
     configuration,

@@ -1,9 +1,10 @@
+import { distRoot } from '../../scripts/build-paths.mjs';
 // A test fixture: serve only the built files, without development-server fallbacks.
 import { createServer } from 'node:http';
 import { readFile, realpath, stat } from 'node:fs/promises';
 import path from 'node:path';
 
-const root = await realpath(process.env.BUILD_ROOT ?? 'dist');
+const root = await realpath(process.env.BUILD_ROOT ?? distRoot);
 const base = process.env.BASE_PATH ?? '';
 const types = {
   '.html': 'text/html; charset=utf-8',

@@ -5,7 +5,7 @@ The source is a personal MIT project. The public demo uses the generic ShutterOS
 ## Configure Pages
 
 1. Use a GitHub repository with Actions enabled, `develop` as its default integration branch, and `main` for releases and Pages. Forks can use the same workflow; the deployment path is derived from the repository name.
-2. Run the [release verification](verification.md) from a clean checkout. Check that the source excludes organisation assets, generated branding, `.env` files, `dist/`, and local browser reports.
+2. Run the [release verification](verification.md) from a clean checkout. Check that the source excludes organisation assets, generated branding, `.env` files, `../shutteros-build/dist/`, and local browser reports.
 3. In **Settings → Pages → Build and deployment**, select **GitHub Actions** as the source. Add the repository Actions variable **`PAGES_ENABLED` = `true`** under **Settings → Secrets and variables → Actions → Variables**.
 4. Run **CI** manually on `main`, or push a commit to it. The deployment job runs only after verification succeeds, only on `main`, and only when the variable is enabled. Pull requests never deploy.
 5. In **Settings → Environments → github-pages**, restrict deployment branches to `main`.
@@ -17,7 +17,7 @@ The workflow uses pinned action revisions, a frozen lockfile, Node 24, dependenc
 
 The workflow derives `/repository-name` for a project site and an empty base for an `owner.github.io` repository. This follows [SvelteKit's static Pages guidance](https://svelte.dev/docs/kit/adapter-static#GitHub-Pages). It supports the standard GitHub Pages URL. A custom domain needs an explicit base-path adjustment and a fresh test; it is not configured by this workflow.
 
-The **shutteros-static-and-portable** Actions artifact contains the root-path build for a local kiosk. The **github-pages** artifact contains `dist/site/`, the separately verified product site with the Pages base path. Do not copy the project-path Pages artifact to a server's root URL: use the kiosk artifact instead.
+The **shutteros-static-and-portable** Actions artifact contains the root-path build for a local kiosk. The **github-pages** artifact contains `../shutteros-build/dist/site/`, the separately verified product site with the Pages base path. Do not copy the project-path Pages artifact to a server's root URL: use the kiosk artifact instead.
 
 `pnpm build:site` builds and assembles the landing page, demo, deployment documentation, TypeDoc API and Storybook. It rebuilds the game for the nested demo URL; run `pnpm build` again before distributing a root-path kiosk build. The public layout is:
 
@@ -33,15 +33,19 @@ The **shutteros-static-and-portable** Actions artifact contains the root-path bu
 
 These paths sit below the repository prefix on a project Pages site. Direct kiosk URLs and downloads use the game-only build. Language links are ordinary URLs, without cookies or stored preferences; English-only technical references are marked as such.
 
+`pnpm build:site` always uses the generic public identity for the demo and
+Storybook, even when local private branding exists. Organisation-specific kiosk
+builds remain separate and use `pnpm build` or `pnpm kiosk:iso`.
+
 To reproduce the project-path verification locally:
 
 ```sh
 BASE_PATH=/shutteros-preview pnpm build:site
-BUILD_ROOT=dist/site/demo BASE_PATH=/shutteros-preview/demo pnpm test:e2e
+BUILD_ROOT=../shutteros-build/dist/site/demo BASE_PATH=/shutteros-preview/demo pnpm test:e2e
 BASE_PATH=/shutteros-preview pnpm test:site
 ```
 
-The browser test fixture serves only the selected build directory on loopback port 4183, under that exact prefix. It has no SPA fallback and never reuses the interactive preview on port 4173. Site checks exercise language navigation, the download, demo, bilingual deployment documentation, API and Storybook, including mobile layout and automated accessibility checks. To preview manually at a root URL, run `pnpm build:site` without `BASE_PATH`, then `python3 -m http.server 4174 --bind 127.0.0.1 --directory dist/site`.
+The browser test fixture serves only the selected build directory on loopback port 4183, under that exact prefix. It has no SPA fallback and never reuses the interactive preview on port 4173. Site checks exercise language navigation, the download, demo, bilingual deployment documentation, API and Storybook, including mobile layout and automated accessibility checks. To preview manually at a root URL, run `pnpm build:site` without `BASE_PATH`, then `python3 -m http.server 4174 --bind 127.0.0.1 --directory ../shutteros-build/dist/site`.
 
 GitHub documents the required publishing source, artifact, permissions, and environment in [custom Pages workflows](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages).
 
@@ -138,7 +142,7 @@ A release therefore triggers two verification runs, one for `main` and one for t
 ## Maintenance and release review
 
 - Rehearse with representative players and the target kiosk before a public event. Automated accessibility checks do not replace keyboard, screen-reader, zoom, and comprehension testing with people.
-- Keep the generic published demo free of organisation-owned assets. Private branding is included in built HTML, so an organisation's `dist/` is not a public-safe artifact by default.
+- Keep the generic published demo free of organisation-owned assets. Private branding is included in built HTML, so an organisation's `../shutteros-build/dist/` is not a public-safe artifact by default.
 - Use a release tag when distributing a validated version. Attach the root-path kiosk artifact if a downloadable build is useful; retain its `LICENSE` and dependency notices.
 
 ## Public repository security

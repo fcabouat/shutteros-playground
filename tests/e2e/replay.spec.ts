@@ -1,10 +1,10 @@
+import { distPath } from '../../scripts/build-paths.mjs';
 import { test, expect, type Page } from '@playwright/test';
 import { fr } from '@shutteros/core/data/fr';
 import { beginFree, switchToFree, switchToGuided } from './helpers';
 import { pathToFileURL } from 'node:url';
-import { resolve } from 'node:path';
 
-const portable = pathToFileURL(resolve('dist/portable/shutteros.html')).href;
+const portable = pathToFileURL(distPath('portable/shutteros.html')).href;
 
 async function enter(page: Page, delivery: 'http' | 'file') {
   await page.goto(delivery === 'http' ? './' : portable);

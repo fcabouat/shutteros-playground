@@ -105,6 +105,7 @@ export default ts.config(
             '**/app/**',
             '**/contract/**',
             '**/branding.generated',
+            '$generated/*',
           ],
         },
       ],

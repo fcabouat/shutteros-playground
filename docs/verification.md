@@ -19,33 +19,35 @@ On Linux hosts without the browser's system libraries, use `pnpm exec playwright
 
 ## Automated coverage
 
-| Area                      | Checks                                                                                                                                                                                   |
-| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Architecture              | Core compiles without DOM types or runtime dependencies; import-boundary tests reject forbidden dependencies.                                                                            |
-| Game rules                | Global session deadline, free/guided transitions, replay without rescoring, paused activities, progressive hints, native/guided action equivalence, invalid intents, routines and reset. |
-| Configuration             | Strict decoding, bounded loading, invalid input, local logo filenames and portable image embedding.                                                                                      |
-| Packaging                 | Script serialization, CSP integrity, dependency license inventory, notice parity and removal of build intermediates.                                                                     |
-| Browser behavior          | Complete HTTP and offline journeys, both languages, navigation, dialogs, drafts, timeout/reset, narrow layouts, keyboard controls, branding and About.                                   |
-| Accessibility and privacy | Axe scans in tested states, focus behavior, unexpected external requests, page errors and persistent browser storage.                                                                    |
-| Product site              | Local links and anchors, language navigation, demo and download paths, API and Storybook loading, mobile layout and Axe scans.                                                           |
-| Maintenance               | Knip unused-file/dependency/export checks, workflow syntax, frozen dependency installation and registry advisory audit.                                                                  |
-| Linux kiosk kit           | ShellCheck, shell/unit syntax, Python/TypeScript contract parity and sandboxed install/refusal/rollback/verification/removal tests on Debian 13 and Ubuntu 24.04 / 26.04.                |
+| Area                      | Checks                                                                                                                                                                                                          |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Architecture              | Core compiles without DOM types or runtime dependencies; import-boundary tests reject forbidden dependencies.                                                                                                   |
+| Game rules                | Global session deadline, free/guided transitions, replay without rescoring, paused activities, progressive hints, native/guided action equivalence, invalid intents, routines and reset.                        |
+| Configuration             | Strict decoding, bounded loading, invalid input, local logo filenames and portable image embedding.                                                                                                             |
+| Packaging                 | Script serialization, CSP integrity, dependency license inventory, notice parity and removal of build intermediates.                                                                                            |
+| Browser behavior          | Complete HTTP and offline journeys, both languages, navigation, dialogs, drafts, timeout/reset, narrow layouts, keyboard controls, branding and About.                                                          |
+| Accessibility and privacy | Axe scans in tested states, focus behavior, unexpected external requests, page errors and persistent browser storage.                                                                                           |
+| Product site              | Local links and anchors, language navigation, demo and download paths, API and Storybook loading, mobile layout and Axe scans.                                                                                  |
+| Maintenance               | Knip unused-file/dependency/export checks, workflow syntax, frozen dependency installation and registry advisory audit.                                                                                         |
+| Linux kiosk kit           | ShellCheck, shell/unit syntax, Python/TypeScript contract parity and sandboxed install/refusal/rollback/verification/removal tests for Ubuntu 26.04 only; offline payload and ISO helpers have isolated checks. |
 
 Only the session deadline limits play; there is no countdown for individual answers. Players cannot extend the deadline, so no WCAG timing-adjustment conformance is claimed. Operators can configure a longer session before an event.
 
-The browser fixture serves `dist/` by default, or the directory selected by `BUILD_ROOT`, on loopback port 4183. It has no development-server fallback and does not reuse an interactive preview. Keep that port available while running the suite.
+The browser fixture serves `../shutteros-build/dist/` by default, or the directory selected by `BUILD_ROOT`, on loopback port 4183. It has no development-server fallback and does not reuse an interactive preview. Keep that port available while running the suite.
 
 The `pnpm verify` command always builds with the generic public identity, even when
-`private/branding.json` exists. It leaves private files untouched. Normal `pnpm dev`
-and `pnpm build` commands continue to use the local branding.
+`private/configuration.json` exists. It leaves private files untouched. Normal `pnpm dev`
+and `pnpm build` commands continue to use the local branding. `pnpm build:site`
+always selects the public identity for its demo and Storybook, so private logos do
+not change the site's public browser fixtures.
 
 ## GitHub Pages path
 
-CI checks the assembled product site in `dist/site/` and its nested demo under the repository’s deployment path. To check the project path locally:
+CI checks the assembled product site in `../shutteros-build/dist/site/` and its nested demo under the repository’s deployment path. To check the project path locally:
 
 ```sh
 BASE_PATH=/shutteros-playground pnpm build:site
-BUILD_ROOT=dist/site/demo BASE_PATH=/shutteros-playground/demo pnpm test:e2e
+BUILD_ROOT=../shutteros-build/dist/site/demo BASE_PATH=/shutteros-playground/demo pnpm test:e2e
 BASE_PATH=/shutteros-playground pnpm test:site
 ```
 
@@ -56,7 +58,7 @@ Use the repository's actual base path for a fork. Run `pnpm build` without `BASE
 - Exercise the deployed URL after an Actions run: welcome, both login routes, one situation, language switching, About notices and logout. Check the browser console and asset paths.
 - Rehearse with representative participants. Verify reading pace, guided duration, keyboard use, screen-reader behavior, zoom, touch input and the target screen resolution. Chromium automation and Axe scans do not establish accessibility conformance or test every browser.
 - Test session expiry, cancelled logout and process recovery on the kiosk. Confirm that the facilitator can reach the organisation's support contact through its usual channel.
-- The Linux kit combines isolated Debian/Ubuntu fixtures with VM tests of PAM/logind, Cage, Chromium policy, recovery and uninstall. See its [validation record](ubuntu-kiosk.md#validation) for tested versions and renderer settings. Complete its [hardware acceptance and recovery checks](ubuntu-kiosk.md#install-and-verify) on the target machine; virtual graphics and keyboard tests do not qualify its GPU, peripherals or firmware controls.
+- The Ubuntu 26.04 kit has isolated installation, rollback, verification and removal fixtures. A locally generated offline ISO passed installation and first boot in a fresh VM on 2026-10-13; see [validation](ubuntu-kiosk.md#validation). Complete the [hardware acceptance and recovery checks](ubuntu-kiosk.md#install-and-verify) on a target PC before deploying the others. HTTP/process startup and a VM display do not qualify its GPU, peripherals or firmware controls. ISO creation and VM checks are explicit local operator work, excluded from CI.
 - Review the distributable files. Keep `LICENSE` and dependency notices, use fictional game data, and exclude private organisation assets from a generic public demo.
 
 Host access logs, HTTP security headers, browser policy and physical access are deployment responsibilities. The application's meta CSP cannot enforce a framing policy. See [security](../SECURITY.md) and [licensing and privacy](legal.md).

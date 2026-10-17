@@ -9,7 +9,9 @@ mkdir -p "$tmp/bin" "$tmp/kit" "$tmp/opt" "$tmp/etc/default" "$tmp/etc/systemd/s
 cp -a "$repo_root/deployment/ubuntu/." "$tmp/kit/"
 cp -a "$repo_root/static/." "$tmp/dist/"
 printf '<!doctype html><title>initial</title>' > "$tmp/dist/index.html"
-printf 'ID=%s\nVERSION_ID=%s\n' "${TEST_DISTRO:-ubuntu}" "${TEST_RELEASE:-24.04}" > "$tmp/etc/os-release"
+mkdir -p "$tmp/dist/_app"
+printf 'console.log(1);' > "$tmp/dist/_app/game.js"
+printf 'ID=%s\nVERSION_ID=%s\n' ubuntu 26.04 > "$tmp/etc/os-release"
 printf 'XKBMODEL="pc105"\nXKBLAYOUT="fr"\nXKBVARIANT="oss"\nXKBOPTIONS="compose:ralt"\n' > "$tmp/etc/default/keyboard"
 printf 'LANG="fr_FR.UTF-8"\n' > "$tmp/etc/default/locale"
 : > "$tmp/accounts"
@@ -72,6 +74,10 @@ if [ "$directory" = true ]; then
   chmod "$mode" "$1"
 else
   /usr/bin/cp "$1" "$2"
+  if [ "${CORRUPT_INSTALL_ONCE:-0}" = 1 ] && [ ! -e "$TEST_CALLS.corrupted" ]; then
+    : > "$2"
+    touch "$TEST_CALLS.corrupted"
+  fi
   chmod "$mode" "$2"
 fi
 EOF
@@ -143,16 +149,34 @@ case "${1:-}" in
     [ "${DISCONNECTED_POLICY:-0}" != 1 ] || slot=-
     printf 'Interface Plug Slot Notes\nsystem-files chromium:etc-chromium-browser-policies %s -\n' "$slot"
     ;;
-  list|wait) exit 0 ;;
+  list) [ "${MISSING_CHROMIUM_SNAP:-0}" != 1 ] ;;
+  wait) exit 0 ;;
   install) exit 90 ;;
 esac
 EOF
+cat > "$tmp/bin/sync" <<'EOF'
+#!/bin/sh
+printf 'sync %s\n' "$*" >> "$TEST_CALLS"
+# No flush of the host filesystem: only failure/order of this boundary is tested.
+if [ "$1" = -f ] && [ "${FAIL_WRITEBACK:-0}" = 1 ]; then exit 1; fi
+EOF
+cat > "$tmp/bin/cp" <<'EOF'
+#!/bin/sh
+/usr/bin/cp "$@"
+if [ "${CORRUPT_STAGE:-0}" = 1 ]; then
+  for argument do :; done
+  case "$argument" in */.shutteros-kiosk-site.*/)
+    : > "$argument/_app/game.js" ;;
+  esac
+fi
+EOF
 cat > "$tmp/bin/python3" <<'EOF'
 #!/bin/sh
-case "${1:-}" in
-  -c) exit 0 ;;
-  *) exec /usr/bin/python3 "$@" ;;
-esac
+if [ "${1:-}" = -B ] && [ "${3:-}" = http ]; then
+  printf 'http-content-check\n' >> "$TEST_CALLS"
+  exit 0
+fi
+exec /usr/bin/python3 "$@"
 EOF
 cat > "$tmp/bin/dpkg-query" <<'EOF'
 #!/bin/sh
@@ -196,7 +220,7 @@ EOF
 touch "$tmp/bin/cage" "$tmp/bin/chromium"
 chmod 755 "$tmp/bin"/*
 
-sed -i "s|/etc/chromium-browser/policies/managed|$tmp/etc/chromium-browser/policies/managed|g; s|/etc/chromium/policies/managed|$tmp/etc/chromium/policies/managed|g; s|/snap/bin/chromium|$tmp/bin/chromium|g; s|/usr/bin/chromium|$tmp/bin/chromium|g" "$tmp/kit/platform.sh"
+sed -i "s|/etc/chromium-browser/policies/managed|$tmp/etc/chromium-browser/policies/managed|g; s|/snap/bin/chromium|$tmp/bin/chromium|g" "$tmp/kit/platform.sh"
 
 script="$tmp/kit/install.sh"
 sed -i "s|PATH=/usr/sbin:/usr/bin:/sbin:/bin|PATH=$tmp/bin:/usr/sbin:/usr/bin:/sbin:/bin|" "$script"
@@ -239,15 +263,27 @@ run_install() {
     "$script" --site-dir "$install_source" "$@"
 }
 
+# A corrupt staging copy must fail before any account or service change.
+if CORRUPT_STAGE=1 run_install "$tmp/dist" > "$tmp/corrupt.log" 2>&1; then exit 1; fi
+grep -q 'checksum mismatch: _app/game.js' "$tmp/corrupt.log"
+[ ! -s "$tmp/accounts" ]
+if grep -Eq '^systemctl (enable|disable|restart|stop)' "$tmp/calls"; then exit 1; fi
+
+: > "$tmp/calls"
 run_install "$tmp/dist"
+# Disk writeback is required before the first HTTP/browser activation.
+python3 - "$tmp/calls" <<'PY_CHECK'
+from pathlib import Path
+import sys
+calls = Path(sys.argv[1]).read_text().splitlines()
+flush = next(i for i, line in enumerate(calls) if line.startswith("sync -f "))
+assert flush < calls.index("systemctl restart shutteros-static.service")
+assert flush < calls.index("systemctl restart shutteros-kiosk.service")
+PY_CHECK
 grep -qx shutteros-kiosk "$tmp/accounts"
 grep -qx shutteros-static "$tmp/accounts"
-if [ "${TEST_DISTRO:-ubuntu}" = ubuntu ]; then
-  grep -q '^snap wait system seed.loaded$' "$tmp/calls"
-else
-  if grep -q '^snap ' "$tmp/calls"; then exit 1; fi
-  test -f "$tmp/etc/chromium/policies/managed/shutteros.json"
-fi
+grep -q '^snap wait system seed.loaded$' "$tmp/calls"
+test -f "$tmp/etc/chromium-browser/policies/managed/shutteros.json"
 grep -q '^sleep 3$' "$tmp/calls"
 if grep -q '^apt-get ' "$tmp/calls"; then exit 1; fi
 if grep -q '^snap install ' "$tmp/calls"; then exit 1; fi
@@ -266,6 +302,20 @@ grep -q '^User=shutteros-static$' "$tmp/etc/systemd/system/shutteros-static.serv
 cp -a "$tmp/dist" "$tmp/dist-update"
 printf '<!doctype html><title>updated</title>' > "$tmp/dist-update/index.html"
 run_install "$tmp/dist-update"
+# A failed filesystem flush rolls back both site and inventory without launching
+# the new game; a truncated temporary support file never replaces its predecessor.
+cp "$tmp/opt/cyber-shutteros/.site-sha256.json" "$tmp/saved-inventory"
+for failure in FAIL_WRITEBACK CORRUPT_INSTALL_ONCE; do
+  : > "$tmp/calls"
+  if env "$failure=1" TEST_ACCOUNTS="$tmp/accounts" TEST_CALLS="$tmp/calls" TEST_GETTY_STATE="$tmp/getty-state" \
+    TEST_HOME="$tmp/home/shutteros-kiosk" TEST_LIB="$tmp/lib/shutteros-kiosk" \
+    "$script" --site-dir "$tmp/dist" > "$tmp/failure.log" 2>&1; then exit 1; fi
+  cmp -s "$tmp/dist-update/index.html" "$tmp/opt/cyber-shutteros/site/index.html"
+  cmp -s "$tmp/saved-inventory" "$tmp/opt/cyber-shutteros/.site-sha256.json"
+  cmp -s "$tmp/kit/session" "$tmp/lib/shutteros-kiosk/session"
+  # Only rollback restart may occur, not a candidate HTTP check or activation.
+  if grep -q '^http-content-check$' "$tmp/calls"; then exit 1; fi
+done
 cmp -s "$tmp/dist-update/index.html" "$tmp/opt/cyber-shutteros/site/index.html"
 
 run_install "$tmp/dist-update" --keyboard-layout us
@@ -317,6 +367,25 @@ fi
 
 # Verification detects a damaged launcher without mutating the installation.
 run_maintenance verify >/dev/null
+# Regressions from the physical incident: blank HTML and missing/empty JS must
+# fail read-only verification even when services still report active.
+cp "$tmp/opt/cyber-shutteros/site/index.html" "$tmp/saved-index"
+: > "$tmp/opt/cyber-shutteros/site/index.html"
+if run_maintenance verify > "$tmp/verify-error" 2>&1; then exit 1; fi
+grep -q 'index.html is missing or empty' "$tmp/verify-error"
+cp "$tmp/saved-index" "$tmp/opt/cyber-shutteros/site/index.html"
+for damage in truncate remove; do
+  cp "$tmp/opt/cyber-shutteros/site/_app/game.js" "$tmp/saved-js"
+  if [ "$damage" = truncate ]; then
+    : > "$tmp/opt/cyber-shutteros/site/_app/game.js"
+  else
+    rm "$tmp/opt/cyber-shutteros/site/_app/game.js"
+  fi
+  if run_maintenance verify > "$tmp/verify-error" 2>&1; then exit 1; fi
+  grep -q '_app/game.js' "$tmp/verify-error"
+  cp "$tmp/saved-js" "$tmp/opt/cyber-shutteros/site/_app/game.js"
+done
+run_maintenance verify >/dev/null
 chmod 0644 "$tmp/lib/shutteros-kiosk/session"
 if run_maintenance verify >/dev/null 2>&1; then
   printf '%s\n' 'expected verification to reject an unsafe launcher mode' >&2
@@ -357,24 +426,28 @@ run_maintenance uninstall >/dev/null
 [ ! -e "$tmp/opt/cyber-shutteros" ]
 [ ! -e "$tmp/home/shutteros-kiosk" ]
 
-# Missing PAM/session dependencies are requested before accounts or services are mutated.
+# Missing offline dependencies fail before accounts or services are mutated.
 : > "$tmp/calls"
-if MISSING_SESSION_PACKAGES=1 run_install "$tmp/dist" >/dev/null 2>&1; then exit 1; fi
-grep -q '^apt-get update$' "$tmp/calls"
-grep -q '^apt-get install -y libpam-systemd dbus-user-session$' "$tmp/calls"
+if MISSING_SESSION_PACKAGES=1 run_install "$tmp/dist" > /dev/null 2> "$tmp/missing-error"; then exit 1; fi
+grep -q 'libpam-systemd is missing' "$tmp/missing-error"
+if grep -Eq '^(apt-get|snap install|useradd) ' "$tmp/calls"; then exit 1; fi
 [ ! -s "$tmp/accounts" ]
 [ ! -e "$tmp/opt/cyber-shutteros" ]
 
-# Debian requests its native browser when absent; it never falls back to Snap.
-if [ "${TEST_DISTRO:-ubuntu}" = debian ]; then
-  chmod 0644 "$tmp/bin/chromium"
-  : > "$tmp/calls"
-  if MISSING_SESSION_PACKAGES=1 run_install "$tmp/dist" >/dev/null 2>&1; then exit 1; fi
-  grep -q '^apt-get install -y chromium libpam-systemd dbus-user-session$' "$tmp/calls"
-  if grep -q '^snap ' "$tmp/calls"; then exit 1; fi
-  [ ! -s "$tmp/accounts" ]
-  chmod 0755 "$tmp/bin/chromium"
-fi
+: > "$tmp/calls"
+if MISSING_CHROMIUM_SNAP=1 run_install "$tmp/dist" > /dev/null 2> "$tmp/missing-error"; then exit 1; fi
+grep -q 'Chromium Snap is missing' "$tmp/missing-error"
+if grep -Eq '^(apt-get|snap install|useradd) ' "$tmp/calls"; then exit 1; fi
+[ ! -s "$tmp/accounts" ]
+[ ! -e "$tmp/opt/cyber-shutteros" ]
+
+chmod 0644 "$tmp/bin/chromium"
+: > "$tmp/calls"
+if run_install "$tmp/dist" > /dev/null 2> "$tmp/missing-error"; then exit 1; fi
+grep -q 'Chromium Snap command is unavailable' "$tmp/missing-error"
+if grep -Eq '^(apt-get|snap install|useradd) ' "$tmp/calls"; then exit 1; fi
+[ ! -s "$tmp/accounts" ]
+chmod 0755 "$tmp/bin/chromium"
 
 # A useradd that creates its identity before failing is still owned by this attempt and removed.
 if FAIL_USER_SLICE_STOP=1 PARTIAL_USERADD=shutteros-kiosk run_install "$tmp/dist" 2>/dev/null; then

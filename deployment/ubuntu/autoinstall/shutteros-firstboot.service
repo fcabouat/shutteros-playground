@@ -1,0 +1,21 @@
+[Unit]
+Description=Complete ShutterOS offline provisioning
+Wants=snapd.socket getty@tty2.service
+After=systemd-logind.service snapd.socket snapd.service
+ConditionPathExists=/opt/shutteros-provisioning/manifest.json
+ConditionPathExists=!/var/lib/shutteros-provisioning/success
+
+[Service]
+# Finish the start job at exec so multi-user.target can start cloud-final.
+# The script waits for cloud-init before mutating the installed system.
+Type=exec
+ExecStart=/bin/bash /opt/shutteros-provisioning/kit/autoinstall/firstboot.sh
+TimeoutStartSec=60s
+RuntimeMaxSec=20min
+RemainAfterExit=yes
+StandardOutput=journal+console
+StandardError=journal+console
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

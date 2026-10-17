@@ -13,7 +13,7 @@ pnpm install --frozen-lockfile
 pnpm build
 ```
 
-La construction produit `dist/`. Servez ce dossier avec Python, en remplaçant le chemin par son emplacement absolu :
+La construction produit `../shutteros-build/dist/`. Servez ce dossier avec Python, en remplaçant le chemin par son emplacement absolu :
 
 ```sh
 python3 -m http.server 8080 --bind 127.0.0.1 --directory /chemin/vers/dist
@@ -30,16 +30,16 @@ Après `pnpm build:site`, relancez `pnpm build` avant de distribuer une borne se
 Le même `pnpm build` produit :
 
 ```text
-dist/portable/shutteros.html
+../shutteros-build/dist/portable/shutteros.html
 ```
 
-Ce fichier peut être ouvert directement dans le navigateur, sans serveur HTTP. Il intègre la configuration de `static/kiosk-config.json`, les logos configurés et les notices de licences. Les fichiers de logos sont vérifiés avant intégration. Pour changer un paramètre ou une image, modifiez les sources puis reconstruisez le livrable.
+Ce fichier peut être ouvert directement dans le navigateur, sans serveur HTTP. Il intègre la configuration locale de `private/configuration.json` si `game` y est défini, sinon celle de `static/kiosk-config.json`, ainsi que les logos et les notices de licences. Pour changer un paramètre ou une image, modifiez la configuration privée puis reconstruisez le livrable.
 
 À l’inverse, le site HTTP lit le JSON déployé au chargement : ses paramètres peuvent être changés sans recompilation.
 
 ## Configurer la session
 
-Le fichier `static/kiosk-config.json` utilise le format version 1. Il contient les phrases de connexion fictives, la durée de session, l’identité des organisations, le contact de sécurité et les adresses des messages simulés.
+Le fichier public `static/kiosk-config.json` utilise le format version 1. Pour une borne propre à votre organisation, placez ce même objet sous la clé `game` dans le fichier ignoré `private/configuration.json`, aux côtés des champs d’identité visuelle. `pnpm build` l’intègre au site local et au fichier autonome ; les builds publics continuent d’utiliser la version générique. La configuration contient les phrases de connexion fictives, la durée de session, le contact de sécurité et les adresses des messages simulés. Voir la [configuration privée unique](branding.fr.md#personnalisation-privée-à-la-construction).
 
 | Paramètre                        | Usage                                                                                                           |
 | -------------------------------- | --------------------------------------------------------------------------------------------------------------- |
@@ -71,13 +71,124 @@ Les phrases du jeu sont publiques et fictives : n’utilisez jamais un vrai mot 
 
 ## Préparer le poste
 
-Le dépôt fournit `deployment/ubuntu/install.sh`, des scripts de vérification et de désinstallation pour Debian 13 et Ubuntu Server 24.04 / 26.04 LTS. Le [guide de déploiement Linux](ubuntu-kiosk.md), en anglais, détaille les prérequis, la configuration Cage/Chromium, la recette matérielle et la récupération.
+Le kit système cible uniquement Ubuntu Server 26.04 amd64 avec Cage et Chromium
+Snap. Le [guide technique](ubuntu-kiosk.md), en anglais, décrit les contrôles de
+politique navigateur, la recette matérielle et la récupération.
 
-Le système hôte reste responsable du confinement : raccourcis système, accès physique, sortie du navigateur et redémarrage après incident. ShutterOS dispose d’un raccourci volontaire de remise à zéro, `Ctrl+Alt+Home`, qui revient à l’accueil ; il ne verrouille pas le système d’exploitation.
+## Clé USB Ubuntu 26.04 hors ligne
 
-Le lanceur Ubuntu active une protection de confort avec `?kiosk=1`. Lors du clic de démarrage, le jeu demande le plein écran et le verrouillage clavier si le navigateur le permet. Il filtre certains raccourcis tout en laissant fonctionner la saisie, la navigation clavier et le raccourci opérateur. Le menu contextuel, les clics auxiliaires et le zoom par Ctrl + molette sont désactivés dans ce mode ; le défilement et le tactile restent disponibles.
+Préparez une fois les dépendances avec Internet dans une VM Ubuntu 26.04 fournie
+par l’opérateur, avec APT, snapd, `xorriso`, `unsquashfs` (squashfs-tools), `python3-yaml` et le trousseau Ubuntu.
+Avant de préparer le cache, placez l’ISO officielle Ubuntu Server 26.04.1 amd64 dans
+`../shutteros-build/cache/ubuntu/ubuntu-26.04.1-live-server-amd64.iso`, depuis le
+checkout accessible dans cette VM, avec son `SHA256SUMS` vérifié à côté. Utilisez
+ce même fichier ISO pour la préparation et l’assemblage. Depuis ce checkout :
 
-Cette protection n’est pas un confinement du poste : sa capture peut échouer et un appui prolongé sur Échap peut la libérer. Le jeu ne redemande pas le plein écran sans un nouveau clic de démarrage. La démo publique n’active pas cette protection.
+```sh
+sudo pnpm kiosk:prepare
+# Sans pnpm dans cette VM, point d’entrée Python équivalent :
+sudo python3 -B deployment/ubuntu/prepare-offline-cache.py \
+  --output ../shutteros-build/cache/offline \
+  --base-iso ../shutteros-build/cache/ubuntu/ubuntu-26.04.1-live-server-amd64.iso
+```
+
+Le cache est calculé depuis les paquets installés dans cette ISO exacte, et non
+ceux de la VM de préparation. La simulation APT hors ligne refuse tout retrait de paquet (`--no-remove`) ou dépendance incompatible.
+La commande ne crée ni ne démarre la VM. Elle produit
+`../shutteros-build/cache/offline`, avec les DEB et les Snap signés nécessaires.
+Si la machine de construction est distincte, copiez-y ce cache et la même ISO
+avec son `SHA256SUMS`, aux mêmes emplacements relatifs au checkout.
+
+Après l’installation verrouillée des dépendances du projet :
+
+```sh
+pnpm kiosk:iso
+# Ou :
+bun run kiosk:iso
+```
+
+Cette commande reconstruit le jeu avec la personnalisation locale courante et
+assemble l’image dans `../shutteros-build/kiosk-iso`. Elle ne télécharge pas de
+paquets manquants. L’option `--skip-build` exige un build racine dont les métadonnées
+correspondent aux sources, à la configuration et au branding actuels ; elle refuse
+un ancien build public. `--base-iso` et `--cache` permettent d’utiliser d’autres
+emplacements locaux.
+
+Par défaut, l’installateur demande sur chaque PC le nom de la machine, le nom du
+compte administrateur et son mot de passe. Vous pouvez choisir `kiosk-admin` comme
+nom de compte. Le mot de passe saisi n’est pas intégré à l’ISO commune : conservez-le
+selon vos règles d’administration, car il sert à la récupération en console et à
+SSH. Les anciens fichiers `../shutteros-build/config/operator.json` et
+`operator-password.txt`, s’ils existent, ne sont pas repris automatiquement.
+L’option explicite `--admin-config /chemin/operator.json` reste disponible pour une
+configuration préparée à l’avance ; son hash ou ses clés SSH sont alors présents
+sur le média. Gardez ces fichiers hors de `private/`, réservé à la configuration
+locale du jeu et à ses images, et de Git.
+
+Écrivez l’ISO sur la clé avec votre outil habituel, en vérifiant le périphérique
+visé. Au démarrage de chaque PC, renseignez le compte administrateur et son mot de
+passe, sélectionnez le disque puis confirmez l’installation dans l’installateur.
+Vérifiez attentivement le disque choisi : son contenu sera remplacé. La clé
+contient les dépendances pour l’installation et le premier démarrage : aucun
+accès Internet n’est requis sur les postes. Le premier démarrage installe les
+Snap signés, connecte leur interface de politiques puis configure la borne.
+
+Sur une clé plus grande que l’ISO hybride, `fdisk` peut signaler que la copie de
+secours de la table GPT se trouve à la fin de l’image, pas à la fin de la clé.
+Ce décalage de capacité n’empêche pas, à lui seul, l’amorçage UEFI. Ne modifiez
+pas la table de partitions de l’ISO pour l’adapter à une taille de clé : elle
+doit fonctionner sur plusieurs capacités. Vérifiez le SHA-256 du **fichier ISO**,
+la présence des partitions de données et EFI sur la clé, puis effectuez le test
+d’amorçage sur un PC cible. Une lecture intégrale de la clé peut différer de
+l’ISO dans les métadonnées GPT après manipulation de la clé.
+
+Une ISO antérieure du 13 octobre 2026 a passé l’installation hors ligne sur
+disque virtuel vierge, le premier démarrage, l’affichage du jeu et l’accès
+administrateur par console et SSH local. L’ISO reconstruite avec la
+configuration privée a passé le contrôle de son contenu et un démarrage UEFI
+jusqu’à Subiquity, sans nouvelle installation complète. Aucune de ces recettes
+VM ne valide le démarrage USB ni le matériel des PC prévus :
+effectuez d’abord une installation et une recette complètes sur un PC physique
+avant de déployer les autres bornes. En cas d’échec, utilisez
+`Ctrl+Alt+F2` puis authentifiez-vous avec le compte administrateur et son mot de
+passe, ou utilisez SSH. Cage autorise ce changement de console pendant que la
+borne fonctionne ; `Ctrl+Alt+F1` revient au jeu. Un administrateur configuré
+uniquement avec des clés SSH a un mot de passe verrouillé et nécessite SSH sur
+un réseau local pour la récupération. Consultez
+`/var/log/shutteros-provisioning/firstboot.log` et
+`journalctl -u shutteros-firstboot.service`. Les détails de reprise sont dans le
+[guide technique](ubuntu-kiosk.md#recovery-and-removal). Ni la construction ISO ni
+les essais VM ne sont exécutés automatiquement ou dans la CI.
+
+## Fichiers vides ou services masqués après un redémarrage
+
+Un service indiqué « masked » peut être un fichier d’unité de zéro octet.
+Un écran blanc peut aussi venir d’un `index.html` ou de fichiers JavaScript vides,
+même si les services sont actifs. Ce n’est pas un nettoyage normal de systemd.
+Conservez les fichiers endommagés et les journaux avant restauration ; le
+[diagnostic technique](ubuntu-kiosk.md#recovery-and-removal) donne les contrôles
+à effectuer. La seule présence de fichiers vides ne démontre ni une coupure
+électrique ni une panne du disque.
+
+Le kit synchronise désormais les fichiers sur disque avant de lancer le jeu,
+remplace les unités et lanceurs par renommage de fichiers complets, et conserve
+un inventaire SHA-256 du site. `verify.sh` détecte les fichiers manquants ou
+altérés et vérifie le contenu HTTP, pas seulement la réponse du serveur. Une
+modification volontaire de configuration doit passer par la source du build et
+une réinstallation pour renouveler cet inventaire. Le marqueur de réussite du
+premier démarrage est lui aussi synchronisé avant sa publication.
+
+Ces changements concernent les futures installations avec le nouveau kit ; ils
+ne modifient pas les ISO déjà générées ni les postes réparés. Une ancienne
+installation sans inventaire nécessite une réinstallation contrôlée pour passer
+le nouveau vérificateur. Si son marqueur de propriété est vide, ne devinez pas
+l’ancien état de la console et ne relancez pas aveuglément le premier démarrage.
+
+Après installation ou réparation, utilisez `sudo sync && sudo systemctl poweroff`,
+attendez l’extinction complète, puis rallumez et contrôlez le jeu et les sommes de
+contrôle. Les écritures synchronisées réduisent le risque de perte lors d’une
+coupure ; elles ne rendent pas toute l’installation indivisible et ne corrigent
+pas un stockage défectueux.
 
 ## Avant d’accueillir les participants
 
@@ -94,9 +205,9 @@ Le compteur se resynchronise au retour du focus ou de la visibilité. Si le proc
 
 ## Fichiers produits
 
-| Chemin                                | Contenu                                                                         |
-| ------------------------------------- | ------------------------------------------------------------------------------- |
-| `dist/`                               | Site statique, configuration et licences ; copier et servir le dossier complet. |
-| `dist/portable/shutteros.html`        | Édition autonome en un fichier.                                                 |
-| `.svelte-kit/`                        | Fichiers intermédiaires du compilateur, ignorés par Git.                        |
-| `src/app.html`, `portable/index.html` | Modèles sources des deux éditions.                                              |
+| Chemin                                            | Contenu                                                                         |
+| ------------------------------------------------- | ------------------------------------------------------------------------------- |
+| `../shutteros-build/dist/`                        | Site statique, configuration et licences ; copier et servir le dossier complet. |
+| `../shutteros-build/dist/portable/shutteros.html` | Édition autonome en un fichier.                                                 |
+| `../shutteros-build/svelte-kit/`                  | Fichiers intermédiaires du compilateur, ignorés par Git.                        |
+| `src/app.html`, `portable/index.html`             | Modèles sources des deux éditions.                                              |

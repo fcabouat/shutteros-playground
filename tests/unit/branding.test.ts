@@ -1,6 +1,6 @@
 import { cp, mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { resolve } from 'node:path';
+import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
@@ -11,14 +11,30 @@ const script = fileURLToPath(new URL('../../scripts/prepare-branding.mjs', impor
 const tinyPng = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
 
 async function runBranding(branding: unknown, logo = true) {
-  const root = await mkdtemp(resolve(tmpdir(), 'shutteros-branding-'));
+  const root = resolve(await mkdtemp(resolve(tmpdir(), 'shutteros-branding-')), 'source');
+  await mkdir(root);
   await mkdir(resolve(root, 'scripts'));
-  await mkdir(resolve(root, 'src/lib'), { recursive: true });
   await mkdir(resolve(root, 'private'));
   await cp(script, resolve(root, 'scripts/prepare-branding.mjs'));
+  await cp(
+    new URL('../../scripts/kiosk-config-source.mjs', import.meta.url),
+    resolve(root, 'scripts/kiosk-config-source.mjs'),
+  );
+  await cp(
+    new URL('../../scripts/build-paths.mjs', import.meta.url),
+    resolve(root, 'scripts/build-paths.mjs'),
+  );
   if (logo) await writeFile(resolve(root, 'private/logo.png'), tinyPng);
-  await writeFile(resolve(root, 'private/branding.json'), JSON.stringify(branding));
-  return { root, output: resolve(root, 'src/lib/branding.generated.ts') };
+  await writeFile(resolve(root, 'private/configuration.json'), JSON.stringify(branding));
+  return { root, output: resolve(root, '../shutteros-build/generated/branding.generated.ts') };
+}
+
+function expectSourceBrandingType(generated: string, fixture: { root: string; output: string }) {
+  const typeImport = generated.match(/import type \{ Branding \} from (['"])([^'"]+)\1;/)?.[2];
+  expect(typeImport).toMatch(/^\.\.?\//);
+  expect(resolve(dirname(fixture.output), typeImport ?? '')).toBe(
+    resolve(fixture.root, 'packages/components/src/screens/branding'),
+  );
 }
 
 describe('private branding preparation', () => {
@@ -27,7 +43,7 @@ describe('private branding preparation', () => {
 
   it('verifies the public identity without reading or changing private configuration', async () => {
     const fixture = await runBranding({ applicationName: 'Private identity' });
-    const input = resolve(fixture.root, 'private/branding.json');
+    const input = resolve(fixture.root, 'private/configuration.json');
     // Even an invalid local configuration must not affect a public verification.
     await writeFile(input, '{invalid private json');
     vi.stubEnv('SHUTTEROS_PUBLIC_BUILD', '1');
@@ -36,11 +52,12 @@ describe('private branding preparation', () => {
         resolve(fixture.root, 'scripts/prepare-branding.mjs'),
       ]);
       const generated = await readFile(fixture.output, 'utf8');
+      expectSourceBrandingType(generated, fixture);
       expect(generated).toContain('"applicationName":"ShutterOS"');
       expect(generated).not.toContain('organizationName');
       expect(await readFile(input, 'utf8')).toBe('{invalid private json');
     } finally {
-      await rm(fixture.root, { recursive: true, force: true });
+      await rm(dirname(fixture.root), { recursive: true, force: true });
     }
   });
 
@@ -62,7 +79,7 @@ describe('private branding preparation', () => {
           `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`,
         );
       } finally {
-        await rm(fixture.root, { recursive: true, force: true });
+        await rm(dirname(fixture.root), { recursive: true, force: true });
       }
     },
   );
@@ -77,7 +94,7 @@ describe('private branding preparation', () => {
           execFileAsync(process.execPath, [resolve(fixture.root, 'scripts/prepare-branding.mjs')]),
         ).rejects.toThrow('Branding:');
       } finally {
-        await rm(fixture.root, { recursive: true, force: true });
+        await rm(dirname(fixture.root), { recursive: true, force: true });
       }
     },
   );
@@ -94,15 +111,13 @@ describe('private branding preparation', () => {
         resolve(fixture.root, 'scripts/prepare-branding.mjs'),
       ]);
       const generated = await readFile(fixture.output, 'utf8');
-      expect(generated).toContain(
-        "import type { Branding } from '@shutteros/components/screens/branding'",
-      );
+      expectSourceBrandingType(generated, fixture);
       expect(generated).toContain('ShutterOS');
       expect(generated).toContain('Example Organisation');
       expect(generated).toContain('data:image/png;base64,iVBORw0KGgo=');
       expect(generated).not.toContain('http:');
     } finally {
-      await rm(fixture.root, { recursive: true, force: true });
+      await rm(dirname(fixture.root), { recursive: true, force: true });
     }
   });
 
@@ -118,14 +133,12 @@ describe('private branding preparation', () => {
         resolve(fixture.root, 'scripts/prepare-branding.mjs'),
       ]);
       const generated = await readFile(fixture.output, 'utf8');
-      expect(generated).toContain(
-        "import type { Branding } from '@shutteros/components/screens/branding'",
-      );
+      expectSourceBrandingType(generated, fixture);
       expect(generated).toContain('Partner organisation');
       expect(generated).toContain('partnerOrganizationLogo');
       expect(generated).toContain('data:image/png;base64,iVBORw0KGgo=');
     } finally {
-      await rm(fixture.root, { recursive: true, force: true });
+      await rm(dirname(fixture.root), { recursive: true, force: true });
     }
   });
 
@@ -151,7 +164,7 @@ describe('private branding preparation', () => {
         execFileAsync(process.execPath, [resolve(fixture.root, 'scripts/prepare-branding.mjs')]),
       ).rejects.toThrow('Branding:');
     } finally {
-      await rm(fixture.root, { recursive: true, force: true });
+      await rm(dirname(fixture.root), { recursive: true, force: true });
     }
   });
 
@@ -167,7 +180,7 @@ describe('private branding preparation', () => {
           `"showOrganizationNames":${showOrganizationNames}`,
         );
       } finally {
-        await rm(fixture.root, { recursive: true, force: true });
+        await rm(dirname(fixture.root), { recursive: true, force: true });
       }
     },
   );
@@ -188,7 +201,7 @@ describe('private branding preparation', () => {
       expect(generated).toContain('Research \\u0026 Development');
       expect(generated).toContain('Line\\u2028break');
     } finally {
-      await rm(fixture.root, { recursive: true, force: true });
+      await rm(dirname(fixture.root), { recursive: true, force: true });
     }
   });
 });

@@ -17,7 +17,7 @@ The [ENISA legal notice](https://www.enisa.europa.eu/about-enisa/legal-notice) g
 ## Software redistribution
 
 - The project source is under the [MIT license](../LICENSE). Preserve its copyright and permission notice when redistributing it.
-- Dependencies retain their own terms. Packaging inventories rendered code and emitted Tailwind CSS, collects dependency license files, and fails when a bundled dependency has no license file. Successful builds include `dist/LICENSE` and `dist/THIRD-PARTY-NOTICES.txt`; the standalone HTML includes the same notices.
+- Dependencies retain their own terms. Packaging inventories rendered code and emitted Tailwind CSS, collects dependency license files, and fails when a bundled dependency has no license file. Successful builds include `../shutteros-build/dist/LICENSE` and `../shutteros-build/dist/THIRD-PARTY-NOTICES.txt`; the standalone HTML includes the same notices.
 - The in-game **About ShutterOS** view exposes these notices. Keep the notice files with a static-site distribution, including an offline kiosk copy.
 
 `static/THIRD-PARTY-NOTICES.txt` supplies the notice text during development. Storybook uses inert fixture text because its component scenarios do not read application assets. A production build compares the static notice with the dependencies actually rendered into the regular and portable deliveries, plus Tailwind's emitted CSS. If that inventory changes, the build stops and keeps the generated manifests; run `pnpm notices:update`, review the updated notice file, then run `pnpm build` again. This explicit refresh prevents a dependency update from shipping stale in-app notices.

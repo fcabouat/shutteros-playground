@@ -1,5 +1,5 @@
 #!/bin/sh
-# Review this local script before running it as root on a dedicated Debian or Ubuntu kiosk host.
+# Review this local script before running it as root on a dedicated Ubuntu 26.04 kiosk host.
 set -eu
 
 PATH=/usr/sbin:/usr/bin:/sbin:/bin
@@ -15,6 +15,7 @@ readonly LIB_ROOT=/usr/local/lib/shutteros-kiosk
 readonly ENVIRONMENT_FILE="$LIB_ROOT/environment"
 readonly STATIC_UNIT=/etc/systemd/system/shutteros-static.service
 readonly KIOSK_UNIT=/etc/systemd/system/shutteros-kiosk.service
+readonly SITE_INVENTORY="$KIOSK_ROOT/.site-sha256.json"
 readonly OWNER_MARKER="$KIOSK_ROOT/.shutteros-kiosk-owner"
 readonly OWNER_VERSION=shutteros-kiosk-install-v1
 readonly OS_RELEASE_FILE=/etc/os-release
@@ -31,6 +32,8 @@ die() {
 
 SOURCE_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd) || die 'cannot resolve script directory'
 readonly SOURCE_DIR
+# shellcheck source=deployment/ubuntu/durable-files.sh
+. "$SOURCE_DIR/durable-files.sh"
 
 usage() {
   cat <<'EOF'
@@ -47,7 +50,8 @@ An interactive terminal offers a keyboard menu unless --keyboard-layout is set.
 
 Copies a reviewed ShutterOS static build into /opt/cyber-shutteros/site, creates
 separate browser and static-server accounts, and enables local Python, Cage,
-and Chromium services on tty1.
+and Chromium services on tty1. Dependencies must already be installed from the
+offline USB; this script does not download packages.
 EOF
 }
 
@@ -143,15 +147,16 @@ assert_no_graphical_display_manager() {
 }
 
 write_marker() {
-  (umask 077
-   cat > "$OWNER_MARKER" <<EOF
+  marker_tmp=$(mktemp)
+  chmod 600 "$marker_tmp"
+  cat > "$marker_tmp" <<EOF
 version=$OWNER_VERSION
 getty_enabled=$getty_enabled
 getty_active=$getty_active
 EOF
-  )
-  chown root:root "$OWNER_MARKER"
-  chmod 600 "$OWNER_MARKER"
+  kiosk_install_file "$marker_tmp" "$OWNER_MARKER" 0600
+  rm -f "$marker_tmp"
+  marker_tmp=
 }
 
 read_default_assignment() {
@@ -233,7 +238,10 @@ EOF
 
 prepare_stage() {
   stage_site=$(mktemp -d "$STAGE_ROOT/.shutteros-kiosk-site.XXXXXX")
+  inventory_tmp=$(mktemp)
+  "$PYTHON_COMMAND" -B "$SOURCE_DIR/site-integrity.py" record "$site_dir" "$inventory_tmp"
   cp -a --no-preserve=ownership "$site_dir/." "$stage_site/"
+  "$PYTHON_COMMAND" -B "$SOURCE_DIR/site-integrity.py" verify "$stage_site" "$inventory_tmp"
   [ -z "$(find "$stage_site" -xdev ! -type d ! -type f -print -quit)" ] ||
     die 'the copied build contains a symlink or special file; source may have changed while copying'
   chown -R root:root "$stage_site"
@@ -243,7 +251,7 @@ prepare_stage() {
 validate_tree() {
   tree=$1
   root_owned_directory "$tree" || return 1
-  [ -f "$tree/index.html" ] && [ -f "$tree/kiosk-config.json" ] || return 1
+  [ -s "$tree/index.html" ] && [ -s "$tree/kiosk-config.json" ] || return 1
   [ -z "$(find "$tree" -xdev \( -type l -o ! -user root -o -perm /022 -o \( ! -type d -a ! -type f \) \) -print -quit)" ]
 }
 
@@ -270,7 +278,7 @@ restore_getty() {
 wait_for_http() {
   attempts=0
   while [ "$attempts" -lt 15 ]; do
-    if "$PYTHON_COMMAND" -c 'from urllib.request import urlopen; urlopen("http://127.0.0.1:8080/", timeout=1).read(1)' >/dev/null 2>&1; then
+    if "$PYTHON_COMMAND" -B "$SOURCE_DIR/site-integrity.py" http "$SITE_ROOT" >/dev/null 2>&1; then
       return 0
     fi
     systemctl --quiet is-active shutteros-static.service || return 1
@@ -308,7 +316,8 @@ backup_support_files() {
     "environment:$ENVIRONMENT_FILE" \
     "static.service:$STATIC_UNIT" \
     "kiosk.service:$KIOSK_UNIT" \
-    "policy.json:$POLICY_FILE"; do
+    "policy.json:$POLICY_FILE" \
+    "site-inventory.json:$SITE_INVENTORY"; do
     name=${pair%%:*}
     path=${pair#*:}
     if exists_or_link "$path"; then
@@ -329,11 +338,12 @@ restore_support_files() {
     "environment:$ENVIRONMENT_FILE" \
     "static.service:$STATIC_UNIT" \
     "kiosk.service:$KIOSK_UNIT" \
-    "policy.json:$POLICY_FILE"; do
+    "policy.json:$POLICY_FILE" \
+    "site-inventory.json:$SITE_INVENTORY"; do
     name=${pair%%:*}
     path=${pair#*:}
     if [ -f "$support_rollback/$name" ]; then
-      install -o root -g root -m "$(stat -c %a "$support_rollback/$name")" "$support_rollback/$name" "$path"
+      kiosk_install_file "$support_rollback/$name" "$path" "$(stat -c %a "$support_rollback/$name")"
     else
       rm -f "$path"
     fi
@@ -342,6 +352,8 @@ restore_support_files() {
 }
 
 stage_site=
+inventory_tmp=
+marker_tmp=
 environment_tmp=
 rollback_site=
 support_rollback=
@@ -361,6 +373,8 @@ cleanup() {
   trap - EXIT
   [ -z "$stage_site" ] || rm -rf "$stage_site"
   [ -z "$environment_tmp" ] || rm -f "$environment_tmp"
+  [ -z "$inventory_tmp" ] || rm -f "$inventory_tmp"
+  [ -z "$marker_tmp" ] || rm -f "$marker_tmp"
   if [ "$status" -ne 0 ] && [ "$activation_started" = true ]; then
     systemctl stop shutteros-kiosk.service shutteros-static.service 2>/dev/null || true
     [ "$new_site_installed" = false ] || rm -rf "$SITE_ROOT"
@@ -455,7 +469,7 @@ done
 # shellcheck disable=SC1090
 . "$OS_RELEASE_FILE"
 kiosk_platform "${ID:-}" || die 'unsupported distribution'
-readonly CHROMIUM_COMMAND POLICY_ROOT CHROMIUM_SNAP
+readonly CHROMIUM_COMMAND POLICY_ROOT
 readonly POLICY_FILE="$POLICY_ROOT/shutteros.json"
 kiosk_supported_release "${ID:-}" "${VERSION_ID:-}" || die 'unsupported release'
 
@@ -463,8 +477,8 @@ case "$site_dir" in
   /*) ;;
   *) die '--site-dir must be an absolute path' ;;
 esac
-[ -f "$site_dir/index.html" ] || die '--site-dir must contain index.html'
-[ -f "$site_dir/kiosk-config.json" ] || die '--site-dir must contain kiosk-config.json'
+[ -s "$site_dir/index.html" ] || die '--site-dir must contain nonempty index.html'
+[ -s "$site_dir/kiosk-config.json" ] || die '--site-dir must contain nonempty kiosk-config.json'
 [ ! -L "$site_dir" ] || die '--site-dir must not be a symlink'
 [ -z "$(find "$site_dir" -type l -print -quit)" ] || die '--site-dir must not contain symlinks'
 [ -z "$(find "$site_dir" -xdev ! -type d ! -type f -print -quit)" ] ||
@@ -494,42 +508,24 @@ assert_no_graphical_display_manager
 prepare_environment
 prepare_stage
 
-missing_packages=
-[ -x "$CAGE_COMMAND" ] || missing_packages="$missing_packages cage"
-[ -x "$PYTHON_COMMAND" ] || missing_packages="$missing_packages python3"
-if [ "$CHROMIUM_SNAP" = true ]; then
-  [ -x "$SNAP_COMMAND" ] || missing_packages="$missing_packages snapd"
-else
-  [ -x "$CHROMIUM_COMMAND" ] || missing_packages="$missing_packages chromium"
-fi
-# PAM/logind must create the unprivileged Wayland runtime directory, even on minimal servers.
+# The offline USB must provision dependencies before this installer runs.
+# Fail without contacting apt repositories or the Snap Store.
+[ -x "$CAGE_COMMAND" ] || die 'Cage is missing; provision it from the offline USB first'
+[ -x "$PYTHON_COMMAND" ] || die 'Python is missing; provision it from the offline USB first'
+[ -x "$SNAP_COMMAND" ] || die 'Snap is missing; provision it from the offline USB first'
 for package in libpam-systemd dbus-user-session; do
-  if [ "$(dpkg-query -W -f='${Status}' "$package" 2>/dev/null || true)" != 'install ok installed' ]; then
-    missing_packages="$missing_packages $package"
-  fi
+  [ "$(dpkg-query -W -f='${Status}' "$package" 2>/dev/null || true)" = 'install ok installed' ] ||
+    die "$package is missing; provision it from the offline USB first"
 done
-if [ -n "$missing_packages" ]; then
-  export DEBIAN_FRONTEND=noninteractive
-  apt-get update
-  # Package names above are fixed constants; splitting passes each as an argument.
-  # shellcheck disable=SC2086
-  apt-get install -y $missing_packages
-fi
-[ -x "$CAGE_COMMAND" ] || die 'Cage is unavailable after package installation'
-[ -x "$PYTHON_COMMAND" ] || die 'Python is unavailable after package installation'
 "$PYTHON_COMMAND" "$SOURCE_DIR/validate-config.py" "$stage_site/kiosk-config.json" ||
   die 'kiosk-config.json is invalid'
-if [ "$CHROMIUM_SNAP" = true ]; then
-  [ -x "$SNAP_COMMAND" ] || die 'Snap is unavailable after package installation'
-  "$SNAP_COMMAND" wait system seed.loaded
-  if ! "$SNAP_COMMAND" list chromium >/dev/null 2>&1; then
-    "$SNAP_COMMAND" install chromium
-  fi
-  "$SNAP_COMMAND" connections chromium |
-    awk '$2 == "chromium:etc-chromium-browser-policies" && $3 != "-" { found = 1 } END { exit !found }' ||
-    die 'the Chromium snap policy interface is not connected'
-fi
-[ -x "$CHROMIUM_COMMAND" ] || die 'Chromium is unavailable after installation'
+"$SNAP_COMMAND" wait system seed.loaded
+"$SNAP_COMMAND" list chromium >/dev/null 2>&1 ||
+  die 'Chromium Snap is missing; provision it from the offline USB first'
+[ -x "$CHROMIUM_COMMAND" ] || die 'Chromium Snap command is unavailable'
+"$SNAP_COMMAND" connections chromium |
+  awk '$2 == "chromium:etc-chromium-browser-policies" && $3 != "-" { found = 1 } END { exit !found }' ||
+  die 'the Chromium snap policy interface is not connected'
 
 if [ "$installation_mode" = fresh ]; then
   fresh_mutation_started=true
@@ -567,16 +563,19 @@ if [ "$installation_mode" = reinstall ]; then
 fi
 
 install -d -o root -g root -m 0755 "$LIB_ROOT"
-install -o root -g root -m 0644 "$SOURCE_DIR/platform.sh" "$LIB_ROOT/platform.sh"
-install -o root -g root -m 0755 "$SOURCE_DIR/session" "$LIB_ROOT/session"
-install -o root -g root -m 0755 "$SOURCE_DIR/launch-chromium" "$LIB_ROOT/launch-chromium"
-install -o root -g root -m 0644 "$environment_tmp" "$ENVIRONMENT_FILE"
+kiosk_install_file "$SOURCE_DIR/platform.sh" "$LIB_ROOT/platform.sh" 0644
+kiosk_install_file "$SOURCE_DIR/session" "$LIB_ROOT/session" 0755
+kiosk_install_file "$SOURCE_DIR/launch-chromium" "$LIB_ROOT/launch-chromium" 0755
+kiosk_install_file "$environment_tmp" "$ENVIRONMENT_FILE" 0644
 rm -f "$environment_tmp"
 environment_tmp=
-install -o root -g root -m 0644 "$SOURCE_DIR/shutteros-static.service" "$STATIC_UNIT"
-install -o root -g root -m 0644 "$SOURCE_DIR/shutteros-kiosk.service" "$KIOSK_UNIT"
+kiosk_install_file "$SOURCE_DIR/shutteros-static.service" "$STATIC_UNIT" 0644
+kiosk_install_file "$SOURCE_DIR/shutteros-kiosk.service" "$KIOSK_UNIT" 0644
 install -d -o root -g root -m 0755 "$POLICY_ROOT"
-install -o root -g root -m 0644 "$SOURCE_DIR/chromium-policy.json" "$POLICY_FILE"
+kiosk_install_file "$SOURCE_DIR/chromium-policy.json" "$POLICY_FILE" 0644
+kiosk_install_file "$inventory_tmp" "$SITE_INVENTORY" 0600
+rm -f "$inventory_tmp"
+inventory_tmp=
 passwd -l "$KIOSK_USER" >/dev/null
 
 systemctl daemon-reload
@@ -603,6 +602,11 @@ fi
 mv "$stage_site" "$SITE_ROOT"
 stage_site=
 new_site_installed=true
+"$PYTHON_COMMAND" -B "$SOURCE_DIR/site-integrity.py" verify "$SITE_ROOT" "$SITE_INVENTORY"
+# Include the renamed site, account databases, ownership state, service links
+# and policy even when /opt, /usr/local and /etc are separate filesystems.
+# Do not expose the game or report success if writeback fails.
+sync -f "$KIOSK_ROOT" "$LIB_ROOT" "$STATIC_UNIT" "$POLICY_FILE"
 systemctl restart shutteros-static.service || die 'the static service failed to start'
 wait_for_http || die 'the static service did not become reachable on loopback'
 systemctl restart shutteros-kiosk.service || die 'the kiosk service failed to start'
@@ -614,5 +618,5 @@ support_rollback=
 support_mutation_started=false
 new_site_installed=false
 
-printf '%s\n' 'Installed ShutterOS kiosk services and verified HTTP plus short process stability.'
+printf '%s\n' 'Persisted ShutterOS kiosk files and verified site checksums, HTTP content and short process stability.'
 printf '%s\n' 'Run deployment/ubuntu/verify.sh, then complete the documented hardware acceptance.'

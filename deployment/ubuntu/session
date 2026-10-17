@@ -2,4 +2,5 @@
 # Root-owned login shell and systemd entrypoint. It never falls back to an interactive shell.
 set -eu
 
-exec /usr/bin/cage -d -- /usr/local/lib/shutteros-kiosk/launch-chromium
+# Authenticated administrator consoles remain reachable with Ctrl+Alt+Fn.
+exec /usr/bin/cage -d -s -- /usr/local/lib/shutteros-kiosk/launch-chromium

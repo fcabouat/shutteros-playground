@@ -2,7 +2,7 @@
   "name": "shutteros-playground",
   "version": "1.2.0",
   "private": true,
-  "description": "ShutterOS Playground — an independent cybersecurity awareness game for European Cybersecurity Month",
+  "description": "ShutterOS Playground \u2014 an independent cybersecurity awareness game for European Cybersecurity Month",
   "type": "module",
   "license": "MIT",
   "engines": {
@@ -11,7 +11,7 @@
   "packageManager": "pnpm@11.19.0",
   "scripts": {
     "dev": "node scripts/prepare-branding.mjs && vite dev --host 127.0.0.1",
-    "build": "node scripts/prepare-branding.mjs && node scripts/prepare-portable-configuration.mjs && vite build && vite build --config vite.portable.config.ts && node scripts/package-notices.mjs",
+    "build": "node scripts/prepare-branding.mjs && node scripts/prepare-portable-configuration.mjs && vite build && vite build --config vite.portable.config.ts && node scripts/sync-kiosk-configuration.mjs && node scripts/package-notices.mjs && node scripts/record-build.mjs",
     "notices:update": "node scripts/package-notices.mjs --update-source",
     "preview": "vite preview --host 127.0.0.1",
     "check:core": "tsc -p packages/core/tsconfig.json",
@@ -25,7 +25,7 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "storybook": "node scripts/prepare-branding.mjs && storybook dev -p 6006 --no-open --disable-telemetry",
-    "build:storybook": "node scripts/prepare-branding.mjs && storybook build --disable-telemetry",
+    "build:storybook": "node scripts/prepare-branding.mjs && storybook build --disable-telemetry --output-dir ../shutteros-build/storybook-static",
     "verify": "node scripts/verify.mjs",
     "build:site": "node scripts/build-site.mjs",
     "docs:api": "typedoc",
@@ -34,7 +34,9 @@
     "gitflow:init": "sh scripts/gitflow-init.sh",
     "verify:checks": "pnpm lint && pnpm format:check && pnpm check && pnpm knip && pnpm test && pnpm build && pnpm test:e2e",
     "pr": "node scripts/delivery.mjs pr",
-    "release": "node scripts/delivery.mjs release"
+    "release": "node scripts/delivery.mjs release",
+    "kiosk:iso": "node scripts/kiosk-iso.mjs",
+    "kiosk:prepare": "python3 -B deployment/ubuntu/prepare-offline-cache.py --base-iso ../shutteros-build/cache/ubuntu/ubuntu-26.04.1-live-server-amd64.iso --output ../shutteros-build/cache/offline"
   },
   "dependencies": {
     "@shutteros/components": "workspace:*",

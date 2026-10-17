@@ -1,3 +1,4 @@
+import { buildRoot, distPath } from '../../scripts/build-paths.mjs';
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { readFile, readdir, stat } from 'node:fs/promises';
@@ -6,7 +7,7 @@ import { parse, type DefaultTreeAdapterMap } from 'parse5';
 import { fr } from '@shutteros/core/data/fr';
 
 test('published guides and product pages have no broken local links', async () => {
-  const root = path.resolve('dist/site');
+  const root = distPath('site');
   const pages = [
     'index.html',
     'fr.html',
@@ -54,7 +55,10 @@ test('landing follows browser locale and an explicit query override', async ({ p
   await page.goto('./index.html?lang=en');
   await expect(page).toHaveURL(/\/index\.html\?lang=en$/);
   await expect(page.locator('html')).toHaveAttribute('lang', 'en');
-  await page.screenshot({ path: '/tmp/shutteros-site-desktop.png', fullPage: true });
+  await page.screenshot({
+    path: `${buildRoot}/test-results/previews/site-desktop.png`,
+    fullPage: true,
+  });
 });
 
 test('deployment and branding guides switch between their French and English versions', async ({
@@ -124,7 +128,10 @@ test('landing and translated documentation fit mobile and pass an accessibility 
       true,
     );
     if (path === './fr.html')
-      await page.screenshot({ path: '/tmp/shutteros-site-mobile.png', fullPage: true });
+      await page.screenshot({
+        path: `${buildRoot}/test-results/previews/site-mobile.png`,
+        fullPage: true,
+      });
     expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   }
 });

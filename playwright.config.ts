@@ -1,9 +1,11 @@
+import { buildRoot } from './scripts/build-paths.mjs';
 import { defineConfig, devices } from '@playwright/test';
 
 const basePath = process.env.BASE_PATH ?? '';
 const baseURL = `http://127.0.0.1:4183${basePath}/`;
 
 export default defineConfig({
+  outputDir: `${buildRoot}/test-results`,
   testDir: './tests/e2e',
   timeout: 30_000,
   expect: { timeout: 5_000 },
@@ -11,7 +13,7 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   workers: 2,
   retries: process.env.CI ? 1 : 0,
-  reporter: [['list'], ['html', { open: 'never' }]],
+  reporter: [['list'], ['html', { open: 'never', outputFolder: `${buildRoot}/playwright-report` }]],
   use: {
     baseURL,
     locale: 'fr-FR',

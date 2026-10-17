@@ -15,6 +15,7 @@ readonly LIB_ROOT=/usr/local/lib/shutteros-kiosk
 readonly ENVIRONMENT_FILE="$LIB_ROOT/environment"
 readonly STATIC_UNIT=/etc/systemd/system/shutteros-static.service
 readonly KIOSK_UNIT=/etc/systemd/system/shutteros-kiosk.service
+readonly SITE_INVENTORY="$KIOSK_ROOT/.site-sha256.json"
 readonly OWNER_MARKER="$KIOSK_ROOT/.shutteros-kiosk-owner"
 readonly OWNER_VERSION=shutteros-kiosk-install-v1
 SOURCE_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
@@ -46,8 +47,9 @@ marker_value() {
 . "$SOURCE_DIR/platform.sh"
 # shellcheck disable=SC1090
 . "$OS_RELEASE_FILE"
+kiosk_supported_release "${ID:-}" "${VERSION_ID:-}" || fail 'unsupported release'
 kiosk_platform "${ID:-}" || fail 'unsupported distribution'
-readonly CHROMIUM_COMMAND POLICY_ROOT CHROMIUM_SNAP
+readonly CHROMIUM_COMMAND POLICY_ROOT
 readonly POLICY_FILE="$POLICY_ROOT/shutteros.json"
 
 id "$KIOSK_USER" >/dev/null 2>&1 || fail 'kiosk account is missing'
@@ -78,10 +80,13 @@ case "$original_getty_active" in active|inactive) ;; *) fail 'ownership marker g
 [ "$(systemctl is-enabled getty@tty1.service 2>/dev/null || true)" = "$expected_getty_enabled" ] || fail 'getty@tty1 enabled state differs from the installed state'
 [ "$(systemctl is-active getty@tty1.service 2>/dev/null || true)" = inactive ] || fail 'getty@tty1 is active and competing with the kiosk'
 root_owned_directory "$SITE_ROOT" || fail 'static site root is not root-owned mode 0755'
-[ -f "$SITE_ROOT/index.html" ] || fail 'static site has no index.html'
-[ -f "$SITE_ROOT/kiosk-config.json" ] || fail 'static site has no kiosk-config.json'
+[ -s "$SITE_ROOT/index.html" ] || fail 'static site index.html is missing or empty'
+[ -s "$SITE_ROOT/kiosk-config.json" ] || fail 'static site kiosk-config.json is missing or empty'
 [ -z "$(find "$SITE_ROOT" -xdev \( -type l -o ! -user root -o -perm /022 -o \( ! -type d -a ! -type f \) \) -print -quit)" ] ||
   fail 'static site contains a symlink, non-root-owned, writable, or special file'
+root_owned_regular "$SITE_INVENTORY" || fail 'site inventory is missing or unsafe; reinstall with the reviewed kit'
+[ "$(stat -c %a "$SITE_INVENTORY")" = 600 ] || fail 'site inventory mode is not 0600'
+python3 -B "$SOURCE_DIR/site-integrity.py" verify "$SITE_ROOT" "$SITE_INVENTORY" || fail 'deployed site integrity differs from the installed build'
 python3 "$SOURCE_DIR/validate-config.py" "$SITE_ROOT/kiosk-config.json" || fail 'deployed kiosk configuration is invalid'
 for name in session launch-chromium platform.sh; do
   source_file="$SOURCE_DIR/$name"
@@ -117,14 +122,12 @@ root_owned_regular "$POLICY_FILE" || fail 'policy file is missing or unsafe'
 cmp -s "$SOURCE_DIR/chromium-policy.json" "$POLICY_FILE" || fail 'installed policy differs from reviewed policy'
 
 [ -x "$CHROMIUM_COMMAND" ] || fail 'Chromium command is missing'
-if [ "$CHROMIUM_SNAP" = true ]; then
-  snap connections chromium |
-    awk '$2 == "chromium:etc-chromium-browser-policies" && $3 != "-" { found = 1 } END { exit !found }' ||
-    fail 'Chromium policy interface is disconnected'
-fi
+snap connections chromium |
+  awk '$2 == "chromium:etc-chromium-browser-policies" && $3 != "-" { found = 1 } END { exit !found }' ||
+  fail 'Chromium policy interface is disconnected'
 systemctl --quiet is-active shutteros-static.service || fail 'static service is not active'
 systemctl --quiet is-active shutteros-kiosk.service || fail 'kiosk service is not active'
-python3 -c 'from urllib.request import urlopen; urlopen("http://127.0.0.1:8080/", timeout=3).read(1)'
+python3 -B "$SOURCE_DIR/site-integrity.py" http "$SITE_ROOT" || fail 'HTTP content differs from the installed index.html'
 
 listeners=$(ss -ltnH '( sport = :8080 )')
 [ -n "$listeners" ] || fail 'nothing listens on TCP port 8080'
